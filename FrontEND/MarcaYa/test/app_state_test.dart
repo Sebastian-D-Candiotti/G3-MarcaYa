@@ -50,7 +50,7 @@ void main() {
   });
 
   test('employee can mark entry and exit only with valid GPS', () {
-    final state = MarcAppState();
+    final state = MarcaYAState();
     expect(state.login('empleado@marcapp.pe', '123456'), isTrue);
 
     state.setGpsScenario(GpsScenario.insideZone);
@@ -69,7 +69,7 @@ void main() {
   });
 
   test('admin can accept and reject employee requests', () {
-    final state = MarcAppState();
+    final state = MarcaYAState();
     expect(state.joinRequests.first.status, RequestStatus.pending);
 
     state.decideRequest('req-1', RequestStatus.accepted);
@@ -81,7 +81,7 @@ void main() {
   });
 
   test('reports filter records by employee and stop', () {
-    final state = MarcAppState();
+    final state = MarcaYAState();
     final employeeRecords = state.reportRecords(employeeId: 'emp-1');
     final stopRecords = state.reportRecords(stopId: 'stop-1');
 

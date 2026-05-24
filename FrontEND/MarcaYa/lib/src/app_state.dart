@@ -273,8 +273,8 @@ class GpsValidator {
   double _toRadians(double degrees) => degrees * pi / 180;
 }
 
-class MarcAppState extends ChangeNotifier {
-  MarcAppState() {
+class MarcaYAState extends ChangeNotifier {
+  MarcaYAState() {
     _seed();
   }
 
@@ -627,7 +627,7 @@ class MarcAppState extends ChangeNotifier {
       ),
       const AppUser(
         id: 'user-2',
-        name: 'Admin MarcAPP',
+        name: 'Admin MarcaYA',
         email: 'admin@marcapp.pe',
         password: '123456',
         role: UserRole.admin,

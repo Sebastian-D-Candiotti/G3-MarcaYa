@@ -1,6 +1,6 @@
 {
-    "name": "marcapp",
-    "short_name": "marcapp",
+    "name": "MarcaYA",
+    "short_name": "MarcaYA",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

@@ -1,5 +1,5 @@
 // lib/src/api_service.dart
-// Reemplaza la lógica simulada de MarcAppState por llamadas HTTP reales
+// Reemplaza la lógica simulada de MarcaYAState por llamadas HTTP reales
 
 import 'dart:convert';
 import 'package:http/http.dart' as http;
