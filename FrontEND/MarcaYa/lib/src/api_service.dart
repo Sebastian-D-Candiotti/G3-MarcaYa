@@ -268,6 +268,32 @@ class ApiService {
   }
 
   // ════════════════════════════════════════════════════════════
+  // PERFIL
+  // ════════════════════════════════════════════════════════════
+
+  /// Obtiene el perfil del usuario autenticado desde el backend
+  Future<Map<String, dynamic>> obtenerPerfil() async {
+    final res = await _client.get(
+      Uri.parse('$kBaseUrl/perfil'),
+      headers: await _headers(),
+    );
+    return _parsearRespuesta(res);
+  }
+
+  /// Actualiza nombre y/o correo del perfil autenticado
+  Future<Map<String, dynamic>> actualizarPerfil({
+    required String nombre,
+    required String correo,
+  }) async {
+    final res = await _client.put(
+      Uri.parse('$kBaseUrl/perfil'),
+      headers: await _headers(),
+      body: jsonEncode({'nombre': nombre, 'correo': correo}),
+    );
+    return _parsearRespuesta(res);
+  }
+
+  // ════════════════════════════════════════════════════════════
   // VALORACIONES
   // ════════════════════════════════════════════════════════════
 

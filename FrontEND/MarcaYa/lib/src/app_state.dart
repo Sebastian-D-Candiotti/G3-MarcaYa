@@ -2,7 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 
-enum UserRole { employee, admin }
+enum UserRole { employee, admin, empresa }
 
 enum AttendanceType { entry, exit }
 
@@ -13,21 +13,71 @@ enum GpsScenario { insideZone, outsideZone, unavailable }
 class AppUser {
   const AppUser({
     required this.id,
-    required this.name,
-    required this.email,
-    required this.password,
-    required this.role,
+    required this.nombre,
+    required this.correo,
+    this.password = '',
+    this.claveHash,
+    required this.rol,
+    this.estado = 'activo',
+    this.fechaRegistro,
     this.employeeId,
-    this.companyId,
+    this.empresaId,
+    this.nombreEmpresa,
   });
 
   final String id;
-  final String name;
-  final String email;
-  final String password;
-  final UserRole role;
-  final String? employeeId;
-  final String? companyId;
+  final String nombre;
+  final String correo;
+  final String password; // plaintext para modo mock
+  final String? claveHash; // bcrypt hash desde backend real
+  final UserRole rol;
+  final String estado; // 'activo' | 'inactivo'
+  final DateTime? fechaRegistro;
+  final String? employeeId; // referencia a Employee (mock)
+  final String? empresaId; // id de la empresa (compañía del empleado)
+  final String? nombreEmpresa; // nombre de empresa (solo para rol empresa)
+
+  // ── Getters retrocompatibles ───────────────────────────────
+  String get name => nombre;
+  String get email => correo;
+  UserRole get role => rol;
+  String? get companyId => empresaId;
+
+  /// Parsea respuesta JSON del backend real
+  factory AppUser.fromJson(Map<String, dynamic> json) {
+    return AppUser(
+      id: json['id']?.toString() ?? '',
+      nombre: json['nombre'] as String? ?? '',
+      correo: json['correo'] as String? ?? '',
+      claveHash: json['clave_hash'] as String?,
+      rol: _parseRole(json['rol'] as String? ?? 'empleado'),
+      estado: json['estado'] as String? ?? 'activo',
+      fechaRegistro: json['fechaRegistro'] != null
+          ? DateTime.tryParse(json['fechaRegistro'] as String)
+          : null,
+      empresaId: json['empresa_id']?.toString(),
+      nombreEmpresa: json['nombre_empresa'] as String?,
+    );
+  }
+
+  /// Serializa para enviar al backend (solo campos editables)
+  Map<String, dynamic> toJson() {
+    return {
+      'nombre': nombre,
+      'correo': correo,
+    };
+  }
+
+  static UserRole _parseRole(String rol) {
+    switch (rol) {
+      case 'admin':
+        return UserRole.admin;
+      case 'empresa':
+        return UserRole.empresa;
+      default:
+        return UserRole.employee;
+    }
+  }
 }
 
 class Employee {
@@ -616,33 +666,65 @@ class MarcaYAState extends ChangeNotifier {
         rating: 4.3,
       ),
     ]);
+    final now = DateTime.now();
     users.addAll([
-      const AppUser(
+      AppUser(
         id: 'user-1',
-        name: 'Luis Ramirez',
-        email: 'empleado@marcapp.pe',
+        nombre: 'Luis Ramirez Soto',
+        correo: 'empleado@marcapp.pe',
         password: '123456',
-        role: UserRole.employee,
+        rol: UserRole.employee,
         employeeId: 'emp-1',
+        empresaId: 'company-1',
+        estado: 'activo',
+        fechaRegistro: now.subtract(const Duration(days: 90)),
       ),
-      const AppUser(
+      AppUser(
         id: 'user-2',
-        name: 'Admin MarcaYA',
-        email: 'admin@marcapp.pe',
+        nombre: 'Admin MarcaYA',
+        correo: 'admin@marcapp.pe',
         password: '123456',
-        role: UserRole.admin,
-        companyId: 'company-1',
+        rol: UserRole.admin,
+        empresaId: 'company-1',
+        estado: 'activo',
+        fechaRegistro: now.subtract(const Duration(days: 180)),
       ),
-      const AppUser(
+      AppUser(
         id: 'user-3',
-        name: 'Carlos Diaz',
-        email: 'carlos@marcapp.pe',
+        nombre: 'Carlos Diaz Prado',
+        correo: 'carlos@marcapp.pe',
         password: '123456',
-        role: UserRole.employee,
+        rol: UserRole.employee,
         employeeId: 'emp-3',
+        empresaId: 'company-1',
+        estado: 'inactivo',
+        fechaRegistro: now.subtract(const Duration(days: 60)),
+      ),
+      // ── Nuevos usuarios ────────────────────────────────
+      AppUser(
+        id: 'user-4',
+        nombre: 'Constructora Andina SAC',
+        correo: 'empresa@marcapp.pe',
+        password: '123456',
+        rol: UserRole.empresa,
+        empresaId: 'company-1',
+        nombreEmpresa: 'Constructora Andina SAC',
+        estado: 'activo',
+        fechaRegistro: now.subtract(const Duration(days: 150)),
+      ),
+      AppUser(
+        id: 'user-5',
+        nombre: 'Mariana Torres Vega',
+        correo: 'mariana@marcapp.pe',
+        password: '123456',
+        rol: UserRole.employee,
+        employeeId: 'emp-2',
+        empresaId: 'company-1',
+        estado: 'activo',
+        fechaRegistro: now.subtract(const Duration(days: 45)),
       ),
     ]);
-    final now = DateTime.now();
+
     attendanceRecords.addAll([
       AttendanceRecord(
         id: 'att-1',
