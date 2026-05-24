@@ -2,8 +2,9 @@
 // VERSIÓN CONECTADA AL BACKEND RUBY
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../../components/header_clipper.dart';
 import '../../src/api_service.dart';
-import '../sign_in/sign_in_page.dart';
 
 class RegistrarEmpresaPage extends StatefulWidget {
   const RegistrarEmpresaPage({super.key});
@@ -65,11 +66,7 @@ class _RegistrarEmpresaPageState extends State<RegistrarEmpresaPage> {
         ),
       );
 
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const SignInPage()),
-            (_) => false,
-      );
+      context.go('/');
     } on ApiException catch (e) {
       setState(() => _error = e.mensaje);
     } catch (e) {
@@ -89,7 +86,7 @@ class _RegistrarEmpresaPageState extends State<RegistrarEmpresaPage> {
             children: [
               // HEADER
               ClipPath(
-                clipper: _CustomHeaderClipper(),
+                clipper: const HeaderClipper(),
                 child: Container(
                   width: double.infinity,
                   height: 100,
@@ -204,18 +201,4 @@ class _RegistrarEmpresaPageState extends State<RegistrarEmpresaPage> {
   }
 }
 
-class _CustomHeaderClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    final path = Path();
-    path.lineTo(size.width - 40, 0);
-    path.lineTo(size.width, size.height / 2);
-    path.lineTo(size.width - 40, size.height);
-    path.lineTo(0, size.height);
-    path.close();
-    return path;
-  }
 
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
-}

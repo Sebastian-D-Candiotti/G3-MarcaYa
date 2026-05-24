@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../registrar_empresa/registrar_empresa.dart';
-import '../registrar_empleado/registrar_empleado.dart';
+import 'package:go_router/go_router.dart';
+import '../../components/header_clipper.dart';
 class RegistrarUsuarioPage extends StatelessWidget {
 
   const RegistrarUsuarioPage({super.key});
@@ -21,7 +21,7 @@ class RegistrarUsuarioPage extends StatelessWidget {
             // HEADER
             ClipPath(
 
-              clipper: CustomHeaderClipper(),
+              clipper: const HeaderClipper(),
 
               child: Container(
 
@@ -116,12 +116,7 @@ class RegistrarUsuarioPage extends StatelessWidget {
 
                     onPressed: () {
 
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const RegistrarEmpresaPage(),
-                        ),
-                      );
+                      context.push('/register/empresa');
 
                     },
 
@@ -203,29 +198,3 @@ class RegistrarUsuarioPage extends StatelessWidget {
 
 }
 
-// HEADER SHAPE
-class CustomHeaderClipper extends CustomClipper<Path> {
-
-  @override
-  Path getClip(Size size) {
-
-    Path path = Path();
-
-    path.lineTo(size.width - 40, 0);
-
-    path.lineTo(size.width, size.height / 2);
-
-    path.lineTo(size.width - 40, size.height);
-
-    path.lineTo(0, size.height);
-
-    path.close();
-
-    return path;
-
-  }
-
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
-
-}

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-import '../nueva_contrasena/nueva_contrasena.dart';
+import 'package:go_router/go_router.dart';
 
 class CodigoContrasenaPage extends StatefulWidget {
 
@@ -149,16 +148,7 @@ class _CodigoContrasenaPageState
                       // VALIDAR
                       if (codigo == '123456') {
 
-                        Navigator.push(
-
-                          context,
-
-                          MaterialPageRoute(
-                            builder: (_) =>
-                            const NuevaContrasenaPage(),
-                          ),
-
-                        );
+                        context.push('/reset-password/new');
 
                       } else {
 

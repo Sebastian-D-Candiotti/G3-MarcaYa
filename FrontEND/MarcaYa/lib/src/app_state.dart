@@ -633,6 +633,14 @@ class MarcaYAState extends ChangeNotifier {
         role: UserRole.admin,
         companyId: 'company-1',
       ),
+      const AppUser(
+        id: 'user-3',
+        name: 'Carlos Diaz',
+        email: 'carlos@marcapp.pe',
+        password: '123456',
+        role: UserRole.employee,
+        employeeId: 'emp-3',
+      ),
     ]);
     final now = DateTime.now();
     attendanceRecords.addAll([

@@ -1,4 +1,4 @@
-# MarcAPP
+# MarcaYA
 
 Prototipo Flutter MVP para digitalizar el registro de asistencia laboral con validacion GPS en tiempo real.
 

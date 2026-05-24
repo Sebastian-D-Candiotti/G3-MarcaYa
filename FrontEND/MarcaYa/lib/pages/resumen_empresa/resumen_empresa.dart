@@ -1,142 +1,75 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../../components/bottom_navbar.dart';
-import '../agregar_parada/agregar_parada.dart';
-import '../administrar_paradas/administrar_paradas.dart';
-import '../perfil_empresa/perfil_empresa.dart';
-import '../empleados_actuales/empleados_actuales.dart';
-import '../ver_solicitudes/ver_solicitudes.dart';
-class ResumenEmpresaPage extends StatelessWidget {
+import '../../providers/auth_provider.dart';
+import '../../theme/app_theme.dart';
 
+class ResumenEmpresaPage extends StatelessWidget {
   const ResumenEmpresaPage({super.key});
+
+  void _logout(BuildContext context) {
+    context.read<AuthProvider>().logout();
+    context.go('/');
+  }
 
   @override
   Widget build(BuildContext context) {
-
+    final auth = context.watch<AuthProvider>();
     return Scaffold(
-
       appBar: AppBar(
-        title: const Text('Resumen Empresa'),
+        title: const Text('Inicio'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: AppColors.error),
+            tooltip: 'Cerrar sesión',
+            onPressed: () => _logout(context),
+          ),
+        ],
       ),
-
-      body: Center(
-
+      body: Padding(
+        padding: const EdgeInsets.all(16),
         child: Column(
-
-          mainAxisAlignment: MainAxisAlignment.center,
-
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
-            // AGREGAR PARADA
-            ElevatedButton(
-
-              onPressed: () {
-
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const AgregarParadaPage(),
-                  ),
-                );
-
-              },
-
-              child: const Text('Agregar Parada'),
-
-            ),
-
-            const SizedBox(height: 20),
-
-            // ADMINISTRAR PARADAS
-            ElevatedButton(
-
-              onPressed: () {
-
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const AdministrarParadasPage(),
-                  ),
-                );
-
-              },
-
-              child: const Text('Administrar Paradas'),
-
-            ),
-
-            const SizedBox(height: 20),
-
-            // VER EMPLEADOS
-            ElevatedButton(
-
-              onPressed: () {
-
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const EmpleadosActualesPage(),
-                  ),
-                );
-
-              },
-
-              child: const Text('Ver Empleados'),
-
-            ),
-
-            const SizedBox(height: 20),
-
-            // VER SOLICITUDES
-            ElevatedButton(
-
-              onPressed: () {
-
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const VerSolicitudesPage(),
-                  ),
-                );
-
-              },
-
-              child: const Text('Ver Solicitudes'),
-
-            ),
-
-          ],
-
-        ),
-
-      ),
-
-      bottomNavigationBar: BottomNavbar(
-
-        currentIndex: 0,
-
-        onTap: (index) {
-
-          // HOME
-          if (index == 0) {}
-
-          // PERFIL
-          if (index == 2) {
-
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const PerfilEmpresaPage(),
+            Text('Bienvenido, ${auth.state.currentUser?.name ?? ''}', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+            const SizedBox(height: 24),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.location_on, color: AppColors.primary, size: 32),
+                title: const Text('Administrar Sitios', style: TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: const Text('Gestiona paradas y obras'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push('/empresa/paradas'),
               ),
-            );
-
-          }
-
-        },
-
+            ),
+            const SizedBox(height: 12),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.group, color: AppColors.primary, size: 32),
+                title: const Text('Empleados', style: TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: const Text('Ver empleados registrados'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push('/empresa/empleados'),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.request_page, color: AppColors.primary, size: 32),
+                title: const Text('Solicitudes', style: TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: const Text('Revisa solicitudes de ingreso'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push('/empresa/solicitudes'),
+              ),
+            ),
+          ],
+        ),
       ),
-
+      bottomNavigationBar: BottomNavbar(
+        userRole: 'empresa',
+        currentIndex: 0,
+      ),
     );
-
   }
-
 }

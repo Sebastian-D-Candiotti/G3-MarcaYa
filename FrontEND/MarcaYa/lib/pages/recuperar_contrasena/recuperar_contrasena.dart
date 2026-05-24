@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../codigo_contrasena/codigo_contrasena.dart';
+import 'package:go_router/go_router.dart';
+import '../../components/header_clipper.dart';
 
 class RecuperarContrasenaPage extends StatelessWidget {
 
@@ -21,7 +22,7 @@ class RecuperarContrasenaPage extends StatelessWidget {
             // HEADER
             ClipPath(
 
-              clipper: CustomHeaderClipper(),
+              clipper: const HeaderClipper(),
 
               child: Container(
 
@@ -127,12 +128,7 @@ class RecuperarContrasenaPage extends StatelessWidget {
 
                 onPressed: () {
 
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const CodigoContrasenaPage(),
-                    ),
-                  );
+                  context.push('/reset-password/code');
 
                 },
 
@@ -164,29 +160,3 @@ class RecuperarContrasenaPage extends StatelessWidget {
 
 }
 
-// HEADER SHAPE
-class CustomHeaderClipper extends CustomClipper<Path> {
-
-  @override
-  Path getClip(Size size) {
-
-    Path path = Path();
-
-    path.lineTo(size.width - 40, 0);
-
-    path.lineTo(size.width, size.height / 2);
-
-    path.lineTo(size.width - 40, size.height);
-
-    path.lineTo(0, size.height);
-
-    path.close();
-
-    return path;
-
-  }
-
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
-
-}

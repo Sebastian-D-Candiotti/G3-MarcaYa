@@ -1,18 +1,28 @@
 import 'package:flutter/material.dart';
-import 'package:marcapp/pages/sign_in/sign_in_page.dart';
+import 'package:provider/provider.dart';
+import 'src/app_state.dart';
+import 'providers/auth_provider.dart';
+import 'router/app_router.dart';
+import 'theme/app_theme.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => AuthProvider(MarcaYAState()),
+      child: const MarcaYA(),
+    ),
+  );
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class MarcaYA extends StatelessWidget {
+  const MarcaYA({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp.router(
       debugShowCheckedModeBanner: false,
-      home: SignInPage(),
+      theme: appTheme,
+      routerConfig: appRouter,
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../sign_in/sign_in_page.dart';
+import 'package:go_router/go_router.dart';
+import '../../components/header_clipper.dart';
 
 class NuevaContrasenaPage extends StatelessWidget {
 
@@ -21,7 +22,7 @@ class NuevaContrasenaPage extends StatelessWidget {
             // HEADER
             ClipPath(
 
-              clipper: CustomHeaderClipper(),
+              clipper: const HeaderClipper(),
 
               child: Container(
 
@@ -111,17 +112,7 @@ class NuevaContrasenaPage extends StatelessWidget {
                   // ESPERA 2 SEGUNDOS
                   Future.delayed(const Duration(seconds: 2), () {
 
-                    Navigator.pushAndRemoveUntil(
-
-                      context,
-
-                      MaterialPageRoute(
-                        builder: (_) => const SignInPage(),
-                      ),
-
-                          (route) => false,
-
-                    );
+                    context.go('/');
 
                   });
 
@@ -203,29 +194,3 @@ Widget buildInput(String hint) {
 
 }
 
-// HEADER SHAPE
-class CustomHeaderClipper extends CustomClipper<Path> {
-
-  @override
-  Path getClip(Size size) {
-
-    Path path = Path();
-
-    path.lineTo(size.width - 40, 0);
-
-    path.lineTo(size.width, size.height / 2);
-
-    path.lineTo(size.width - 40, size.height);
-
-    path.lineTo(0, size.height);
-
-    path.close();
-
-    return path;
-
-  }
-
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
-
-}

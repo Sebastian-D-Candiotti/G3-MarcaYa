@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import '../../components/bottom_navbar.dart';
 
-class PerfilEmpleadoPage extends StatelessWidget {
-  const PerfilEmpleadoPage({super.key});
+class BuscarPage extends StatelessWidget {
+  const BuscarPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Mi Perfil')),
-      body: const Center(child: Text('Perfil empleado / empresa')),
+      appBar: AppBar(title: const Text('Buscar')),
+      body: const Center(child: Text('Buscar empresas', style: TextStyle(fontSize: 18))),
       bottomNavigationBar: const BottomNavbar(
         userRole: 'empleado',
-        currentIndex: 3,
+        currentIndex: 2,
       ),
     );
   }
