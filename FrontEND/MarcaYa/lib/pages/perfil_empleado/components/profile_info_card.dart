@@ -81,7 +81,7 @@ class ProfileInfoCard extends StatelessWidget {
           ),
         ),
         Text(
-          ' ($reviews reviews)',
+          ' ($reviews reseñas)',
           style:
               const TextStyle(fontSize: 13, color: AppColors.textSecondary),
         ),
@@ -95,12 +95,12 @@ class ProfileInfoCard extends StatelessWidget {
       child: Row(
         children: [
           _buildStatItem(
-              '$attendances', 'Attendances', PerfilEmpleadoStyles.attendanceColor),
+              '$attendances', 'Asistencias', PerfilEmpleadoStyles.attendanceColor),
           PerfilEmpleadoStyles.divider(),
-          _buildStatItem('$lates', 'Lates', PerfilEmpleadoStyles.lateColor),
+          _buildStatItem('$lates', 'Tardanzas', PerfilEmpleadoStyles.lateColor),
           PerfilEmpleadoStyles.divider(),
           _buildStatItem(
-              '$absences', 'Absences', PerfilEmpleadoStyles.absenceColor),
+              '$absences', 'Ausencias', PerfilEmpleadoStyles.absenceColor),
         ],
       ),
     );

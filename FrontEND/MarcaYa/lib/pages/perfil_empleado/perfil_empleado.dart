@@ -99,7 +99,7 @@ class _PerfilEmpleadoPageState extends State<PerfilEmpleadoPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'You rated $_myRating star${_myRating == 1 ? '' : 's'}',
+          'Calificaste con $_myRating estrella${_myRating == 1 ? '' : 's'}',
         ),
         backgroundColor: AppColors.primary,
         behavior: SnackBarBehavior.floating,
@@ -113,19 +113,19 @@ class _PerfilEmpleadoPageState extends State<PerfilEmpleadoPage> {
       context: context,
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Add comment'),
+        title: const Text('Agregar comentario'),
         content: TextField(
           controller: controller,
           maxLines: 3,
           decoration: const InputDecoration(
-            hintText: 'Write your comment...',
+            hintText: 'Escribe tu comentario...',
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text(
-              'Cancel',
+              'Cancelar',
               style: TextStyle(color: AppColors.textSecondary),
             ),
           ),
@@ -135,7 +135,7 @@ class _PerfilEmpleadoPageState extends State<PerfilEmpleadoPage> {
                 setState(() {
                   _comments.add(CommentItem(
                     initials: 'ME',
-                    author: 'Me',
+                    author: 'Tú',
                     text: controller.text.trim(),
                     avatarColor: AppColors.primary,
                   ));
@@ -150,7 +150,7 @@ class _PerfilEmpleadoPageState extends State<PerfilEmpleadoPage> {
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child: const Text('Send'),
+            child: const Text('Enviar'),
           ),
         ],
       ),

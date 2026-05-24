@@ -23,7 +23,7 @@ class ProfileHeader extends StatelessWidget {
                 alignment: Alignment.center,
                 children: [
                   const Text(
-                    'Employee Profile',
+                    'Perfil del empleado',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 18,

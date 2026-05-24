@@ -25,7 +25,7 @@ class RatingCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Overall rating',
+            'Calificación general',
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w600,
@@ -36,7 +36,7 @@ class RatingCard extends StatelessWidget {
           _buildDisplayStars(),
           const SizedBox(height: 16),
           const Text(
-            'Rate this employee',
+            'Califica este empleado',
             style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
           ),
           const SizedBox(height: 8),
@@ -97,7 +97,7 @@ class RatingCard extends StatelessWidget {
           elevation: 0,
         ),
         child: const Text(
-          'Rate',
+          'Calificar',
           style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
         ),
       ),

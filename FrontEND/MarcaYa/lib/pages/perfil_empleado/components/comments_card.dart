@@ -41,7 +41,7 @@ class CommentsCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                'Comments',
+                'Comentarios',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
@@ -49,7 +49,7 @@ class CommentsCard extends StatelessWidget {
                 ),
               ),
               Text(
-                '${comments.length} reviews',
+                '${comments.length} reseñas',
                 style: const TextStyle(
                     fontSize: 13, color: AppColors.textSecondary),
               ),
@@ -126,7 +126,7 @@ class CommentsCard extends StatelessWidget {
           ),
         ),
         child: const Text(
-          'Add comment',
+          'Agregar comentario',
           style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
         ),
       ),
