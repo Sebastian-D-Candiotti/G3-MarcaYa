@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../theme/app_theme.dart';
+import '../../../core/theme/app_theme.dart';
 import '../perfil_empleado_styles.dart';
 
 /// Rating card with static display stars, interactive rating stars, and rate button.

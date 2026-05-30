@@ -2,83 +2,13 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 
-enum UserRole { employee, admin, empresa }
+import '../domain/entities/app_user.dart';
 
 enum AttendanceType { entry, exit }
 
 enum RequestStatus { pending, accepted, rejected }
 
 enum GpsScenario { insideZone, outsideZone, unavailable }
-
-class AppUser {
-  const AppUser({
-    required this.id,
-    required this.nombre,
-    required this.correo,
-    this.password = '',
-    this.claveHash,
-    required this.rol,
-    this.estado = 'activo',
-    this.fechaRegistro,
-    this.employeeId,
-    this.empresaId,
-    this.nombreEmpresa,
-  });
-
-  final String id;
-  final String nombre;
-  final String correo;
-  final String password; // plaintext para modo mock
-  final String? claveHash; // bcrypt hash desde backend real
-  final UserRole rol;
-  final String estado; // 'activo' | 'inactivo'
-  final DateTime? fechaRegistro;
-  final String? employeeId; // referencia a Employee (mock)
-  final String? empresaId; // id de la empresa (compañía del empleado)
-  final String? nombreEmpresa; // nombre de empresa (solo para rol empresa)
-
-  // ── Getters retrocompatibles ───────────────────────────────
-  String get name => nombre;
-  String get email => correo;
-  UserRole get role => rol;
-  String? get companyId => empresaId;
-
-  /// Parsea respuesta JSON del backend real
-  factory AppUser.fromJson(Map<String, dynamic> json) {
-    return AppUser(
-      id: json['id']?.toString() ?? '',
-      nombre: json['nombre'] as String? ?? '',
-      correo: json['correo'] as String? ?? '',
-      claveHash: json['clave_hash'] as String?,
-      rol: _parseRole(json['rol'] as String? ?? 'empleado'),
-      estado: json['estado'] as String? ?? 'activo',
-      fechaRegistro: json['fechaRegistro'] != null
-          ? DateTime.tryParse(json['fechaRegistro'] as String)
-          : null,
-      empresaId: json['empresa_id']?.toString(),
-      nombreEmpresa: json['nombre_empresa'] as String?,
-    );
-  }
-
-  /// Serializa para enviar al backend (solo campos editables)
-  Map<String, dynamic> toJson() {
-    return {
-      'nombre': nombre,
-      'correo': correo,
-    };
-  }
-
-  static UserRole _parseRole(String rol) {
-    switch (rol) {
-      case 'admin':
-        return UserRole.admin;
-      case 'empresa':
-        return UserRole.empresa;
-      default:
-        return UserRole.employee;
-    }
-  }
-}
 
 class Employee {
   const Employee({

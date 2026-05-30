@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
-import '../../theme/app_theme.dart';
+import '../../core/theme/app_theme.dart';
 
 class SignInPage extends StatefulWidget {
   const SignInPage({super.key});

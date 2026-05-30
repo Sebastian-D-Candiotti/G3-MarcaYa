@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../src/app_state.dart';
-import '../../../theme/app_theme.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../domain/entities/app_user.dart';
 import '../perfil_empleado_styles.dart';
 
 /// Employee info card: name, DNI, rating, and stats row.

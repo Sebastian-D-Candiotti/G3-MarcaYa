@@ -2,6 +2,39 @@
 
 Prototipo Flutter MVP para digitalizar el registro de asistencia laboral con validacion GPS en tiempo real.
 
+## Arquitectura
+
+El proyecto sigue Clean Architecture con tres capas en `lib/`:
+
+```
+lib/
+  core/           → infraestructura compartida
+    constants/    → constantes de la app
+    network/      → ApiClient (HTTP, JWT)
+    router/       → AppRouter (GoRouter)
+    theme/        → AppColors, estilos globales
+  domain/         → reglas de negocio (sin dependencias externas)
+    entities/     → AppUser
+    repositories/ → AuthRepository (interfaz)
+    usecases/     → lógica de negocio reutilizable (creciente)
+  data/           → implementación de repositorios
+    datasources/  → AuthRemoteDataSource (HTTP real)
+    models/       → DTOs para parseo JSON
+    repositories/ → AuthRepositoryImpl
+  pages/          → pantallas, cada una con su carpeta
+    */components/ → widgets propios de esa pantalla
+  providers/      → ChangeNotifiers (Estado global)
+  components/     → widgets compartidos (BottomNavbar, etc.)
+  src/            → legado por migrar (app_state.dart monolitico)
+```
+
+### Principios
+
+- **Dependencias hacia adentro**: `domain/` no importa `data/`, `core/`, ni Flutter.
+- **Repositorios como interfaz**: `domain/repositories/` define el contrato; `data/repositories/` lo implementa.
+- **Inversión de dependencias**: `providers/` programa contra la interfaz, no contra la implementación concreta.
+- **Migración progresiva**: `src/app_state.dart` (monolito ~775 líneas) se extrae de a poco hacia `domain/` y `data/`.
+
 ## Credenciales demo
 
 - Empleado: `empleado@marcapp.pe` / `123456`
@@ -20,13 +53,10 @@ Prototipo Flutter MVP para digitalizar el registro de asistencia laboral con val
 
 ## Comandos
 
-Si Flutter no esta en el PATH, usa el SDK instalado en `C:\Users\fabri\flutter-sdk`:
-
-```powershell
-C:\Users\fabri\flutter-sdk\bin\flutter.bat doctor
-C:\Users\fabri\flutter-sdk\bin\flutter.bat analyze
-C:\Users\fabri\flutter-sdk\bin\flutter.bat test
-C:\Users\fabri\flutter-sdk\bin\flutter.bat run -d web-server --web-hostname 127.0.0.1 --web-port 5174
+```bash
+flutter analyze
+flutter test
+flutter run -d web-server --web-hostname 127.0.0.1 --web-port 5174
 ```
 
 ## Nota de entorno

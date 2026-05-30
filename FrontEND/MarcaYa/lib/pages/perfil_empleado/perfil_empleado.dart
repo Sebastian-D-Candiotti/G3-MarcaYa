@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../components/bottom_navbar.dart';
 import '../../providers/auth_provider.dart';
-import '../../theme/app_theme.dart';
+import '../../core/theme/app_theme.dart';
 import 'components/comments_card.dart';
 import 'components/profile_header.dart';
 import 'components/profile_info_card.dart';

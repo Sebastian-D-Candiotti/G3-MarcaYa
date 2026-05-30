@@ -4,7 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../components/header_clipper.dart';
-import '../../src/api_service.dart';
+import '../../core/network/api_client.dart';
 
 class RegistrarEmpresaPage extends StatefulWidget {
   const RegistrarEmpresaPage({super.key});
