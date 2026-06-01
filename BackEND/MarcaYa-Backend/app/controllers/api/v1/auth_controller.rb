@@ -1,73 +1,100 @@
 class Api::V1::AuthController < ApplicationController
-  skip_before_action :verify_authenticity_token
-  before_action :authenticate_request, only: [:logout]
 
-  # POST /api/v1/auth/login
   def login
-    correo = params[:correo]&.strip&.downcase
+    correo = params[:correo]
     clave  = params[:clave]
 
-    unless correo.present? && clave.present?
-      render json: { error: 'Correo y clave son requeridos' }, status: :bad_request
-      return
-    end
-
-    usuario = Usuario.find_by(correo: correo)
+    usuario = Usuario.find_by(
+      correo: correo,
+      estado: true
+    )
 
     if usuario.nil?
-      render json: { error: 'Credenciales inválidas' }, status: :unauthorized
+      render json: {
+        error: "Usuario no encontrado"
+      }, status: :unauthorized
       return
     end
 
-    unless usuario.authenticate(clave)
-      render json: { error: 'Credenciales inválidas' }, status: :unauthorized
+    if usuario.clave_hash != clave
+      render json: {
+        error: "Contraseña incorrecta"
+      }, status: :unauthorized
       return
     end
 
-    token = encode_token(usuario_id: usuario.id, rol: usuario.rol)
+    if usuario.rol == "empresa"
+      empresa = Empresa.find_by(
+        usuario_id: usuario.id
+      )
+
+      valoraciones = Valoracion.where(
+        empresa_id: empresa.id
+      )
+
+      promedio_estrellas =
+        valoraciones.average(:puntuacion)&.round(1) || 0
+
+      comentarios =
+        valoraciones.map do |v|
+          {
+            comentario: v.comentario
+          }
+        end
+
+      perfil = {
+        id: usuario.id,
+        correo: usuario.correo,
+        rol: usuario.rol,
+        nombre: empresa&.nombre_empresa,
+        nombre_empresa: empresa&.nombre_empresa,
+        descripcion: empresa&.descripcion,
+        telefono: empresa&.telefono,
+        direccion: empresa&.direccion,
+        ruc: empresa&.ruc,
+        foto_url: empresa&.foto_url
+      }
+
+    else
+
+      empleado = Empleado.find_by(
+        usuario_id: usuario.id
+      )
+
+      perfil = {
+        id: usuario.id,
+        employee_id: empleado.id,
+        correo: usuario.correo,
+        rol: usuario.rol,
+        nombre: empleado&.nombre,
+        apellido: empleado&.apellido,
+        descripcion: empleado&.descripcion,
+        telefono: empleado&.telefono,
+        foto_url: empleado&.foto_url
+      }
+
+    end
 
     render json: {
-      token:  token,
-      rol:    usuario.rol,
-      perfil: usuario_json(usuario)
+      token: "token_demo",
+      rol: usuario.rol,
+      perfil: perfil
     }
   end
 
-  # POST /api/v1/auth/registro
   def registro
-    rol = params[:rol]&.strip&.downcase
 
-    unless %w[empleado empresa].include?(rol)
-      render json: { error: 'Rol inválido. Debe ser empleado o empresa' }, status: :bad_request
-      return
-    end
-
-    usuario = Usuario.new(
-      nombre: params[:nombre],
-      correo: params[:correo]&.strip&.downcase,
-      password: params[:clave],
-      password_confirmation: params[:clave],
-      rol: rol
+    usuario = Usuario.create!(
+      correo: params[:correo],
+      clave_hash: params[:clave],
+      rol: params[:rol]
     )
 
-    unless usuario.save
-      render json: { error: usuario.errors.full_messages.join(', ') }, status: :unprocessable_entity
-      return
-    end
-
-    token = encode_token(usuario_id: usuario.id, rol: usuario.rol)
-
     render json: {
-      token:  token,
-      rol:    usuario.rol,
-      perfil: usuario_json(usuario)
+      mensaje: "Usuario registrado",
+      id: usuario.id
     }, status: :created
+
   end
 
-  # POST /api/v1/auth/logout
-  def logout
-    # En una app sin blacklist de tokens, el logout es responsabilidad del cliente
-    # borrando el token localmente. Aquí solo confirmamos.
-    render json: { mensaje: 'Sesión cerrada correctamente' }
-  end
 end
