@@ -1,0 +1,12 @@
+# == Schema Information: empresas
+# id, usuario_id, nombre_empresa, ruc, descripcion, telefono, direccion, foto_url, estado
+
+activa:
+  usuario_id: <%= ActiveRecord::FixtureSet.identify(:empresa_activa) %>
+  nombre_empresa: Empresa Test S.A.C.
+  ruc: 20123456789
+  descripcion: Empresa de prueba para caracterización
+  telefono: 999888777
+  direccion: Av. Principal 123
+  foto_url: https://example.com/foto.jpg
+  estado: activo

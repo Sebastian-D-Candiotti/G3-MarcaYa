@@ -1,9 +1,27 @@
-# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+# == Schema Information: usuarios
+# id, correo, clave_hash, rol, estado, created_at, updated_at
+# NOTE: clave_hash is plain text — this is the CURRENT behavior being locked
 
-one:
-  nombre: MyString
-  correo: MyString
+empresa_activa:
+  correo: empresa@test.com
+  clave_hash: plaintext123
+  rol: empresa
+  estado: true
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>
 
-two:
-  nombre: MyString
-  correo: MyString
+empleado_activo:
+  correo: empleado@test.com
+  clave_hash: pass456
+  rol: empleado
+  estado: true
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>
+
+empresa_inactiva:
+  correo: inactiva@test.com
+  clave_hash: secret789
+  rol: empresa
+  estado: false
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>

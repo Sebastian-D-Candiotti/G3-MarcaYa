@@ -1,0 +1,12 @@
+# == Schema Information: empleados
+# id, usuario_id, nombre, apellido, dni, telefono, descripcion, foto_url, estado
+
+activo:
+  usuario_id: <%= ActiveRecord::FixtureSet.identify(:empleado_activo) %>
+  nombre: Juan
+  apellido: Pérez
+  dni: 12345678
+  telefono: 987654321
+  descripcion: Empleado de prueba
+  foto_url: https://example.com/empleado.jpg
+  estado: activo

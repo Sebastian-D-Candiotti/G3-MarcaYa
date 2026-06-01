@@ -14,3 +14,9 @@
 # ActiveSupport::Inflector.inflections(:en) do |inflect|
 #   inflect.acronym "RESTful"
 # end
+
+# Spanish pluralization rules for models using Spanish words
+ActiveSupport::Inflector.inflections(:en) do |inflect|
+  inflect.irregular "solicitud", "solicitudes"
+  inflect.irregular "valoracion", "valoraciones"
+end

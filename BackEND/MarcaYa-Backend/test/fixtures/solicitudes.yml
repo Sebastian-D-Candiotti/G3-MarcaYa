@@ -1,0 +1,16 @@
+# == Schema Information: solicitudes
+# id, empleado_id, obra_id, estado, created_at, updated_at
+
+pendiente:
+  empleado_id: <%= ActiveRecord::FixtureSet.identify(:activo, :empleados) %>
+  obra_id: <%= ActiveRecord::FixtureSet.identify(:activa, :obras) %>
+  estado: pendiente
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>
+
+aceptada:
+  empleado_id: <%= ActiveRecord::FixtureSet.identify(:activo, :empleados) %>
+  obra_id: <%= ActiveRecord::FixtureSet.identify(:activa, :obras) %>
+  estado: aceptada
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>

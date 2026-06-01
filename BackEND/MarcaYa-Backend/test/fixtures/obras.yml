@@ -1,0 +1,23 @@
+# == Schema Information: obras
+# id, empresa_id, nombre, descripcion_ubicacion, latitud, longitud, radio_metros,
+# hora_inicio, hora_fin, tolerancia_entrada_min, tolerancia_salida_min, estado,
+# fecha_inicio, fecha_fin, direccion, capacidad_empleados, codigo_obra, usuario_creador_id
+
+activa:
+  empresa_id: <%= ActiveRecord::FixtureSet.identify(:activa, :empresas) %>
+  nombre: Obra de prueba
+  descripcion_ubicacion: Cerca del parque central
+  latitud: -12.0464
+  longitud: -77.0428
+  radio_metros: 100
+  hora_inicio: <%= '"08:00:00"' %>
+  hora_fin: <%= '"17:00:00"' %>
+  tolerancia_entrada_min: 5
+  tolerancia_salida_min: 5
+  estado: activa
+  fecha_inicio: 2026-01-01
+  fecha_fin: 2026-12-31
+  direccion: Av. Secundaria 456
+  capacidad_empleados: 50
+  codigo_obra: OB-001
+  usuario_creador_id: <%= ActiveRecord::FixtureSet.identify(:empresa_activa, :usuarios) %>
