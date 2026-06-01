@@ -1,0 +1,233 @@
+@startuml
+skinparam defaultFontSize 10
+skinparam classFontSize 10
+skinparam classAttributeFontSize 8
+skinparam classBorderColor #B03A2E
+skinparam classBackgroundColor #FADBD8
+skinparam interfaceBorderColor #B03A2E
+skinparam interfaceBackgroundColor #F5B7B1
+skinparam packageBorderColor #B03A2E
+skinparam shadowing false
+skinparam padding 6
+skinparam margin 6
+skinparam minClassWidth 130
+
+title <size:14><b>MarcaYA — Capa de Dominio</size></b>
+
+together {
+  abstract class Usuario {
+    + id: UUID
+    + correo: String
+    + claveHash: String
+    + rol: String
+    + fechaRegistro: DateTime
+    + estado: String
+    + es_empleado?()
+    + es_empresa?()
+    + activo?()
+  }
+
+  class Empleado {
+    + nombre: String
+    + apellido: String
+    + empresaId: FK
+    + estado: String
+    + valoracionPromedio: Float
+    + activo?()
+    + pendiente?()
+  }
+
+  class Empresa {
+    + nombreEmpresa: String
+  }
+
+  class Obra {
+    + nombre: String
+    + descripcion: String
+    + empresaId: FK
+    + estado: String
+    + activa?()
+  }
+
+  class Parada {
+    + nombre: String
+    + latitud: Double
+    + longitud: Double
+    + radio: Float
+    + obraId: FK
+    + estado: String
+    + geocerca()
+    + activa?()
+  }
+
+  class RegistroAsistencia {
+    + empleadoId: FK
+    + paradaId: FK
+    + tipoMarcacion: String
+    + fechaHora: DateTime
+    + latitudRegistrada: Double
+    + longitudRegistrada: Double
+    + validaGPS: Boolean
+    + duracionJornada: Integer
+    + es_entrada?()
+    + es_salida?()
+  }
+
+  class RegistroEntrada {
+  }
+
+  class RegistroSalida {
+    + duracionJornada: Integer
+  }
+
+  class SolicitudIngreso {
+    + empleadoId: FK
+    + obraId: FK
+    + estado: String
+    + fechaSolicitud: DateTime
+    + motivoRechazo: String
+    + pendiente?()
+    + aceptada?()
+  }
+
+  class EmpleadoParada {
+    + empleadoId: FK
+    + paradaId: FK
+    + fechaAsignacion: DateTime
+    + activo: Boolean
+  }
+
+  class CronogramaPago {
+    + empleadoId: FK
+    + empresaId: FK
+    + periodoInicio: Date
+    + periodoFin: Date
+    + horasTrabajadas: Float
+    + montoTotal: Decimal
+    + estado: String
+    + pendiente?()
+    + pagado?()
+  }
+
+  class Valoracion {
+    + emisorId: FK
+    + receptorId: FK
+    + puntuacion: Integer
+    + comentario: String
+    + fecha: DateTime
+  }
+
+  class TokenRecuperacion {
+    + usuarioId: FK
+    + codigo: String
+    + fechaExpiracion: DateTime
+    + usado: Boolean
+    + expirado?()
+  }
+
+  class PlanSuscripcion {
+    + nombre: String
+    + precio: Decimal
+    + limiteEmpleados: Integer
+    + descripcion: String
+  }
+
+  class Suscripcion {
+    + empresaId: FK
+    + planId: FK
+    + fechaInicio: DateTime
+    + fechaFin: DateTime
+    + estado: String
+    + plan: PlanSuscripcion
+    + activa?()
+    + puede_agregar_empleado?(conteo_actual)
+  }
+}
+
+together {
+  class CoordenadaGps <<immutable>> {
+    + latitud: Double
+    + longitud: Double
+    + ==(other)
+  }
+
+  class Geocerca <<immutable>> {
+    + centro: CoordenadaGps
+    + radio: Integer
+  }
+
+  class ResultadoPago <<immutable>> {
+    + exitoso: Boolean
+    + idTransaccion: String
+    + fechaProcesado: DateTime
+    + mensaje: String
+    + exitoso?()
+  }
+}
+
+together {
+  interface IValidacionStrategy {
+    + validar(datos)
+  }
+
+  class GpsStrategy {
+    + validar(datos)
+  }
+
+  class ContextoValidacion {
+    - STRATEGIAS: Map
+    - estrategia: IValidacionStrategy
+    + initialize(tipo_verificacion, estrategia)
+    + validar!(datos)
+  }
+}
+
+together {
+  class GpsValidationService {
+    + dentro_de_geocerca?(coordenada, geocerca)
+  }
+
+  class JornadaDurationService {
+    + calcular(entrada, salida)
+  }
+
+  class CronogramaCalculatorService {
+    + calcular_monto(horas, tarifa)
+  }
+}
+
+Usuario <|-- Empleado
+Usuario <|-- Empresa
+RegistroAsistencia <|-- RegistroEntrada
+RegistroAsistencia <|-- RegistroSalida
+
+Empresa "1" --> "0..N" Obra
+Obra "1" --> "0..N" Parada
+Parada "1" --> "0..N" EmpleadoParada
+Empleado "1" --> "0..N" EmpleadoParada
+Empleado "1" --> "0..N" RegistroAsistencia
+Parada "1" --> "0..N" RegistroAsistencia
+Empleado "1" --> "0..N" SolicitudIngreso
+Obra "1" --> "0..N" SolicitudIngreso
+Empleado "1" --> "0..N" CronogramaPago
+Empresa "1" --> "0..N" CronogramaPago
+Usuario "1" --> "0..N" Valoracion : emisor
+Usuario "1" --> "0..N" Valoracion : receptor
+Usuario "1" --> "0..N" TokenRecuperacion
+Empresa "1" --> "0..N" Suscripcion
+PlanSuscripcion "1" --> "0..N" Suscripcion
+Suscripcion "1" --> "1" PlanSuscripcion
+
+Parada ..> Geocerca
+PlanSuscripcion ..> ResultadoPago : genera
+Geocerca *--> "1" CoordenadaGps
+
+IValidacionStrategy <|.. GpsStrategy
+ContextoValidacion --> IValidacionStrategy
+
+GpsStrategy --> GpsValidationService
+
+RegistroAsistencia ..> JornadaDurationService
+CronogramaPago ..> CronogramaCalculatorService
+
+@enduml

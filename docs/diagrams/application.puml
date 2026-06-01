@@ -1,0 +1,139 @@
+@startuml
+skinparam defaultFontSize 10
+skinparam classFontSize 10
+skinparam classAttributeFontSize 9
+skinparam classBorderColor #1E8449
+skinparam classBackgroundColor #D5F5E3
+skinparam interfaceBorderColor #7D3C98
+skinparam interfaceBackgroundColor #E8DAEF
+skinparam shadowing false
+skinparam padding 6
+skinparam margin 6
+skinparam minClassWidth 140
+
+title <size:14><b>MarcaYA — Capa de Aplicacion</size></b>
+
+together {
+  interface "IMarcarAsistencia" as IMA <<driving_port>> {
+    + marcar_entrada(...)
+    + marcar_salida(...)
+  }
+
+  interface "IEmpleadoRepository" as IEmpR <<driven_port>>
+  interface "IParadaRepository" as IParR <<driven_port>>
+  interface "IRegistroAsistenciaRepository" as IAsisR <<driven_port>>
+  interface "INotificacionService" as INotif <<driven_port>>
+  interface "IUsuarioRepository" as IUsrR <<driven_port>>
+  interface "ITokenRecuperacionRepository" as ITokR <<driven_port>>
+  interface "IObraRepository" as IObR <<driven_port>>
+  interface "IEmpleadoParadaRepository" as IEmpParR <<driven_port>>
+  interface "ISolicitudIngresoRepository" as ISolR <<driven_port>>
+  interface "ICronogramaPagoRepository" as ICronR <<driven_port>>
+  interface "IValoracionRepository" as IValR <<driven_port>>
+  interface "IPlanSuscripcionRepository" as IPlanR <<driven_port>>
+  interface "ISuscripcionRepository" as ISuscR <<driven_port>>
+  interface "IPagoStrategy" as IPagoR <<driven_port>>
+
+  class JornadaDurationService <<domain>>
+  class CronogramaCalculatorService <<domain>>
+}
+
+together {
+  class AsistenciaFacade {
+    - empleado_repo: IEmpleadoRepository
+    - parada_repo: IParadaRepository
+    - asistencia_repo: IRegistroAsistenciaRepository
+    - gps_service: GpsValidationService
+    + marcar_entrada(emp_id, par_id, lat, lon)
+    + marcar_salida(emp_id, par_id, lat, lon)
+  }
+
+  class SistemaAsistenciaFacade {
+    - empleado_repo: IEmpleadoRepository
+    - parada_repo: IParadaRepository
+    - asistencia_repo: IRegistroAsistenciaRepository
+    - gps_service: GpsValidationService
+    - notificacion_svc: INotificacionService
+    + registrar_entrada(emp_id, par_id, lat, lon)
+    + registrar_salida(emp_id, par_id, lat, lon)
+  }
+
+  class MarcarEntradaCommand {
+    - emp_id: String
+    - par_id: String
+    - lat: Float
+    - lon: Float
+    + execute()
+    + to_h()
+  }
+
+  class MarcarEntrada {
+    - empleado_repo: IEmpleadoRepository
+    - parada_repo: IParadaRepository
+    - asistencia_repo: IRegistroAsistenciaRepository
+    - gps_service: GpsValidationService
+    + ejecutar(emp_id, par_id, lat, lon)
+  }
+}
+
+class "LoginUsuario\nRegistrarEmpleado\nRegistrarEmpresa\nSolicitarRecuperacion\nVerificarCodigo\nResetearPassword" as Auth <<use_case>>
+
+class "MarcarSalida\nObtenerHistorial\nObtenerTiempoReal" as AsistenciaUC <<use_case>>
+
+class "CrearObra\nEditarObra\nDesactivarObra" as ObrasUC <<use_case>>
+
+class "CrearParada\nEditarParada\nEliminarParada\nAsignarEmpleadoParada\nDesasignarEmpleadoParada" as ParadasUC <<use_case>>
+
+class "SolicitarIngresoObra\nAceptarSolicitud\nRechazarSolicitud" as SolicitudesUC <<use_case>>
+
+class "GenerarCronograma\nSincronizarCronograma" as CronogramaUC <<use_case>>
+
+class "GenerarReporteAsistencia\nExportarReporte\nCalcularEstadisticas" as ReportesUC <<use_case>>
+
+class "CrearValoracion\nCalcularPromedio" as ValoracionesUC <<use_case>>
+
+class "ContratarPlan\nContextoPago\nCancelarSuscripcion\nVerSuscripcionActiva\nListarPlanes" as SuscripcionesUC <<use_case>>
+
+AsistenciaFacade ..|> IMA
+SistemaAsistenciaFacade ..|> IMA
+AsistenciaFacade *--> MarcarEntrada
+MarcarEntradaCommand ..> SistemaAsistenciaFacade : execute
+AsistenciaFacade --> IEmpR
+AsistenciaFacade --> IParR
+AsistenciaFacade --> IAsisR
+SistemaAsistenciaFacade --> IEmpR
+SistemaAsistenciaFacade --> IParR
+SistemaAsistenciaFacade --> IAsisR
+SistemaAsistenciaFacade --> INotif
+MarcarEntrada --> IEmpR
+MarcarEntrada --> IParR
+MarcarEntrada --> IAsisR
+MarcarEntrada --> GpsValidationService
+
+Auth --> IUsrR
+Auth --> ITokR
+
+AsistenciaUC --> IEmpR
+AsistenciaUC --> IParR
+AsistenciaUC --> IAsisR
+
+ObrasUC --> IObR
+
+ParadasUC --> IParR
+ParadasUC --> IEmpParR
+
+SolicitudesUC --> ISolR
+
+CronogramaUC --> ICronR
+CronogramaUC --> JornadaDurationService
+CronogramaUC --> CronogramaCalculatorService
+
+ReportesUC --> IAsisR
+
+ValoracionesUC --> IValR
+
+SuscripcionesUC --> IPlanR
+SuscripcionesUC --> ISuscR
+SuscripcionesUC --> IPagoR
+
+@enduml

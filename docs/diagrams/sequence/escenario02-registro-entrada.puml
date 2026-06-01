@@ -1,0 +1,141 @@
+@startuml
+skinparam defaultFontSize 10
+skinparam participantFontSize 10
+skinparam actorFontSize 11
+skinparam shadowing false
+
+title <size:14><b>Escenario 2: Registro de Entrada con Validacion GPS</size></b>
+caption <size:11>US03 - Como empleado, quiero marcar mi entrada validando mi ubicacion GPS</size>
+
+actor "Empleado" as emp #FADBD8
+participant "AsistenciaController" as ctrl #D6EAF8
+participant "IMarcarAsistencia\n(Driving Port)" as port #E8DAEF
+participant "AsistenciaFacade" as facade #D5F5E3
+participant "MarcarEntrada\n(Use Case)" as uc #D5F5E3
+participant "ContextoValidacion" as ctxVal #FADBD8
+participant "GpsStrategy" as gpsStrat #FADBD8
+participant "GpsValidationService" as gpsSvc #FADBD8
+participant "RegistroFactory" as factory #FADBD8
+participant "RegistroEntrada\n(Domain)" as registro #FADBD8
+participant "IEmpleadoRepository\n(Driven Port)" as empRepo #D4E6F1
+participant "IParadaRepository\n(Driven Port)" as parRepo #D4E6F1
+participant "IRegistroAsistenciaRepository\n(Driven Port)" as asisRepo #D4E6F1
+participant "ArRegistroAsistenciaRepository\n(Driven Adapter)" as asisImpl #D5D8DC
+participant "RegistroAsistenciaRecord" as record #D5D8DC
+participant "RegistroAsistenciaMapper" as mapper #D5D8DC
+
+== Inicio: Empleado marca entrada ==
+
+emp -> ctrl: POST /asistencia/entrada\n{ empleado_id, parada_id, lat, lon }
+activate ctrl
+
+ctrl -> port: marcar_entrada(emp_id, par_id, lat, lon)
+activate port
+
+port -> facade: marcar_entrada(emp_id, par_id, lat, lon)
+activate facade
+
+facade -> uc: ejecutar(emp_id, par_id, lat, lon)
+activate uc
+
+== Carga de datos de dominio ==
+
+uc -> empRepo: find_by_id!(emp_id)
+activate empRepo
+empRepo --> uc: Empleado
+deactivate empRepo
+
+uc -> parRepo: find_by_id!(par_id)
+activate parRepo
+parRepo --> uc: Parada (con geocerca)
+deactivate parRepo
+
+== Validacion GPS ==
+
+uc -> ctxVal: validar!(empleado, parada, lat, lon)
+activate ctxVal
+
+ctxVal -> gpsStrat: validar({ lat, lon, geocerca })
+activate gpsStrat
+
+gpsStrat -> gpsSvc: dentro_de_geocerca?(coordenada, geocerca)
+activate gpsSvc
+note right: Calculo Haversine\nentre coordenada\ny centro de geocerca
+
+gpsSvc --> gpsStrat: true / false
+deactivate gpsSvc
+
+gpsStrat --> ctxVal: resultado_validacion
+deactivate gpsStrat
+
+ctxVal --> uc: validacion exitosa
+deactivate ctxVal
+
+alt Validacion fallida
+  uc --> facade: raise Domain::Errors::ValidacionGPSFallida
+  facade --> port: Error
+  port --> ctrl: Error
+  ctrl --> emp: 422 Unprocessable\n{ error: "Fuera de la geocerca" }
+  deactivate uc
+  deactivate facade
+  deactivate port
+  deactivate ctrl
+end
+
+== Creacion del registro de entrada ==
+
+uc -> factory: build(:entrada, empleado, parada, lat, lon)
+activate factory
+
+factory -> registro: new(tipo=ENTRADA, empleadoId, paradaId, lat, lon)
+activate registro
+registro --> factory: RegistroEntrada
+deactivate registro
+
+factory --> uc: RegistroEntrada
+deactivate factory
+
+== Persistencia ==
+
+uc -> asisRepo: guardar(registro)
+activate asisRepo
+
+asisRepo -> asisImpl: guardar(registro)
+activate asisImpl
+
+asisImpl -> mapper: to_record_attrs(registro)
+activate mapper
+mapper --> asisImpl: Hash { empleado_id, parada_id, tipo, lat, lon, valida_gps, ... }
+deactivate mapper
+
+asisImpl -> record: create!(attrs)
+activate record
+record --> asisImpl: RegistroAsistenciaRecord
+deactivate record
+
+asisImpl -> mapper: to_domain(record)
+activate mapper
+mapper --> asisImpl: RegistroEntrada
+deactivate mapper
+
+asisImpl --> asisRepo: RegistroEntrada
+deactivate asisImpl
+
+asisRepo --> uc: RegistroEntrada
+deactivate asisRepo
+
+== Respuesta exitosa ==
+
+uc --> facade: RegistroEntrada
+deactivate uc
+
+facade --> port: RegistroEntrada
+deactivate facade
+
+port --> ctrl: RegistroEntrada
+deactivate port
+
+ctrl --> emp: 201 Created\n{ id, tipo, empleado_id, parada_id,\n  fecha_hora, valida_gps, duracion }
+deactivate ctrl
+
+@enduml

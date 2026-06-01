@@ -1,0 +1,103 @@
+@startuml
+skinparam defaultFontSize 10
+skinparam participantFontSize 10
+skinparam actorFontSize 11
+skinparam shadowing false
+
+title <size:14><b>Escenario 3: Gestion de Empleados Registrados</size></b>
+caption <size:11>La empresa consulta la lista de trabajadores y actualiza su estado o permisos</size>
+
+actor "Empresa" as empresa #D6EAF8
+participant "EmpresasController" as ctrlEmp #D6EAF8
+participant "EmpleadosController" as ctrlEmp2 #D6EAF8
+participant "IEmpleadoRepository\n(Driven Port)" as repo #D4E6F1
+participant "ArEmpleadoRepository\n(Driven Adapter)" as impl #D5D8DC
+participant "EmpleadoRecord\n(ActiveRecord)" as record #D5D8DC
+participant "EmpleadoMapper" as mapper #D5D8DC
+participant "EmpleadoSerializer" as ser #E8DAEF
+
+== Flujo 1: Consultar lista de empleados ==
+
+empresa -> ctrlEmp: GET /empresas/{empresa_id}/empleados
+activate ctrlEmp
+
+ctrlEmp -> repo: find_by_empresa(empresa_id)
+activate repo
+
+repo -> impl: find_by_empresa(empresa_id)
+activate impl
+
+impl -> record: where(empresa_id: id)
+activate record
+record --> impl: EmpleadoRecord[]
+deactivate record
+
+loop for each record
+  impl -> mapper: to_domain(record)
+  activate mapper
+  mapper --> impl: Empleado
+  deactivate mapper
+end
+
+impl --> repo: Empleado[]
+deactivate impl
+
+repo --> ctrlEmp: Empleado[]
+deactivate repo
+
+ctrlEmp -> ser: as_json(empleados)
+activate ser
+ser --> ctrlEmp: Array<Hash>
+deactivate ser
+
+ctrlEmp --> empresa: 200 OK\n[ { id, nombre, apellido, estado, obras }, ... ]
+deactivate ctrlEmp
+
+== Flujo 2: Actualizar estado del empleado ==
+
+empresa -> ctrlEmp2: PATCH /empleados/{empleado_id}\n{ estado: "INACTIVO" }
+activate ctrlEmp2
+
+ctrlEmp2 -> repo: find_by_id!(empleado_id)
+activate repo
+repo --> ctrlEmp2: Empleado
+deactivate repo
+
+ctrlEmp2 -> ctrlEmp2: empleado.estado = "INACTIVO"\n(regla de dominio)
+
+ctrlEmp2 -> repo: guardar(empleado)
+activate repo
+
+repo -> impl: guardar(empleado)
+activate impl
+
+impl -> mapper: to_record_attrs(empleado)
+activate mapper
+mapper --> impl: Hash { estado, ... }
+deactivate mapper
+
+impl -> record: update!(attrs)
+activate record
+record --> impl: EmpleadoRecord
+deactivate record
+
+impl -> mapper: to_domain(record)
+activate mapper
+mapper --> impl: Empleado
+deactivate mapper
+
+impl --> repo: Empleado
+deactivate impl
+
+repo --> ctrlEmp2: Empleado
+deactivate repo
+
+ctrlEmp2 -> ser: as_json(empleado)
+activate ser
+ser --> ctrlEmp2: Hash
+deactivate ser
+
+ctrlEmp2 --> empresa: 200 OK\n{ id, nombre, apellido, estado: "INACTIVO" }
+deactivate ctrlEmp2
+
+@enduml

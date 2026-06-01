@@ -1,0 +1,163 @@
+@startuml
+skinparam defaultFontSize 10
+skinparam participantFontSize 10
+skinparam actorFontSize 11
+skinparam shadowing false
+
+title <size:14><b>Escenario 4: Solicitud de Ingreso a Obra</size></b>
+caption <size:11>El empleado solicita acceso a una obra; la empresa revisa y aprueba o rechaza</size>
+
+actor "Empleado" as emp #FADBD8
+actor "Empresa" as empresa #D6EAF8
+participant "SolicitudesController" as ctrl #D6EAF8
+participant "ISolicitarIngresoObra\n(Driving Port)" as port #E8DAEF
+participant "SolicitarIngresoObra\n(Use Case)" as ucCreate #D5F5E3
+participant "RevisarSolicitudIngreso\n(Use Case)" as ucReview #D5F5E3
+participant "EmpleadoObra\n(Domain)" as empObra #FADBD8
+participant "EstadoSolicitud\n(Value Object)" as estado #FADBD8
+participant "IEmpleadoObraRepository\n(Driven Port)" as repo #D4E6F1
+participant "ArEmpleadoObraRepository\n(Driven Adapter)" as impl #D5D8DC
+participant "EmpleadoObraRecord" as record #D5D8DC
+participant "EmpleadoObraMapper" as mapper #D5D8DC
+participant "EmpleadoObraSerializer" as ser #E8DAEF
+
+== Flujo 1: Empleado solicita ingreso a obra ==
+
+emp -> ctrl: POST /solicitudes\n{ empleado_id, obra_id }
+activate ctrl
+
+ctrl -> port: solicitar_ingreso(empleado_id, obra_id)
+activate port
+
+port -> ucCreate: ejecutar(empleado_id, obra_id)
+activate ucCreate
+
+note over ucCreate: Validar que el empleado\nexista y la obra este activa
+
+ucCreate -> empObra: new(empleadoId, obraId,\n    estado: PENDIENTE)
+activate empObra
+
+empObra -> estado: PENDIENTE
+activate estado
+estado --> empObra: EstadoSolicitud
+deactivate estado
+
+empObra --> ucCreate: EmpleadoObra
+deactivate empObra
+
+ucCreate -> repo: guardar(empleadoObra)
+activate repo
+
+repo -> impl: guardar(empleadoObra)
+activate impl
+
+impl -> mapper: to_record_attrs(empleadoObra)
+activate mapper
+mapper --> impl: Hash { empleado_id, obra_id, estado, ... }
+deactivate mapper
+
+impl -> record: create!(attrs)
+activate record
+record --> impl: EmpleadoObraRecord
+deactivate record
+
+impl -> mapper: to_domain(record)
+activate mapper
+mapper --> impl: EmpleadoObra
+deactivate mapper
+
+impl --> repo: EmpleadoObra
+deactivate impl
+
+repo --> ucCreate: EmpleadoObra (persistido)
+deactivate repo
+
+ucCreate --> port: EmpleadoObra (estado: PENDIENTE)
+deactivate ucCreate
+
+port --> ctrl: EmpleadoObra
+deactivate port
+
+ctrl -> ser: as_json(empleadoObra)
+activate ser
+ser --> ctrl: Hash
+deactivate ser
+
+ctrl --> emp: 201 Created\n{ id, empleado_id, obra_id, estado: "PENDIENTE",\n  fecha_solicitud }
+deactivate ctrl
+
+== Flujo 2: Empresa revisa y resuelve la solicitud ==
+
+empresa -> ctrl: PATCH /solicitudes/{id}\n{ estado: "APROBADO" | "RECHAZADO" }
+activate ctrl
+
+ctrl -> port: revisar_solicitud(id, resolucion)
+activate port
+
+port -> ucReview: ejecutar(id, resolucion)
+activate ucReview
+
+ucReview -> repo: find_by_id!(id)
+activate repo
+repo --> ucReview: EmpleadoObra (PENDIENTE)
+deactivate repo
+
+alt Resolucion: APROBADO
+  ucReview -> empObra: aprobar()
+  activate empObra
+  empObra -> estado: APROBADO
+  estado --> empObra: EstadoSolicitud
+  empObra --> ucReview: EmpleadoObra (APROBADO)
+  deactivate empObra
+
+else Resolucion: RECHAZADO
+  ucReview -> empObra: rechazar()
+  activate empObra
+  empObra -> estado: RECHAZADO
+  estado --> empObra: EstadoSolicitud
+  empObra --> ucReview: EmpleadoObra (RECHAZADO)
+  deactivate empObra
+end
+
+ucReview -> repo: guardar(empleadoObra)
+activate repo
+
+repo -> impl: guardar(empleadoObra)
+activate impl
+
+impl -> mapper: to_record_attrs(empleadoObra)
+activate mapper
+mapper --> impl: Hash { estado, ... }
+deactivate mapper
+
+impl -> record: update!(attrs)
+activate record
+record --> impl: EmpleadoObraRecord
+deactivate record
+
+impl -> mapper: to_domain(record)
+activate mapper
+mapper --> impl: EmpleadoObra
+deactivate mapper
+
+impl --> repo: EmpleadoObra
+deactivate impl
+
+repo --> ucReview: EmpleadoObra
+deactivate repo
+
+ucReview --> port: EmpleadoObra
+deactivate ucReview
+
+port --> ctrl: EmpleadoObra
+deactivate port
+
+ctrl -> ser: as_json(empleadoObra)
+activate ser
+ser --> ctrl: Hash
+deactivate ser
+
+ctrl --> empresa: 200 OK\n{ id, empleado_id, obra_id, estado: "APROBADO",\n  fecha_resolucion }
+deactivate ctrl
+
+@enduml

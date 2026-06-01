@@ -1,0 +1,90 @@
+@startuml
+skinparam defaultFontSize 10
+skinparam participantFontSize 10
+skinparam actorFontSize 11
+skinparam shadowing false
+
+title <size:14><b>Escenario 1: Registro de Paradas con Coordenadas</size></b>
+caption <size:11>US02 - Como empresa, quiero registrar paradas con coordenadas y radio de validacion</size>
+
+actor "Empresa\n(Usuario)" as empresa
+participant "ParadasController" as ctrl #D6EAF8
+participant "IGestionarParada\n(Driving Port)" as port #E8DAEF
+participant "CrearParada\n(Use Case)" as uc #D5F5E3
+participant "Parada\n(Domain)" as parada #FADBD8
+participant "Geocerca\n(Domain VO)" as geo #FADBD8
+participant "CoordenadaGps\n(Domain VO)" as coord #FADBD8
+participant "IParadaRepository\n(Driven Port)" as repo #D4E6F1
+participant "ArParadaRepository\n(Driven Adapter)" as impl #D5D8DC
+participant "ParadaRecord\n(ActiveRecord)" as record #D5D8DC
+participant "ParadaMapper" as mapper #D5D8DC
+
+== Inicio: Solicitud HTTP ==
+
+empresa -> ctrl: POST /obras/{obra_id}/paradas\nContent-Type: application/json\n{ nombre, lat, lon, radio }
+activate ctrl
+
+ctrl -> port: crear(obra_id, params)
+activate port
+
+port -> uc: ejecutar(obra_id, params)
+activate uc
+
+== Validacion y creacion de dominio ==
+
+uc -> parada: new(nombre, lat, lon, radio, obra_id)
+activate parada
+parada --> uc: Parada(id, geocerca)
+deactivate parada
+
+uc -> coord: new(latitud, longitud)
+activate coord
+coord --> uc: CoordenadaGps
+deactivate coord
+
+uc -> geo: new(centro=coord, radio)
+activate geo
+geo --> uc: Geocerca
+deactivate geo
+
+== Persistencia via repositorio ==
+
+uc -> repo: guardar(parada)
+activate repo
+
+repo -> impl: guardar(parada)
+activate impl
+
+impl -> mapper: to_record_attrs(parada)
+activate mapper
+mapper --> impl: Hash { nombre, lat, lon, radio, obra_id }
+deactivate mapper
+
+impl -> record: create!(attrs)
+activate record
+record --> impl: ParadaRecord
+deactivate record
+
+impl -> mapper: to_domain(record)
+activate mapper
+mapper --> impl: Parada
+deactivate mapper
+
+impl --> repo: Parada
+deactivate impl
+
+repo --> uc: Parada
+deactivate repo
+
+== Respuesta ==
+
+uc --> port: Parada
+deactivate uc
+
+port --> ctrl: Parada
+deactivate port
+
+ctrl --> empresa: 201 Created\n{ id, nombre, lat, lon, radio, obra_id, estado }
+deactivate ctrl
+
+@enduml
