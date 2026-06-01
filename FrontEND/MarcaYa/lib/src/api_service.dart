@@ -2,11 +2,13 @@
 // Reemplaza la lógica simulada de MarcaYAState por llamadas HTTP reales
 
 import 'dart:convert';
+import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 // ─── CAMBIA ESTA URL SEGÚN DONDE CORRA TU BACKEND ───────────
 // Emulador Android:  http://10.0.2.2:3000/api/v1
+// Google chrome: http://localhost:3000/api/v1
 // Dispositivo físico: http://TU_IP_LOCAL:3000/api/v1  (ej: 192.168.1.5)
 // Producción:        https://tu-dominio.com/api/v1
 const String kBaseUrl = 'http://localhost:3000/api/v1';
@@ -120,55 +122,67 @@ class ApiService {
     await borrarToken();
   }
 
-  // ════════════════════════════════════════════════════════════
-  // OBRAS
-  // ════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
+// OBRAS
+// ════════════════════════════════════════════════════════════
 
   Future<List<dynamic>> obtenerObras() async {
     final res = await _client.get(
       Uri.parse('$kBaseUrl/obras'),
       headers: await _headers(),
     );
+
     return jsonDecode(res.body) as List<dynamic>;
   }
 
+  Future<Map<String, dynamic>> obtenerObra(int obraId) async {
+    final res = await _client.get(
+      Uri.parse('$kBaseUrl/obras/$obraId'),
+      headers: await _headers(),
+    );
+
+    return _parsearRespuesta(res);
+  }
+
   Future<Map<String, dynamic>> crearObra({
+    required String codigoObra,
     required String nombre,
-    required String descripcion,
+    required String descripcionUbicacion,
     required double latitud,
     required double longitud,
-    required double radioMetros,
+    required int radioMetros,
+    required String horaInicio,
+    required String horaFin,
+    required String fechaInicio,
+    required String fechaFin,
+    required int capacidadEmpleados,
+    required String direccion,
   }) async {
+
     final res = await _client.post(
       Uri.parse('$kBaseUrl/obras'),
       headers: await _headers(),
       body: jsonEncode({
-        'nombre':               nombre,
-        'descripcion_ubicacion': descripcion,
-        'latitud':              latitud,
-        'longitud':             longitud,
-        'radio_metros':         radioMetros,
+        'empresa_id': 1,
+        'codigo_obra': codigoObra,
+        'nombre': nombre,
+        'descripcion_ubicacion': descripcionUbicacion,
+        'latitud': latitud,
+        'longitud': longitud,
+        'radio_metros': radioMetros,
+        'hora_inicio': horaInicio,
+        'hora_fin': horaFin,
+        'fecha_inicio': fechaInicio,
+        'fecha_fin': fechaFin,
+        'capacidad_empleados': capacidadEmpleados,
+        'direccion': direccion,
+        'estado': 'activa',
       }),
     );
+
     return _parsearRespuesta(res);
   }
 
-  Future<List<dynamic>> obtenerSolicitudesObra(int obraId) async {
-    final res = await _client.get(
-      Uri.parse('$kBaseUrl/obras/$obraId/solicitudes'),
-      headers: await _headers(),
-    );
-    return jsonDecode(res.body) as List<dynamic>;
-  }
-
-  Future<void> responderSolicitud(int obraId, int solicitudId, String estado) async {
-    final res = await _client.patch(
-      Uri.parse('$kBaseUrl/obras/$obraId/solicitudes/$solicitudId'),
-      headers: await _headers(),
-      body: jsonEncode({'estado': estado}),
-    );
-    _parsearRespuesta(res);
-  }
 
   // ════════════════════════════════════════════════════════════
   // ASISTENCIAS
@@ -217,9 +231,32 @@ class ApiService {
     return jsonDecode(res.body) as List<dynamic>;
   }
 
+
   // ════════════════════════════════════════════════════════════
   // EMPLEADOS
   // ════════════════════════════════════════════════════════════
+  /// Trae todos los empleados actuales de la empresa
+  Future<List<dynamic>> obtenerEmpleadosActuales(String empresaId) async {
+    final res = await _client.get(
+      Uri.parse('$kBaseUrl/empleados/actuales?empresa_id=$empresaId'),
+      headers: await _headers(),
+    );
+
+    if (res.statusCode >= 400) {
+      throw Exception('Error al obtener empleados actuales');
+    }
+
+    final data = jsonDecode(res.body);
+
+    // Si viene un solo Map, lo conviertes a List
+    if (data is Map<String, dynamic>) {
+      return [data];
+    } else if (data is List) {
+      return List<dynamic>.from(data);
+    } else {
+      return [];
+    }
+  }
 
   Future<List<dynamic>> obtenerEmpleados() async {
     final res = await _client.get(
@@ -229,15 +266,92 @@ class ApiService {
     return jsonDecode(res.body) as List<dynamic>;
   }
 
-  Future<void> solicitarIngreso(int obraId) async {
-    final res = await _client.post(
-      Uri.parse('$kBaseUrl/empleados/solicitar_obra'),
+  Future<List<dynamic>> obtenerUsuarios() async {
+
+    final res = await _client.get(
+      Uri.parse('$kBaseUrl/usuarios'),
       headers: await _headers(),
-      body: jsonEncode({'obra_id': obraId}),
     );
+
+    return jsonDecode(res.body) as List<dynamic>;
+  }
+
+  // ════════════════════════════════════════════════════════════
+// SOLICITUDES
+// ════════════════════════════════════════════════════════════
+
+  /// Trae todas las solicitudes de la empresa autenticada
+  Future<List<dynamic>> obtenerSolicitudes() async {
+    final res = await _client.get(
+      Uri.parse('$kBaseUrl/solicitudes'),
+      headers: await _headers(),
+    );
+
+    // Devuelve la lista de solicitudes directamente desde el backend
+    return jsonDecode(res.body) as List<dynamic>;
+  }
+
+  /// El empleado solicita ingreso a una obra
+  Future<void> solicitarIngreso({
+    required int obraId,
+    required String empleadoId,
+  }) async {
+    final res = await _client.post(
+      Uri.parse('$kBaseUrl/solicitudes'),
+      headers: await _headers(),
+      body: jsonEncode({
+        'obra_id': obraId,
+        'empleado_id': empleadoId,
+      }),
+    );
+
     _parsearRespuesta(res);
   }
 
+  Future<List<dynamic>> obtenerObrasEmpleado(String empleadoId) async {
+    final res = await _client.get(
+      Uri.parse('$kBaseUrl/empleados/$empleadoId/obras'),
+      headers: await _headers(),
+    );
+
+    if (res.statusCode >= 400) {
+      throw Exception('Error al obtener obras del empleado');
+    }
+
+    return jsonDecode(res.body) as List<dynamic>;
+  }
+
+  /// La empresa acepta una solicitud pendiente
+  Future<void> aceptarSolicitud(int solicitudId) async {
+    final res = await _client.put(
+      Uri.parse('$kBaseUrl/solicitudes/$solicitudId/aceptar'),
+      headers: await _headers(),
+    );
+
+    _parsearRespuesta(res);
+  }
+
+  /// La empresa rechaza una solicitud pendiente
+  Future<void> rechazarSolicitud(int solicitudId) async {
+    final res = await _client.put(
+      Uri.parse('$kBaseUrl/solicitudes/$solicitudId/rechazar'),
+      headers: await _headers(),
+    );
+
+    _parsearRespuesta(res);
+  }
+
+  Future<List<dynamic>> obtenerSolicitudesEmpleado(
+      String empleadoId) async {
+    final res = await _client.get(
+      Uri.parse('$kBaseUrl/solicitudes?id=$empleadoId'),
+      headers: await _headers(),
+    );
+
+    return List<dynamic>.from(
+      jsonDecode(res.body),
+    );
+  }
   // ════════════════════════════════════════════════════════════
   // PAGOS
   // ════════════════════════════════════════════════════════════
@@ -291,6 +405,25 @@ class ApiService {
       body: jsonEncode({'nombre': nombre, 'correo': correo}),
     );
     return _parsearRespuesta(res);
+  }
+
+  Future<Map<String, dynamic>> obtenerPerfilUsuario(int usuarioId) async {
+    final res = await _client.get(
+      Uri.parse('$kBaseUrl/usuarios/$usuarioId'),
+      headers: await _headers(),
+    );
+    final data = _parsearRespuesta(res);
+
+    // si es empresa, trae info de empresas
+    if (data['rol'] == 'empresa') {
+      // llamada a /empresas?usuario_id=...
+      // o data['empresa'] incluido en el backend
+    } else {
+      // llamada a /empleados?usuario_id=...
+      // o data['empleado'] incluido en el backend
+    }
+
+    return data;
   }
 
   // ════════════════════════════════════════════════════════════

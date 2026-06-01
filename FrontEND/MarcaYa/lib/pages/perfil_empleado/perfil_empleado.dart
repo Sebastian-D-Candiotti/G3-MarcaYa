@@ -1,177 +1,146 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import '../../components/bottom_navbar.dart';
 import '../../providers/auth_provider.dart';
-import '../../theme/app_theme.dart';
-import 'components/comments_card.dart';
-import 'components/profile_header.dart';
-import 'components/profile_info_card.dart';
-import 'components/rating_card.dart';
+import '../../components/bottom_navbar.dart';
 
-/// Employee profile view. Composed from small reusable components.
-class PerfilEmpleadoPage extends StatefulWidget {
+class PerfilEmpleadoPage extends StatelessWidget {
   const PerfilEmpleadoPage({super.key});
-
-  @override
-  State<PerfilEmpleadoPage> createState() => _PerfilEmpleadoPageState();
-}
-
-class _PerfilEmpleadoPageState extends State<PerfilEmpleadoPage> {
-  int _myRating = 0;
-
-  // TODO: replace with real backend data
-  static const _mock = _MockData(
-    dni: '12345678',
-    rating: 4.8,
-    reviews: 2,
-    attendances: 19,
-    lates: 3,
-    absences: 1,
-  );
-
-  final List<CommentItem> _comments = [
-    const CommentItem(
-      initials: 'CX',
-      author: 'Constructora XYZ',
-      text: 'Great worker, punctual and responsible.',
-      avatarColor: Color(0xFF00BCD4),
-    ),
-    const CommentItem(
-      initials: 'MT',
-      author: 'Miguel Torres',
-      text: 'Excellent teammate, always willing to help.',
-      avatarColor: Color(0xFF4CAF50),
-    ),
-    const CommentItem(
-      initials: 'CM',
-      author: 'Carlos M.',
-      text: 'Always delivers on assigned tasks.',
-      avatarColor: Color(0xFF9C27B0),
-    ),
-  ];
 
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
-    final profile = auth.currentUserProfile;
+    final empleado = auth.currentUserProfile; // usuario logueado
 
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Column(
-        children: [
-          ProfileHeader(name: profile?.nombre ?? 'Employee'),
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  ProfileInfoCard(
-                    profile: profile,
-                    dni: _mock.dni,
-                    rating: _mock.rating,
-                    reviews: _mock.reviews,
-                    attendances: _mock.attendances,
-                    lates: _mock.lates,
-                    absences: _mock.absences,
-                  ),
-                  const SizedBox(height: 12),
-                  RatingCard(
-                    myRating: _myRating,
-                    onRatingChanged: (v) => setState(() => _myRating = v),
-                    onRatePressed: () => _showRateSnackBar(),
-                  ),
-                  const SizedBox(height: 12),
-                  CommentsCard(
-                    comments: _comments,
-                    onAddComment: () => _showCommentDialog(),
-                  ),
-                  const SizedBox(height: 20),
-                ],
+      appBar: AppBar(
+        title: const Text('Mi Perfil'),
+      ),
+
+      body: empleado == null
+          ? const Center(
+        child: Text(
+          'No se encontró el perfil',
+          style: TextStyle(fontSize: 18),
+        ),
+      )
+          : SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // FOTO
+            CircleAvatar(
+              radius: 50,
+              backgroundImage: empleado.fotoUrl != null &&
+                  empleado.fotoUrl!.isNotEmpty
+                  ? NetworkImage(empleado.fotoUrl!)
+                  : null,
+              child: empleado.fotoUrl == null ||
+                  empleado.fotoUrl!.isEmpty
+                  ? Text(
+                (empleado.nombre ?? '').isNotEmpty
+                    ? empleado.nombre![0].toUpperCase()
+                    : '?',
+                style: const TextStyle(fontSize: 30),
+              )
+                  : null,
+            ),
+
+            const SizedBox(height: 20),
+
+            // NOMBRE COMPLETO
+            Text(
+              '${empleado.nombre ?? ''} ${empleado.apellido ?? ''}',
+              style: const TextStyle(
+                  fontSize: 24, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+
+            const SizedBox(height: 12),
+
+            // DESCRIPCIÓN
+            if (empleado.descripcion != null &&
+                empleado.descripcion!.isNotEmpty)
+              Text(
+                empleado.descripcion!,
+                style: const TextStyle(fontSize: 16),
+                textAlign: TextAlign.center,
+              ),
+
+            const SizedBox(height: 20),
+
+            // CORREO
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.email),
+                title: const Text('Correo'),
+                subtitle: Text(empleado.correo),
               ),
             ),
-          ),
-          const BottomNavbar(userRole: 'empleado', currentIndex: 3),
-        ],
-      ),
-    );
-  }
 
-  void _showRateSnackBar() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'You rated $_myRating star${_myRating == 1 ? '' : 's'}',
-        ),
-        backgroundColor: AppColors.primary,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
+            const SizedBox(height: 12),
 
-  void _showCommentDialog() {
-    final controller = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Add comment'),
-        content: TextField(
-          controller: controller,
-          maxLines: 3,
-          decoration: const InputDecoration(
-            hintText: 'Write your comment...',
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(color: AppColors.textSecondary),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (controller.text.trim().isNotEmpty) {
-                setState(() {
-                  _comments.add(CommentItem(
-                    initials: 'ME',
-                    author: 'Me',
-                    text: controller.text.trim(),
-                    avatarColor: AppColors.primary,
-                  ));
-                });
-                Navigator.pop(context);
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+            // TELÉFONO
+            if (empleado.telefono != null &&
+                empleado.telefono!.isNotEmpty)
+              Card(
+                child: ListTile(
+                  leading: const Icon(Icons.phone),
+                  title: const Text('Teléfono'),
+                  subtitle: Text(empleado.telefono!),
+                ),
+              ),
+
+            const SizedBox(height: 12),
+
+            // ROL
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.badge),
+                title: const Text('Rol'),
+                subtitle: Text(
+                  auth.userRole ?? 'empleado',
+                ),
               ),
             ),
-            child: const Text('Send'),
-          ),
-        ],
+
+            ElevatedButton.icon(
+              onPressed: () {
+                // TODO: abrir modal o página para editar perfil
+              },
+              icon: const Icon(Icons.edit),
+              label: const Text('Editar Perfil'),
+            ),
+            const SizedBox(height: 12),
+
+            ElevatedButton.icon(
+              onPressed: () async {
+
+                await auth.logout();
+
+                if (context.mounted) {
+                  context.go('/');
+                }
+
+              },
+
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+
+              icon: const Icon(Icons.logout),
+              label: const Text('Cerrar Sesión'),
+            ),
+          ],
+        ),
+      ),
+
+      bottomNavigationBar: const BottomNavbar(
+        userRole: 'empleado',
+        currentIndex: 2,
       ),
     );
   }
-}
-
-class _MockData {
-  final String dni;
-  final double rating;
-  final int reviews;
-  final int attendances;
-  final int lates;
-  final int absences;
-
-  const _MockData({
-    required this.dni,
-    required this.rating,
-    required this.reviews,
-    required this.attendances,
-    required this.lates,
-    required this.absences,
-  });
 }

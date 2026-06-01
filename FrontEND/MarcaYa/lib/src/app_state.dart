@@ -23,6 +23,14 @@ class AppUser {
     this.employeeId,
     this.empresaId,
     this.nombreEmpresa,
+    this.descripcion,
+    this.telefono,
+    this.direccion,
+    this.fotoUrl,
+    this.apellido,
+    this.promedioEstrellas,
+    this.comentarios,
+    this.ruc,
   });
 
   final String id;
@@ -36,6 +44,15 @@ class AppUser {
   final String? employeeId; // referencia a Employee (mock)
   final String? empresaId; // id de la empresa (compañía del empleado)
   final String? nombreEmpresa; // nombre de empresa (solo para rol empresa)
+  final String? descripcion;
+  final String? telefono;
+  final String? direccion;
+  final String? fotoUrl;
+  final String? apellido;
+  final String? ruc;
+  final double? promedioEstrellas;
+  final List<dynamic>? comentarios;
+
 
   // ── Getters retrocompatibles ───────────────────────────────
   String get name => nombre;
@@ -57,6 +74,21 @@ class AppUser {
           : null,
       empresaId: json['empresa_id']?.toString(),
       nombreEmpresa: json['nombre_empresa'] as String?,
+      apellido: json['apellido'],
+      descripcion: json['descripcion'],
+      telefono: json['telefono'],
+      direccion: json['direccion'],
+      fotoUrl: json['foto_url'],
+      ruc: json['ruc'],
+
+      promedioEstrellas:
+      json['promedio_estrellas'] != null
+          ? double.tryParse(
+        json['promedio_estrellas'].toString(),
+      )
+          : null,
+
+      comentarios: json['comentarios'],
     );
   }
 
@@ -325,7 +357,7 @@ class GpsValidator {
 
 class MarcaYAState extends ChangeNotifier {
   MarcaYAState() {
-    _seed();
+    //_seed();
   }
 
   final _gpsValidator = const GpsValidator();

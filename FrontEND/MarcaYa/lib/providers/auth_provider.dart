@@ -8,71 +8,128 @@ class AuthProvider extends ChangeNotifier {
   AuthProvider(this._state);
 
   MarcaYAState get state => _state;
-  bool get isLoggedIn => _state.currentUser != null;
-  String? get userRole {
-    final user = _state.currentUser;
-    if (user == null) return null;
-    // Mapeo de roles: employee → 'empleado', admin → 'empresa', empresa → 'empresa'
-    return user.role == UserRole.employee ? 'empleado' : 'empresa';
-  }
 
-  /// Perfil completo del usuario autenticado (desde backend o desde mock)
+  bool get isLoggedIn => _state.currentUser != null;
+
+  String? _userRole;
+
+  String? get userRole => _userRole;
+
   AppUser? get currentUserProfile => _state.currentUser;
 
-  bool login(String email, String password) {
-    final ok = _state.login(email, password);
-    if (ok) notifyListeners();
-    return ok;
-  }
-
-  void logout() {
-    _state.logout();
-    notifyListeners();
-  }
-
-  /// Obtiene el perfil desde el backend real y lo guarda en el estado mock
-  /// para mantener compatibilidad. Si no hay backend, usa el mock existente.
-  Future<void> fetchProfile() async {
+  // ==========================================
+  // LOGIN REAL CONTRA BACKEND
+  // ==========================================
+  Future<bool> login(String email, String password) async {
     try {
-      final data = await ApiService.instance.obtenerPerfil();
-      final perfilJson = data['perfil'] as Map<String, dynamic>;
-      final perfil = AppUser.fromJson(perfilJson);
+      final result = await ApiService.instance.login(
+        email,
+        password,
+      );
+      print(result.perfil);
+      _userRole = result.rol;
 
-      // Actualiza el currentUser en el estado mock con datos del backend
-      final idx = _state.users.indexWhere((u) => u.id == perfil.id);
+      final perfil = AppUser.fromJson(result.perfil);
+      print(result.perfil);
+      print(perfil.nombre);
+      print(perfil.correo);
+      final idx = _state.users.indexWhere(
+            (u) => u.id == perfil.id,
+      );
+
       if (idx != -1) {
         _state.users[idx] = perfil;
+      } else {
+        _state.users.add(perfil);
       }
+
       _state.currentUser = perfil;
+
       notifyListeners();
-    } catch (_) {
-      // Sin backend — seguimos con el mock actual
-      debugPrint('fetchProfile: sin backend disponible, usando mock');
+
+      return true;
+    } catch (e) {
+      debugPrint('Error login: $e');
+      return false;
     }
   }
 
-  /// Actualiza nombre y correo en el backend y refleja el cambio en el estado mock
+  // ==========================================
+  // LOGOUT
+  // ==========================================
+  Future<void> logout() async {
+    await ApiService.instance.logout();
+
+    _state.logout();
+    _userRole = null;
+
+    notifyListeners();
+  }
+
+  // ==========================================
+  // PERFIL
+  // ==========================================
+  Future<void> fetchProfile() async {
+    try {
+      final data = await ApiService.instance.obtenerPerfil();
+
+      final perfilJson = data['perfil'] as Map<String, dynamic>;
+      final perfil = AppUser.fromJson(perfilJson);
+
+      final idx = _state.users.indexWhere(
+            (u) => u.id == perfil.id,
+      );
+
+      if (idx != -1) {
+        _state.users[idx] = perfil;
+      } else {
+        _state.users.add(perfil);
+      }
+
+      _state.currentUser = perfil;
+
+      notifyListeners();
+    } catch (e) {
+      debugPrint('fetchProfile error: $e');
+    }
+  }
+
+  // ==========================================
+  // ACTUALIZAR PERFIL
+  // ==========================================
   Future<void> updateProfile({
     required String nombre,
     required String correo,
   }) async {
     try {
-      final data = await ApiService.instance.actualizarPerfil(
+      final data =
+      await ApiService.instance.actualizarPerfil(
         nombre: nombre,
         correo: correo,
       );
-      final perfilJson = data['perfil'] as Map<String, dynamic>;
-      final perfil = AppUser.fromJson(perfilJson);
 
-      final idx = _state.users.indexWhere((u) => u.id == perfil.id);
+      final perfilJson =
+      data['perfil'] as Map<String, dynamic>;
+
+      final perfil =
+      AppUser.fromJson(perfilJson);
+
+      final idx = _state.users.indexWhere(
+            (u) => u.id == perfil.id,
+      );
+
       if (idx != -1) {
         _state.users[idx] = perfil;
+      } else {
+        _state.users.add(perfil);
       }
+
       _state.currentUser = perfil;
+
       notifyListeners();
-    } catch (_) {
-      // Fallback: actualiza solo en mock
-      debugPrint('updateProfile: sin backend disponible, actualizando solo mock');
+    } catch (e) {
+      debugPrint('updateProfile error: $e');
     }
   }
+
 }

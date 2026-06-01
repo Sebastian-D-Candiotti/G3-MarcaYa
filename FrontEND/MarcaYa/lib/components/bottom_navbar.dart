@@ -11,50 +11,48 @@ class BottomNavbar extends StatelessWidget {
     required this.currentIndex,
   });
 
-  static const _empresaItems = [
-    _NavItem(label: 'Inicio', icon: Icons.home, route: '/empresa'),
-    _NavItem(label: 'Sitios', icon: Icons.location_on, route: '/empresa/paradas'),
-    _NavItem(label: 'Empleados', icon: Icons.group, route: '/empresa/empleados'),
-    _NavItem(label: 'Solicitudes', icon: Icons.request_page, route: '/empresa/solicitudes'),
-  ];
-
-  static const _empleadoItems = [
-    _NavItem(label: 'Inicio', icon: Icons.home, route: '/empleado'),
-    _NavItem(label: 'Asistencia', icon: Icons.fingerprint, route: '/empleado/asistencia'),
-    _NavItem(label: 'Buscar', icon: Icons.search, route: '/empleado/buscar'),
-    _NavItem(label: 'Mi Perfil', icon: Icons.person, route: '/empleado/perfil'),
-  ];
-
-  List<_NavItem> get _items =>
-      userRole == 'empresa' ? _empresaItems : _empleadoItems;
-
   @override
   Widget build(BuildContext context) {
+    final String baseRoute =
+    userRole == 'empresa'
+        ? '/empresa'
+        : '/empleado';
+
     return BottomNavigationBar(
-      currentIndex: currentIndex.clamp(0, _items.length - 1),
+      currentIndex: currentIndex,
       onTap: (index) {
-        if (index < _items.length) {
-          context.go(_items[index].route);
+        switch (index) {
+          case 0:
+            context.go(baseRoute);
+            break;
+
+          case 1:
+            context.go('$baseRoute/buscar');
+            break;
+
+          case 2:
+            context.go('$baseRoute/perfil');
+            break;
         }
       },
-      items: _items
-          .map((item) => BottomNavigationBarItem(
-                icon: Icon(item.icon),
-                label: item.label,
-              ))
-          .toList(),
+      type: BottomNavigationBarType.fixed,
+      selectedItemColor: const Color(0xFF1E3A8A),
+      unselectedItemColor: Colors.grey,
+      showUnselectedLabels: true,
+      items: const [
+        BottomNavigationBarItem(
+          icon: Icon(Icons.home),
+          label: 'Inicio',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.search),
+          label: 'Buscar',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.person),
+          label: 'Perfil',
+        ),
+      ],
     );
   }
-}
-
-class _NavItem {
-  final String label;
-  final IconData icon;
-  final String route;
-
-  const _NavItem({
-    required this.label,
-    required this.icon,
-    required this.route,
-  });
 }
