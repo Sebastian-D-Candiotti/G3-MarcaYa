@@ -9,8 +9,22 @@ Rails.application.routes.draw do
       post "auth/login",    to: "auth#login"
       post "auth/registro", to: "auth#registro"
 
-      # OBRAS
-      resources :obras
+      # OBRAS (with nested paradas)
+      resources :obras do
+        member do
+          get :paradas, to: "obras#index_paradas"
+          post :paradas, to: "obras#create_parada"
+        end
+      end
+
+      # PARADAS
+      resources :paradas, only: [:show, :update, :destroy] do
+        member do
+          get :empleados, to: "paradas#index_empleados"
+          post :empleados, to: "paradas#asignar_empleado"
+          delete "empleados/:empleado_id", to: "paradas#desasignar_empleado"
+        end
+      end
 
       # USUARIOS
       get   "usuarios/:id",            to: "usuarios#show"
@@ -36,6 +50,16 @@ Rails.application.routes.draw do
         collection do
           get :actuales
         end
+      end
+
+      # ASISTENCIA
+      namespace :asistencia do
+        post 'marcar-entrada', to: 'asistencias#marcar_entrada'
+        post 'marcar-salida', to: 'asistencias#marcar_salida'
+        get 'historial', to: 'asistencias#historial_personal'
+        get 'historial/:empleado_id', to: 'asistencias#historial_empleado'
+        get 'tiempo-real', to: 'asistencias#tiempo_real'
+        get 'tiempo-real/:parada_id', to: 'asistencias#tiempo_real_parada'
       end
 
     end

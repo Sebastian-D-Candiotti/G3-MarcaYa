@@ -10,9 +10,17 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_01_015443) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_02_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "asignaciones", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "empleado_id", null: false
+    t.string "estado", limit: 20, default: "activo"
+    t.bigint "obra_id", null: false
+    t.datetime "updated_at", null: false
+  end
 
   create_table "asistencias", force: :cascade do |t|
     t.datetime "created_at", precision: nil, default: -> { "CURRENT_TIMESTAMP" }
@@ -48,6 +56,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_01_015443) do
     t.datetime "fecha_ingreso", precision: nil, default: -> { "CURRENT_TIMESTAMP" }
     t.bigint "obra_id", null: false
     t.datetime "updated_at", precision: nil, default: -> { "CURRENT_TIMESTAMP" }
+  end
+
+  create_table "empleado_paradas", force: :cascade do |t|
+    t.boolean "activo", default: true, null: false
+    t.datetime "created_at", null: false
+    t.bigint "empleado_id", null: false
+    t.string "estado", limit: 20, default: "activo", null: false
+    t.bigint "parada_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["empleado_id", "parada_id"], name: "index_empleado_paradas_on_empleado_id_and_parada_id", unique: true
   end
 
   create_table "empleados", force: :cascade do |t|
@@ -111,6 +129,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_01_015443) do
     t.bigint "usuario_creador_id"
   end
 
+  create_table "paradas", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "estado", limit: 20, default: "activa", null: false
+    t.float "latitud", null: false
+    t.float "longitud", null: false
+    t.string "nombre", limit: 150, null: false
+    t.bigint "obra_id", null: false
+    t.integer "radio_metros", default: 50, null: false
+    t.datetime "updated_at", null: false
+    t.index ["obra_id", "nombre"], name: "index_paradas_on_obra_id_and_nombre", unique: true
+  end
+
   create_table "plan_suscripciones", force: :cascade do |t|
     t.datetime "created_at", precision: nil, default: -> { "CURRENT_TIMESTAMP" }
     t.integer "limite_empleados", null: false
@@ -127,11 +157,29 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_01_015443) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "registro_asistencias", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "duracion_jornada"
+    t.bigint "empleado_id", null: false
+    t.datetime "fecha_hora", null: false
+    t.float "latitud_registrada", null: false
+    t.float "longitud_registrada", null: false
+    t.string "observaciones"
+    t.bigint "parada_id", null: false
+    t.string "tipo_marcacion", limit: 10, null: false
+    t.datetime "updated_at", null: false
+    t.boolean "valida_gps", default: true, null: false
+    t.index ["empleado_id"], name: "index_registro_asistencias_on_empleado_id"
+    t.index ["fecha_hora"], name: "index_registro_asistencias_on_fecha_hora"
+    t.index ["parada_id"], name: "index_registro_asistencias_on_parada_id"
+    t.index ["tipo_marcacion"], name: "index_registro_asistencias_on_tipo_marcacion"
+  end
+
   create_table "solicitudes", force: :cascade do |t|
     t.datetime "created_at", precision: nil, default: -> { "CURRENT_TIMESTAMP" }
     t.bigint "empleado_id", null: false
+    t.bigint "empresa_id", null: false
     t.string "estado", limit: 20, default: "pendiente"
-    t.bigint "obra_id", null: false
     t.datetime "updated_at", precision: nil, default: -> { "CURRENT_TIMESTAMP" }
   end
 
@@ -196,14 +244,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_01_015443) do
     t.datetime "updated_at", null: false
   end
 
+  add_foreign_key "asignaciones", "empleados", name: "asignaciones_empleado_id_fkey"
+  add_foreign_key "asignaciones", "obras", name: "asignaciones_obra_id_fkey"
   add_foreign_key "asistencias", "empleados", name: "asistencias_empleado_id_fkey"
   add_foreign_key "asistencias", "obras", name: "asistencias_obra_id_fkey"
   add_foreign_key "cronograma_de_pagos", "empleados", name: "cronograma_de_pagos_empleado_id_fkey"
   add_foreign_key "cronograma_de_pagos", "obras", name: "cronograma_de_pagos_obra_id_fkey"
   add_foreign_key "empleado_obra", "empleados", name: "empleado_obra_empleado_id_fkey"
   add_foreign_key "empleado_obra", "obras", name: "empleado_obra_obra_id_fkey"
+  add_foreign_key "empleado_paradas", "empleados", name: "empleado_paradas_empleado_id_fkey", on_delete: :cascade
+  add_foreign_key "empleado_paradas", "paradas", name: "empleado_paradas_parada_id_fkey", on_delete: :cascade
   add_foreign_key "metodo_pago", "empleados", name: "metodo_pago_empleado_id_fkey"
   add_foreign_key "obras", "empresas", name: "obras_empresa_id_fkey"
+  add_foreign_key "paradas", "obras", name: "paradas_obra_id_fkey", on_delete: :cascade
+  add_foreign_key "registro_asistencias", "empleados", on_delete: :restrict
+  add_foreign_key "registro_asistencias", "paradas", on_delete: :restrict
+  add_foreign_key "solicitudes", "empresas", name: "solicitudes_empresa_id_fkey"
   add_foreign_key "solicitudes_ingreso", "empleados", name: "solicitudes_ingreso_empleado_id_fkey"
   add_foreign_key "solicitudes_ingreso", "obras", name: "solicitudes_ingreso_obra_id_fkey"
   add_foreign_key "suscripciones", "empresas", name: "suscripciones_empresa_id_fkey"

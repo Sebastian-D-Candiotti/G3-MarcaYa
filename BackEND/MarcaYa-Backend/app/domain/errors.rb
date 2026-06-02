@@ -9,6 +9,17 @@ module Domain
     class SolicitudNoEncontradaError < StandardError; end
     class TransicionEstadoInvalidaError < StandardError; end
     class ObraNoEncontradaError < StandardError; end
+    class EmpresaNoEncontradaError < StandardError; end
     class PuntuacionInvalidaError < ValidacionError; end
+    class ParadaNoEncontradaError < StandardError; end
+    class AsistenciaNoEncontradaError < StandardError
+      def initialize(mensaje = "Registro de asistencia no encontrado")
+        super
+      end
+    end
+    class EntradaActivaExistenteError < ValidacionError; end
+    class EmpleadoNoAsignadoParadaError < ValidacionError; end
+    class ParadaInactivaError < ValidacionError; end
   end
 end
+
