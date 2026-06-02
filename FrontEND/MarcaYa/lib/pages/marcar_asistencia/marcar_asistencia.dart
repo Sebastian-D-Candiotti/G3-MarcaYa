@@ -154,7 +154,7 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
   Future<void> _cargarParadas() async {
     try {
       final auth = context.read<AuthProvider>();
-      final empleadoId = int.tryParse(auth.currentUserProfile?.id ?? '');
+      final empleadoId = int.tryParse(auth.currentUserProfile?.employeeId ?? '');
       if (empleadoId == null) {
         setState(() {
           _cargandoParadas = false;

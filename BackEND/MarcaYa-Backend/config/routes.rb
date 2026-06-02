@@ -70,14 +70,14 @@ Rails.application.routes.draw do
       get    "valoraciones/:usuario_id/promedio", to: "valoraciones#promedio"
 
       # ASISTENCIA
-      namespace :asistencia do
-        post 'marcar-entrada', to: 'asistencias#marcar_entrada'
-        post 'marcar-salida', to: 'asistencias#marcar_salida'
-        get 'historial', to: 'asistencias#historial_personal'
-        get 'historial/:empleado_id', to: 'asistencias#historial_empleado'
-        get 'tiempo-real', to: 'asistencias#tiempo_real'
-        get 'tiempo-real/:parada_id', to: 'asistencias#tiempo_real_parada'
-      end
+      # NOTA: se usan rutas directas (no namespace) porque el controlador
+      # es Api::V1::AsistenciasController, no Api::V1::Asistencia::AsistenciasController
+      post 'asistencia/marcar-entrada', to: 'asistencias#marcar_entrada'
+      post 'asistencia/marcar-salida', to: 'asistencias#marcar_salida'
+      get 'asistencia/historial', to: 'asistencias#historial_personal'
+      get 'asistencia/historial/:empleado_id', to: 'asistencias#historial_empleado'
+      get 'asistencia/tiempo-real', to: 'asistencias#tiempo_real'
+      get 'asistencia/tiempo-real/:parada_id', to: 'asistencias#tiempo_real_parada'
 
       # REPORTES
       namespace :reportes do

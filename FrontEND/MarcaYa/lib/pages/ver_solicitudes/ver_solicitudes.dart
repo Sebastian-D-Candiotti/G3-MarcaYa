@@ -14,12 +14,37 @@ class VerSolicitudesPage extends StatefulWidget {
 
 class _VerSolicitudesPageState extends State<VerSolicitudesPage> {
   List<dynamic> _solicitudes = [];
+  List<dynamic> _obras = [];
   bool _cargando = true;
+  bool _cargandoObras = false;
 
   @override
   void initState() {
     super.initState();
     _cargarSolicitudes();
+    _cargarObras();
+  }
+
+  Future<void> _cargarObras() async {
+    setState(() => _cargandoObras = true);
+    try {
+      final auth = context.read<AuthProvider>();
+      final empresaId = auth.currentUserProfile?.empresaId != null
+          ? int.tryParse(auth.currentUserProfile!.empresaId!)
+          : null;
+      if (empresaId == null) {
+        setState(() => _cargandoObras = false);
+        return;
+      }
+      final data = await ApiService.instance.obtenerObras(empresaId: empresaId);
+      setState(() {
+        _obras = data;
+        _cargandoObras = false;
+      });
+    } catch (e) {
+      setState(() => _cargandoObras = false);
+      debugPrint('Error al cargar obras: $e');
+    }
   }
 
   Future<void> _cargarSolicitudes() async {
@@ -40,104 +65,86 @@ class _VerSolicitudesPageState extends State<VerSolicitudesPage> {
     }
   }
 
-  void _aceptar(dynamic solicitud) async {
-    try {
-      // Al aceptar, se asigna a una obra. Por defecto usamos un selector simple.
-      // En una versión futura se podría elegir la obra desde un dropdown.
-      final obraId = await _seleccionarObra();
-      if (obraId == null) return; // usuario canceló
-
-      await ApiService.instance.aceptarSolicitud(
-        solicitud['id'],
-        obraId: obraId,
-      );
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-              'Solicitud de ${solicitud['empleado']?['nombre'] ?? 'Anónimo'} aceptada'),
-          backgroundColor: Colors.green,
-        ),
-      );
-      _cargarSolicitudes();
-    } catch (e) {
-      debugPrint('Error aceptar solicitud: $e');
-    }
-  }
-
-  /// Diálogo simple para ingresar el ID de obra donde asignar al empleado.
-  /// En producción, debería ser un selector de obras de la empresa.
+  /// Diálogo para seleccionar una obra de la empresa donde asignar al empleado.
   Future<int?> _seleccionarObra() async {
-    final controller = TextEditingController();
-    final obraId = await showDialog<int>(
+    if (_obras.isEmpty) {
+      if (!mounted) return null;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No hay obras disponibles. Primero creá una obra.')),
+      );
+      return null;
+    }
+
+    int? obraSeleccionada;
+
+    return showDialog<int>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Asignar a obra'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Ingresá el ID de la obra donde asignar al empleado:'),
-            const SizedBox(height: 12),
-            TextField(
-              controller: controller,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'ID de obra',
-                border: OutlineInputBorder(),
-              ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Asignar a obra'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Seleccioná la obra donde asignar al empleado:'),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<int>(
+                  value: obraSeleccionada,
+                  decoration: const InputDecoration(
+                    labelText: 'Obra',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: _obras.map<DropdownMenuItem<int>>((o) {
+                    return DropdownMenuItem(
+                      value: o['id'] as int,
+                      child: Text(o['nombre'] ?? 'Obra #${o['id']}'),
+                    );
+                  }).toList(),
+                  onChanged: (v) => setDialogState(() => obraSeleccionada = v),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: obraSeleccionada == null
+                  ? null
+                  : () => Navigator.pop(ctx, obraSeleccionada),
+              child: const Text('Aceptar'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final id = int.tryParse(controller.text);
-              if (id != null) Navigator.pop(ctx, id);
-            },
-            child: const Text('Aceptar'),
-          ),
-        ],
       ),
     );
-    controller.dispose();
-    return obraId;
-  }
-
-  void _rechazar(dynamic solicitud) async {
-    try {
-      await ApiService.instance.rechazarSolicitud(solicitud['id']);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-              'Solicitud de ${solicitud['empleado']?['nombre'] ?? 'Anónimo'} rechazada'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      _cargarSolicitudes();
-    } catch (e) {
-      debugPrint('Error rechazar solicitud: $e');
-    }
   }
 
   void _verPerfil(dynamic solicitud) {
     final empleado = solicitud['empleado'];
     if (empleado == null) return;
 
-    // Navega al perfil del empleado pasando el ID
+    final usuarioId = empleado['usuario_id'];
+    if (usuarioId == null) return;
+
     context.push(
-      '/empleado/perfil', // Asegúrate que esta ruta está registrada en tu app_router.dart
-      extra: {'usuarioId': empleado['id']},
+      '/perfil-publico',
+      extra: {'usuarioId': usuarioId as int},
     );
   }
   void _aceptarSolicitud(dynamic s) async {
     try {
-      await ApiService.instance.aceptarSolicitud(s['id']);
+      final obraId = await _seleccionarObra();
+      if (obraId == null) return;
+
+      await ApiService.instance.aceptarSolicitud(s['id'], obraId: obraId);
+      if (!mounted) return;
       setState(() {
-        _solicitudes.removeWhere((sol) => sol['id'] == s['id']); // elimina de la lista
+        _solicitudes.removeWhere((sol) => sol['id'] == s['id']);
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Solicitud aceptada')),
@@ -187,7 +194,7 @@ class _VerSolicitudesPageState extends State<VerSolicitudesPage> {
           return Card(
             child: ListTile(
               title: Text('${empleado?['nombre'] ?? ''} ${empleado?['apellido'] ?? ''}'),
-              subtitle: Text('Obra: ${obra?['nombre'] ?? ''}'),
+              subtitle: Text('Obra: ${obra != null ? obra['nombre'] : 'No seleccionada'}'),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -211,7 +218,7 @@ class _VerSolicitudesPageState extends State<VerSolicitudesPage> {
       ),
       bottomNavigationBar: const BottomNavbar(
         userRole: 'empresa',
-        currentIndex: 0,
+        currentIndex: 2,
       ),
     );
   }

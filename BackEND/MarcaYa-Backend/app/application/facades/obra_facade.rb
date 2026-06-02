@@ -12,6 +12,10 @@ module Application
         UseCases::Obras::ListarObras.new(obra_repo: @obra_repo).ejecutar
       end
 
+      def listar_por_empresa(empresa_id:)
+        @obra_repo.listar_por_empresa(empresa_id)
+      end
+
       def obtener(id:)
         UseCases::Obras::ObtenerObra.new(obra_repo: @obra_repo).ejecutar(id: id)
       end

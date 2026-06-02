@@ -11,48 +11,51 @@ class BottomNavbar extends StatelessWidget {
     required this.currentIndex,
   });
 
+  List<_NavItem> get _items {
+    if (userRole == 'empresa') {
+      return const [
+        _NavItem(Icons.home, 'Inicio', '/empresa'),
+        _NavItem(Icons.search, 'Buscar', '/empresa/buscar'),
+        _NavItem(Icons.request_page, 'Solicitudes', '/empresa/solicitudes'),
+        _NavItem(Icons.business, 'Obras', '/empresa/obras'),
+        _NavItem(Icons.person, 'Perfil', '/empresa/perfil'),
+      ];
+    }
+    return const [
+      _NavItem(Icons.home, 'Inicio', '/empleado'),
+      _NavItem(Icons.search, 'Buscar', '/empleado/buscar'),
+      _NavItem(Icons.person, 'Perfil', '/empleado/perfil'),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
-    final String baseRoute =
-    userRole == 'empresa'
-        ? '/empresa'
-        : '/empleado';
-
+    final items = _items;
     return BottomNavigationBar(
-      currentIndex: currentIndex,
+      currentIndex: currentIndex < items.length ? currentIndex : 0,
       onTap: (index) {
-        switch (index) {
-          case 0:
-            context.go(baseRoute);
-            break;
-
-          case 1:
-            context.go('$baseRoute/buscar');
-            break;
-
-          case 2:
-            context.go('$baseRoute/perfil');
-            break;
+        if (index < items.length) {
+          context.go(items[index].route);
         }
       },
       type: BottomNavigationBarType.fixed,
       selectedItemColor: const Color(0xFF1E3A8A),
       unselectedItemColor: Colors.grey,
       showUnselectedLabels: true,
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: 'Inicio',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.search),
-          label: 'Buscar',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person),
-          label: 'Perfil',
-        ),
-      ],
+      items: items
+          .map((item) => BottomNavigationBarItem(
+                icon: Icon(item.icon),
+                label: item.label,
+              ))
+          .toList(),
     );
   }
+}
+
+class _NavItem {
+  final IconData icon;
+  final String label;
+  final String route;
+
+  const _NavItem(this.icon, this.label, this.route);
 }

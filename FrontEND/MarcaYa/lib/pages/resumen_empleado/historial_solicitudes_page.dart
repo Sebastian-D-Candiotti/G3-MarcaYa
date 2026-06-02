@@ -76,7 +76,7 @@ class _HistorialSolicitudesPageState
         itemCount: solicitudes.length,
         itemBuilder: (context, index) {
           final solicitud = solicitudes[index];
-          final obra = solicitud['obra'];
+          final empresa = solicitud['empresa'] as Map<String, dynamic>?;
           final estado = solicitud['estado'];
 
           return Card(
@@ -96,8 +96,7 @@ class _HistorialSolicitudesPageState
                 CrossAxisAlignment.start,
                 children: [
                   Text(
-                    obra?['nombre'] ??
-                        'Obra desconocida',
+                    empresa?['nombre']?.toString() ?? 'Empresa',
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight:

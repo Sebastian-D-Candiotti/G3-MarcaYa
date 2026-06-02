@@ -15,15 +15,20 @@ import '../pages/marcar_asistencia/marcar_asistencia.dart';
 import '../pages/perfil_empresa/perfil_empresa.dart';
 import '../pages/perfil_empleado/perfil_empleado.dart';
 import '../pages/buscar/buscar_page.dart';
+import '../pages/lista_obras/lista_obras_page.dart';
 import '../pages/administrar_paradas/administrar_paradas.dart';
 import '../pages/agregar_parada/agregar_parada.dart';
+import '../pages/agregar_parada/agregar_parada_page.dart';
 import '../pages/editar_parada/editar_parada.dart';
 import '../pages/ver_asistencia/ver_asistencia.dart';
 import '../pages/empleados_actuales/empleados_actuales.dart';
+import '../pages/paradas_por_obra/paradas_por_obra_page.dart';
 import '../pages/ver_solicitudes/ver_solicitudes.dart';
 import '../pages/confirmacion_registrar_empresa/confirmacion_registrar_empresa.dart';
 import '../pages/confirmacion_registrar_empleado/confirmacion_registrar_empleado.dart';
 import '../pages/perfil_publico/perfil_publico.dart';
+import '../pages/editar_perfil_empleado/editar_perfil_empleado_page.dart';
+import '../pages/editar_perfil_empresa/editar_perfil_empresa_page.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/',
@@ -109,6 +114,10 @@ final appRouter = GoRouter(
       path: '/empleado/perfil',
       builder: (_, __) => const PerfilEmpleadoPage(),
     ),
+    GoRoute(
+      path: '/empleado/perfil/editar',
+      builder: (_, __) => const EditarPerfilEmpleadoPage(),
+    ),
 
     GoRoute(
       path: '/empleado/marcar_asistencia',
@@ -149,6 +158,10 @@ final appRouter = GoRouter(
       path: '/empresa/perfil',
       builder: (_, __) => const PerfilEmpresaPage(),
     ),
+    GoRoute(
+      path: '/empresa/perfil/editar',
+      builder: (_, __) => const EditarPerfilEmpresaPage(),
+    ),
 
     // RUTAS INTERNAS DE EMPRESA
     GoRoute(
@@ -157,18 +170,42 @@ final appRouter = GoRouter(
     ),
 
     GoRoute(
+      path: '/empresa/obras',
+      builder: (_, __) => const ListaObrasPage(),
+    ),
+    GoRoute(
       path: '/empresa/obras/agregar',
       builder: (_, __) => const AgregarObraPage(),
     ),
+    GoRoute(
+      path: '/empresa/obras/:obraId/paradas',
+      builder: (context, state) {
+        final obraId = int.parse(state.pathParameters['obraId']!);
+        final extra = state.extra as Map<String, dynamic>?;
+        return ParadasPorObraPage(
+          obraId: obraId,
+          obraNombre: extra?['obraNombre'] as String?,
+        );
+      },
+    ),
 
     GoRoute(
+      path: '/empresa/paradas/agregar',
+      builder: (_, __) => const AgregarParadaPage(),
+    ),
+    GoRoute(
       path: '/empresa/paradas/editar',
-      builder: (_, __) => const EditarParadaPage(),
+      builder: (context, state) => EditarParadaPage(
+        paradaData: state.extra as Map<String, dynamic>,
+      ),
     ),
 
     GoRoute(
       path: '/empresa/asistencia',
-      builder: (_, __) => const VerAsistenciaPage(),
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>;
+        return VerAsistenciaPage(paradaId: extra['paradaId'] as int);
+      },
     ),
 
     GoRoute(
@@ -203,7 +240,7 @@ final appRouter = GoRouter(
           listen: false,
         );
         return HistorialSolicitudesPage(
-          empleadoId: auth.currentUserProfile!.id.toString(),
+          empleadoId: auth.currentUserProfile!.employeeId ?? auth.currentUserProfile!.id.toString(),
         );
       },
     ),

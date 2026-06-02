@@ -1,11 +1,6 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:go_router/go_router.dart';
-import 'package:http/http.dart' as http;
-import 'package:latlong2/latlong.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../../src/api_service.dart';
 
@@ -165,64 +160,19 @@ class _AgregarObraPageState extends State<AgregarObraPage> {
   }
 
   Future<void> crearObra() async {
-
-    final url = Uri.parse(
-      'http://localhost:3000/api/v1/obras',
+    await ApiService.instance.crearObra(
+      codigoObra: codigoController.text,
+      nombre: nombreController.text,
+      descripcionUbicacion: descripcionController.text,
+      latitud: latitud!,
+      longitud: longitud!,
+      radioMetros: radioMetros.round(),
+      horaInicio: '${horaInicio!.hour}:${horaInicio!.minute}',
+      horaFin: '${horaFin!.hour}:${horaFin!.minute}',
+      fechaInicio: fechaInicio.toString().split(' ')[0],
+      fechaFin: fechaFin.toString().split(' ')[0],
+      capacidadEmpleados: int.parse(capacidadController.text),
     );
-
-    final response = await http.post(
-      url,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({
-
-        'empresa_id': 1,
-
-        'codigo_obra':
-        codigoController.text,
-
-        'nombre':
-        nombreController.text,
-
-        'descripcion_ubicacion':
-        descripcionController.text,
-
-        'latitud':
-        latitud,
-
-        'longitud':
-        longitud,
-
-        'radio_metros':
-        radioMetros.round(),
-
-        'hora_inicio':
-        '${horaInicio!.hour}:${horaInicio!.minute}',
-
-        'hora_fin':
-        '${horaFin!.hour}:${horaFin!.minute}',
-
-        'fecha_inicio':
-        fechaInicio.toString().split(' ')[0],
-
-        'fecha_fin':
-        fechaFin.toString().split(' ')[0],
-
-        'capacidad_empleados':
-        int.parse(
-          capacidadController.text,
-        ),
-
-        'estado':
-        'activa',
-
-      }),
-    );
-
-    if (response.statusCode != 201) {
-      throw Exception(response.body);
-    }
   }
 
   Widget campo(

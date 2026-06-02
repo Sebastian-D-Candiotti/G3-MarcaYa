@@ -63,7 +63,11 @@ class ApiService {
   Map<String, dynamic> _parsearRespuesta(http.Response res) {
     final body = jsonDecode(res.body) as Map<String, dynamic>;
     if (res.statusCode >= 400) {
-      throw ApiException(body['error'] ?? 'Error desconocido', res.statusCode);
+      final mensaje = body['error'] ??
+          (body['errors'] is List ? (body['errors'] as List).join(', ') : null) ??
+          body['errors'] ??
+          'Error desconocido';
+      throw ApiException(mensaje.toString(), res.statusCode);
     }
     return body;
   }
@@ -140,9 +144,13 @@ class ApiService {
   // OBRAS
   // ════════════════════════════════════════════════════════════
 
-  Future<List<dynamic>> obtenerObras() async {
+  Future<List<dynamic>> obtenerObras({int? empresaId}) async {
+    var url = '$kBaseUrl/obras';
+    if (empresaId != null) {
+      url = '$url?empresa_id=$empresaId';
+    }
     final res = await _client.get(
-      Uri.parse('$kBaseUrl/obras'),
+      Uri.parse(url),
       headers: await _headers(),
     );
 
@@ -170,28 +178,29 @@ class ApiService {
     required String fechaInicio,
     required String fechaFin,
     required int capacidadEmpleados,
-    required String direccion,
+    String? direccion,
   }) async {
+    final body = <String, dynamic>{
+      'empresa_id': 1,
+      'codigo_obra': codigoObra,
+      'nombre': nombre,
+      'descripcion_ubicacion': descripcionUbicacion,
+      'latitud': latitud,
+      'longitud': longitud,
+      'radio_metros': radioMetros,
+      'hora_inicio': horaInicio,
+      'hora_fin': horaFin,
+      'fecha_inicio': fechaInicio,
+      'fecha_fin': fechaFin,
+      'capacidad_empleados': capacidadEmpleados,
+      'estado': 'activa',
+    };
+    if (direccion != null) body['direccion'] = direccion;
 
     final res = await _client.post(
       Uri.parse('$kBaseUrl/obras'),
       headers: await _headers(),
-      body: jsonEncode({
-        'empresa_id': 1,
-        'codigo_obra': codigoObra,
-        'nombre': nombre,
-        'descripcion_ubicacion': descripcionUbicacion,
-        'latitud': latitud,
-        'longitud': longitud,
-        'radio_metros': radioMetros,
-        'hora_inicio': horaInicio,
-        'hora_fin': horaFin,
-        'fecha_inicio': fechaInicio,
-        'fecha_fin': fechaFin,
-        'capacidad_empleados': capacidadEmpleados,
-        'direccion': direccion,
-        'estado': 'activa',
-      }),
+      body: jsonEncode(body),
     );
 
     return _parsearRespuesta(res);
@@ -318,6 +327,29 @@ class ApiService {
     return jsonDecode(res.body) as List<dynamic>;
   }
 
+  /// Asistencia en tiempo real para una parada específica
+  Future<List<dynamic>> obtenerAsistenciaTiempoReal(int paradaId) async {
+    final res = await _client.get(
+      Uri.parse('$kBaseUrl/asistencia/tiempo-real/$paradaId'),
+      headers: await _headers(),
+    );
+
+    if (res.statusCode >= 400) {
+      final body = jsonDecode(res.body);
+      final mensaje = body is Map
+          ? (body['error'] ?? body['errors'] ?? 'Error al cargar asistencia')
+          : 'Error al cargar asistencia';
+      throw ApiException(mensaje.toString(), res.statusCode);
+    }
+
+    final body = jsonDecode(res.body);
+    if (body is List) return body;
+    if (body is Map && body.containsKey('error')) {
+      throw ApiException(body['error'].toString(), res.statusCode);
+    }
+    return [];
+  }
+
   // ════════════════════════════════════════════════════════════
   // EMPLEADOS
   // ════════════════════════════════════════════════════════════
@@ -330,15 +362,15 @@ class ApiService {
     );
 
     if (res.statusCode >= 400) {
-      throw Exception('Error al obtener empleados actuales');
+      throw ApiException('Error al obtener empleados actuales', res.statusCode);
     }
 
     final data = jsonDecode(res.body);
 
-    if (data is Map<String, dynamic>) {
-      return [data];
-    } else if (data is List) {
+    if (data is List) {
       return List<dynamic>.from(data);
+    } else if (data is Map<String, dynamic>) {
+      return [data];
     } else {
       return [];
     }
@@ -382,7 +414,14 @@ class ApiService {
       Uri.parse('$kBaseUrl/asistencia/historial/$empleadoId'),
       headers: await _headers(),
     );
-    return jsonDecode(res.body) as List<dynamic>;
+
+    if (res.statusCode >= 400) {
+      throw ApiException('Error al obtener asistencias del empleado', res.statusCode);
+    }
+
+    final body = jsonDecode(res.body);
+    if (body is List) return body;
+    return [];
   }
 
   Future<List<dynamic>> obtenerParadasEmpleado(int empleadoId) async {
@@ -400,10 +439,12 @@ class ApiService {
     );
 
     if (res.statusCode >= 400) {
-      throw Exception('Error al obtener obras del empleado');
+      throw ApiException('Error al obtener obras del empleado', res.statusCode);
     }
 
-    return jsonDecode(res.body) as List<dynamic>;
+    final body = jsonDecode(res.body);
+    if (body is List) return body;
+    return [];
   }
 
   Future<List<dynamic>> obtenerUsuarios() async {
@@ -442,6 +483,36 @@ class ApiService {
 
     final res = await _client.put(
       Uri.parse('$kBaseUrl/usuarios/$usuarioId'),
+      headers: await _headers(),
+      body: jsonEncode(body),
+    );
+    return _parsearRespuesta(res);
+  }
+
+  /// Actualiza el perfil del usuario autenticado vía PUT /api/v1/perfil
+  /// Acepta campos tanto de empleado como de empresa según el rol
+  Future<Map<String, dynamic>> actualizarMiPerfil({
+    String? correo,
+    String? nombre,
+    String? apellido,
+    String? telefono,
+    String? descripcion,
+    String? nombreEmpresa,
+    String? direccion,
+    String? ruc,
+  }) async {
+    final body = <String, dynamic>{};
+    if (correo != null) body['correo'] = correo;
+    if (nombre != null) body['nombre'] = nombre;
+    if (apellido != null) body['apellido'] = apellido;
+    if (telefono != null) body['telefono'] = telefono;
+    if (descripcion != null) body['descripcion'] = descripcion;
+    if (nombreEmpresa != null) body['nombre_empresa'] = nombreEmpresa;
+    if (direccion != null) body['direccion'] = direccion;
+    if (ruc != null) body['ruc'] = ruc;
+
+    final res = await _client.put(
+      Uri.parse('$kBaseUrl/perfil'),
       headers: await _headers(),
       body: jsonEncode(body),
     );

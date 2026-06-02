@@ -13,6 +13,7 @@ class Api::V1::SolicitudesController < Api::V1::BaseController
         estado: s.estado.to_s,
         empleado: {
           id: empleado&.id,
+          usuario_id: empleado&.usuario_id,
           nombre: empleado&.nombre,
           apellido: empleado&.apellido,
           dni: empleado&.dni
@@ -74,6 +75,7 @@ class Api::V1::SolicitudesController < Api::V1::BaseController
       estado: solicitud.estado.to_s,
       empleado: {
         id: empleado&.id,
+        usuario_id: empleado&.usuario_id,
         nombre: empleado&.nombre,
         apellido: empleado&.apellido,
         dni: empleado&.dni
@@ -121,6 +123,7 @@ class Api::V1::SolicitudesController < Api::V1::BaseController
       {
         id: o.id,
         nombre: o.nombre,
+        empresa_id: o.empresa_id,
         latitud: o.latitud,
         longitud: o.longitud,
         radio: o.radio_metros

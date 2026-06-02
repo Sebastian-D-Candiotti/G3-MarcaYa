@@ -2,60 +2,68 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:provider/provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../src/api_service.dart';
 
-class EditarParadaPage extends StatefulWidget {
-  final Map<String, dynamic> paradaData;
-
-  const EditarParadaPage({super.key, required this.paradaData});
+class AgregarParadaPage extends StatefulWidget {
+  const AgregarParadaPage({super.key});
 
   @override
-  State<EditarParadaPage> createState() => _EditarParadaPageState();
+  State<AgregarParadaPage> createState() => _AgregarParadaPageState();
 }
 
-class _EditarParadaPageState extends State<EditarParadaPage> {
+class _AgregarParadaPageState extends State<AgregarParadaPage> {
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _nombreCtrl;
+  final _nombreCtrl = TextEditingController();
   final MapController mapController = MapController();
 
-  late LatLng centroMapa;
+  LatLng centroMapa = const LatLng(-12.046374, -77.042793);
+
   double? latitud;
   double? longitud;
   double radioMetros = 100;
+
+  List<dynamic> _obras = [];
+  int? _obraSeleccionadaId;
+  bool _cargandoObras = true;
   bool _enviando = false;
 
   @override
   void initState() {
     super.initState();
-    final data = widget.paradaData;
-    _nombreCtrl = TextEditingController(text: data['nombre']?.toString() ?? '');
-
-    final lat = double.tryParse(data['latitud']?.toString() ?? '');
-    final lng = double.tryParse(data['longitud']?.toString() ?? '');
-    if (lat != null && lng != null) {
-      centroMapa = LatLng(lat, lng);
-      latitud = lat;
-      longitud = lng;
-    } else {
-      centroMapa = const LatLng(-12.046374, -77.042793);
-    }
-
-    radioMetros = double.tryParse(
-          data['radioMetros']?.toString() ??
-              data['radio_metros']?.toString() ??
-              '',
-        ) ??
-        100;
+    _cargarObras();
   }
 
-  @override
-  void dispose() {
-    _nombreCtrl.dispose();
-    super.dispose();
+  Future<void> _cargarObras() async {
+    final auth = context.read<AuthProvider>();
+    final empresaId = auth.currentUserProfile?.empresaId != null
+        ? int.tryParse(auth.currentUserProfile!.empresaId!)
+        : null;
+    if (empresaId == null) {
+      setState(() => _cargandoObras = false);
+      return;
+    }
+    try {
+      final data = await ApiService.instance.obtenerObras(empresaId: empresaId);
+      setState(() {
+        _obras = data;
+        _cargandoObras = false;
+      });
+    } catch (e) {
+      setState(() => _cargandoObras = false);
+      debugPrint('Error al cargar obras: $e');
+    }
   }
 
   Future<void> _guardar() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_obraSeleccionadaId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Seleccioná una obra')),
+      );
+      return;
+    }
     if (latitud == null || longitud == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Seleccioná una ubicación en el mapa')),
@@ -65,8 +73,8 @@ class _EditarParadaPageState extends State<EditarParadaPage> {
 
     setState(() => _enviando = true);
     try {
-      await ApiService.instance.actualizarParada(
-        widget.paradaData['id'] as int,
+      await ApiService.instance.crearParada(
+        obraId: _obraSeleccionadaId!,
         nombre: _nombreCtrl.text,
         latitud: latitud!,
         longitud: longitud!,
@@ -75,7 +83,7 @@ class _EditarParadaPageState extends State<EditarParadaPage> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Parada actualizada')),
+        const SnackBar(content: Text('Parada creada correctamente')),
       );
       context.pop();
     } catch (e) {
@@ -89,18 +97,44 @@ class _EditarParadaPageState extends State<EditarParadaPage> {
   }
 
   @override
+  void dispose() {
+    _nombreCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Editar Parada')),
+      appBar: AppBar(title: const Text('Agregar Parada')),
       body: Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            // Selector de obra
+            _cargandoObras
+                ? const LinearProgressIndicator()
+                : DropdownButtonFormField<int>(
+                    value: _obraSeleccionadaId,
+                    decoration: const InputDecoration(
+                      labelText: 'Obra',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: _obras.map<DropdownMenuItem<int>>((o) {
+                      return DropdownMenuItem(
+                        value: o['id'] as int,
+                        child: Text(o['nombre'] ?? ''),
+                      );
+                    }).toList(),
+                    onChanged: (v) => setState(() => _obraSeleccionadaId = v),
+                    validator: (v) => v == null ? 'Seleccioná una obra' : null,
+                  ),
+            const SizedBox(height: 16),
             TextFormField(
               controller: _nombreCtrl,
               decoration: const InputDecoration(
-                labelText: 'Nombre',
+                labelText: 'Nombre de la parada',
+                hintText: 'Ej: Puerta principal',
                 border: OutlineInputBorder(),
               ),
               validator: (v) => v == null || v.isEmpty ? 'Requerido' : null,
@@ -197,7 +231,7 @@ class _EditarParadaPageState extends State<EditarParadaPage> {
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('Guardar'),
+                  : const Text('Guardar Parada'),
             ),
           ],
         ),

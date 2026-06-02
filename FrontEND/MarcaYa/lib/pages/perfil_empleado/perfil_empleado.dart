@@ -106,9 +106,7 @@ class PerfilEmpleadoPage extends StatelessWidget {
             ),
 
             ElevatedButton.icon(
-              onPressed: () {
-                // TODO: abrir modal o página para editar perfil
-              },
+              onPressed: () => context.push('/empleado/perfil/editar'),
               icon: const Icon(Icons.edit),
               label: const Text('Editar Perfil'),
             ),

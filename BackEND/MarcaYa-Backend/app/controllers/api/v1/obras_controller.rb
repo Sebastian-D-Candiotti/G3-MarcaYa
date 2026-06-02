@@ -1,8 +1,13 @@
 class Api::V1::ObrasController < Api::V1::BaseController
 
   # GET /api/v1/obras
+  # GET /api/v1/obras?empresa_id=1
   def index
-    obras = Rails.configuration.di.obra_facade.listar
+    obras = if params[:empresa_id]
+              Rails.configuration.di.obra_facade.listar_por_empresa(empresa_id: params[:empresa_id])
+            else
+              Rails.configuration.di.obra_facade.listar
+            end
     render json: obras.map { |o| Serializer::ObraSerializer.as_json(o) }
   end
 

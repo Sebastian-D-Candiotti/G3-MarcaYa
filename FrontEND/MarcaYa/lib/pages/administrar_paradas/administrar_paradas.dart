@@ -32,7 +32,7 @@ class AdministrarParadasPage extends StatelessWidget {
       ),
       bottomNavigationBar: const BottomNavbar(
         userRole: 'empresa',
-        currentIndex: 1,
+        currentIndex: 3,
       ),
     );
   }

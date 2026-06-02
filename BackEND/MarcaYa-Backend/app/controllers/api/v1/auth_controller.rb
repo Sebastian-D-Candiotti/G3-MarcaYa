@@ -52,6 +52,7 @@ class Api::V1::AuthController < Api::V1::BaseController
 
     {
       id: usuario.id,
+      empresa_id: empresa&.id,
       correo: usuario.correo,
       rol: usuario.rol.to_s,
       nombre: empresa&.nombre_empresa,

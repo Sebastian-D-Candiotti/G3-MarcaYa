@@ -13,6 +13,8 @@ class PerfilPublicoPage extends StatefulWidget {
 
 class _PerfilPublicoPageState extends State<PerfilPublicoPage> {
   Map<String, dynamic>? usuario;
+  List<dynamic> _misSolicitudes = [];
+  List<dynamic> _misObras = [];
   bool cargando = true;
 
   @override
@@ -26,16 +28,54 @@ class _PerfilPublicoPageState extends State<PerfilPublicoPage> {
       final data =
       await ApiService.instance.obtenerPerfilUsuario(widget.usuarioId);
 
-      print(data);
+      // Cargar solicitudes del empleado autenticado para saber si ya solicitó
+      List<dynamic> solicitudes = [];
+      try {
+        solicitudes = await ApiService.instance.obtenerMisSolicitudes();
+      } catch (_) {}
+
+      // Cargar obras del empleado autenticado para saber si ya está asignado
+      List<dynamic> obras = [];
+      try {
+        final auth = context.read<AuthProvider>();
+        final empId = auth.currentUserProfile?.employeeId;
+        if (empId != null) {
+          obras = await ApiService.instance.obtenerObrasEmpleado(empId);
+        }
+      } catch (_) {}
 
       setState(() {
         usuario = data;
+        _misSolicitudes = solicitudes;
+        _misObras = obras;
         cargando = false;
       });
     } catch (e) {
       setState(() => cargando = false);
       debugPrint(e.toString());
     }
+  }
+
+  /// Retorna el estado de solicitud para una empresa: null si no hay, 'pendiente', 'aceptada'
+  String? _estadoSolicitud(int? empresaId) {
+    if (empresaId == null) return null;
+    for (final s in _misSolicitudes) {
+      final empresa = s['empresa'] as Map<String, dynamic>?;
+      if (empresa?['id'] == empresaId) {
+        final estado = s['estado'] as String?;
+        if (estado == 'pendiente' || estado == 'aceptada') return estado;
+      }
+    }
+    return null;
+  }
+
+  /// Verifica si el empleado autenticado ya está asignado a alguna obra de esta empresa
+  bool _estaAsignadoAEmpresa(int? empresaId) {
+    if (empresaId == null) return false;
+    for (final obra in _misObras) {
+      if (obra['empresa_id'] == empresaId) return true;
+    }
+    return false;
   }
 
   @override
@@ -235,65 +275,34 @@ class _PerfilPublicoPageState extends State<PerfilPublicoPage> {
             const SizedBox(height: 20),
 
             // OBRAS
-            if (usuario!['rol'] == 'empresa' &&
-                usuario!['obras'] != null)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-
-                  const Text(
-                    'Obras actuales',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+            if (usuario!['rol'] == 'empresa') ...[
+              if (usuario!['obras'] != null) ...[
+                const Text(
+                  'Obras actuales',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
                   ),
+                ),
 
-                  const SizedBox(height: 10),
+                const SizedBox(height: 10),
 
-                  ...List<Widget>.from(
-                    (usuario!['obras'] as List).map(
-                          (obra) => Card(
-                        child: ListTile(
-                          title: Text(obra['nombre'] ?? ''),
-                          subtitle: Text(obra['codigo_obra'] ?? ''),
-
-                          // BOTÓN SOLICITAR INGRESO
-                          trailing: ElevatedButton.icon(
-                            icon: const Icon(Icons.send),
-                            label: const Text('Solicitar ingreso'),
-                            onPressed: () async {
-                              final auth = Provider.of<AuthProvider>(context, listen: false);
-
-                              final empleadoId = auth.currentUserProfile!.id; // ID del empleado logueado
-                              final empresaId = int.parse(usuario!['id'].toString()); // ID de la empresa
-
-                              try {
-                                await ApiService.instance.solicitarIngreso(
-                                  empleadoId: empleadoId,
-                                  empresaId: empresaId,
-                                );
-
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Solicitud enviada correctamente'),
-                                  ),
-                                );
-                              } catch (e) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Error al enviar solicitud: $e'),
-                                  ),
-                                );
-                              }
-                            },
+                ...List<Widget>.from(
+                  (usuario!['obras'] as List).map(
+                        (obra) => Card(
+                          child: ListTile(
+                            title: Text(obra['nombre'] ?? ''),
+                            subtitle: Text(obra['codigo_obra'] ?? ''),
                           ),
                         ),
-                      ),
-                    ),
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 16),
+              ],
+
+              // BOTÓN SOLICITAR INGRESO — UNO SOLO PARA LA EMPRESA
+              _buildSolicitarIngresoBoton(usuario?['empresa_id'] as int?),
+            ],
 
             const SizedBox(height: 25),
 
@@ -345,6 +354,71 @@ class _PerfilPublicoPageState extends State<PerfilPublicoPage> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildSolicitarIngresoBoton(int? empresaId) {
+    final estado = _estadoSolicitud(empresaId);
+    final asignado = _estaAsignadoAEmpresa(empresaId);
+
+    if (estado == 'pendiente') {
+      return ElevatedButton.icon(
+        icon: const Icon(Icons.hourglass_empty),
+        label: const Text('Solicitud enviada'),
+        onPressed: null,
+        style: ElevatedButton.styleFrom(foregroundColor: Colors.grey),
+      );
+    }
+
+    if (estado == 'aceptada' || asignado) {
+      return ElevatedButton.icon(
+        icon: const Icon(Icons.check_circle),
+        label: const Text('Ya pertenece'),
+        onPressed: null,
+        style: ElevatedButton.styleFrom(foregroundColor: Colors.green),
+      );
+    }
+
+    return ElevatedButton.icon(
+      icon: const Icon(Icons.send),
+      label: const Text('Solicitar ingreso'),
+      onPressed: () async {
+        final auth = Provider.of<AuthProvider>(context, listen: false);
+
+        final empleadoId = int.tryParse(auth.currentUserProfile?.employeeId ?? '');
+        if (empleadoId == null || empresaId == null) {
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No se puede enviar la solicitud: datos incompletos')),
+          );
+          return;
+        }
+
+        try {
+          await ApiService.instance.solicitarIngreso(
+            empleadoId: empleadoId,
+            empresaId: empresaId,
+          );
+
+          // Agregar la solicitud al estado local para reflejar el cambio
+          setState(() {
+            _misSolicitudes.add({
+              'estado': 'pendiente',
+              'empresa': {'id': empresaId},
+            });
+          });
+
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Solicitud enviada correctamente')),
+          );
+        } catch (e) {
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error al enviar solicitud: $e')),
+          );
+        }
+      },
     );
   }
 }

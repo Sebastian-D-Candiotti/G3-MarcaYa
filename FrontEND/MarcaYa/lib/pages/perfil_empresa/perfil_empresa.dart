@@ -140,9 +140,7 @@ class PerfilEmpresaPage extends StatelessWidget {
 
             // BOTÓN EDITAR PERFIL
             ElevatedButton.icon(
-              onPressed: () {
-                // TODO: abrir modal o página para editar perfil
-              },
+              onPressed: () => context.push('/empresa/perfil/editar'),
               icon: const Icon(Icons.edit),
               label: const Text('Editar Perfil'),
             ),
@@ -174,7 +172,7 @@ class PerfilEmpresaPage extends StatelessWidget {
 
       bottomNavigationBar: const BottomNavbar(
         userRole: 'empresa',
-        currentIndex: 2,
+        currentIndex: 4,
       ),
     );
   }

@@ -15,8 +15,11 @@ module Application
       end
 
       def crear(empleado_id:, empresa_id:)
-        UseCases::Solicitudes::CrearSolicitud.new(solicitud_repo: @solicitud_repo)
-                                             .ejecutar(empleado_id: empleado_id, empresa_id: empresa_id)
+        UseCases::Solicitudes::CrearSolicitud.new(
+          solicitud_repo: @solicitud_repo,
+          asignacion_repo: @asignacion_repo,
+          obra_repo: @obra_repo
+        ).ejecutar(empleado_id: empleado_id, empresa_id: empresa_id)
       end
 
       def aceptar(id:, obra_id:)

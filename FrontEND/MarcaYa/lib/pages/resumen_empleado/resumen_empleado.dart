@@ -25,9 +25,14 @@ class _ResumenEmpleadoPageState extends State<ResumenEmpleadoPage> {
   }
   Future<void> _cargarObrasAprobadas() async {
     final auth = context.read<AuthProvider>();
+    final empleadoId = auth.currentUserProfile?.employeeId;
+    if (empleadoId == null) {
+      setState(() => cargando = false);
+      return;
+    }
     try {
       final lista = await ApiService.instance
-          .obtenerObrasEmpleado(auth.currentUserProfile!.id);
+          .obtenerObrasEmpleado(empleadoId);
       setState(() {
         obras = lista;
         cargando = false;

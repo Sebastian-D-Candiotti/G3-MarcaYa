@@ -102,6 +102,7 @@ class Api::V1::UsuariosController < Api::V1::BaseController
 
     render json: {
       id: usuario.id,
+      empresa_id: empresa&.id,
       correo: usuario.correo,
       rol: usuario.rol.to_s,
       estado: usuario.estado,
