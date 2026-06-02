@@ -1,0 +1,26 @@
+# == Schema Information: paradas
+# id, obra_id, nombre, latitud, longitud, radio_metros, estado, created_at, updated_at
+
+entrada_principal:
+  obra_id: <%= ActiveRecord::FixtureSet.identify(:activa, :obras) %>
+  nombre: Entrada Principal
+  latitud: -34.603722
+  longitud: -58.381592
+  radio_metros: 50
+  estado: activa
+
+entrada_lateral:
+  obra_id: <%= ActiveRecord::FixtureSet.identify(:activa, :obras) %>
+  nombre: Entrada Lateral
+  latitud: -34.604
+  longitud: -58.382
+  radio_metros: 60
+  estado: activa
+
+parada_inactiva:
+  obra_id: <%= ActiveRecord::FixtureSet.identify(:activa, :obras) %>
+  nombre: Parada Inactiva
+  latitud: -34.605
+  longitud: -58.383
+  radio_metros: 30
+  estado: inactiva

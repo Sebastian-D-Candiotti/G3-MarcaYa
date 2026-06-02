@@ -20,9 +20,9 @@ class Ports::Driven::ISolicitudRepositoryTest < Minitest::Test
     end
   end
 
-  def test_listar_por_obra_raises_not_implemented
+  def test_listar_por_empresa_raises_not_implemented
     assert_raises(NotImplementedError) do
-      Ports::Driven::ISolicitudRepository.listar_por_obra(1)
+      Ports::Driven::ISolicitudRepository.listar_por_empresa(1)
     end
   end
 
@@ -41,7 +41,7 @@ class Ports::Driven::ISolicitudRepositoryTest < Minitest::Test
   def test_responds_to_all_methods
     assert_respond_to Ports::Driven::ISolicitudRepository, :find_by_id!
     assert_respond_to Ports::Driven::ISolicitudRepository, :listar_por_empleado
-    assert_respond_to Ports::Driven::ISolicitudRepository, :listar_por_obra
+    assert_respond_to Ports::Driven::ISolicitudRepository, :listar_por_empresa
     assert_respond_to Ports::Driven::ISolicitudRepository, :listar_pendientes
     assert_respond_to Ports::Driven::ISolicitudRepository, :guardar
   end

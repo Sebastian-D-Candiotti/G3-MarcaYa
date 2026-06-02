@@ -1,0 +1,18 @@
+# == Schema Information: empleado_paradas
+# id, empleado_id, parada_id, activo, estado, created_at, updated_at
+
+asignacion_activa:
+  empleado_id: <%= ActiveRecord::FixtureSet.identify(:activo, :empleados) %>
+  parada_id: <%= ActiveRecord::FixtureSet.identify(:entrada_principal, :paradas) %>
+  activo: true
+  estado: activo
+  created_at: <%= Time.now %>
+  updated_at: <%= Time.now %>
+
+asignacion_inactiva:
+  empleado_id: <%= ActiveRecord::FixtureSet.identify(:activo, :empleados) %>
+  parada_id: <%= ActiveRecord::FixtureSet.identify(:entrada_lateral, :paradas) %>
+  activo: false
+  estado: inactivo
+  created_at: <%= Time.now %>
+  updated_at: <%= Time.now %>

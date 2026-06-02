@@ -18,6 +18,11 @@ module Ports
         raise NotImplementedError, "#{name}##{__method__} must be implemented"
       end
 
+      # @return [Array<Domain::Entities::Empleado>]
+      def self.todos
+        raise NotImplementedError, "#{name}##{__method__} must be implemented"
+      end
+
       # @param empleado [Domain::Entities::Empleado] The employee to persist
       # @return [Domain::Entities::Empleado]
       def self.guardar(empleado)

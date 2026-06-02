@@ -10,15 +10,17 @@ module Ports
         raise NotImplementedError, "#{name}##{__method__} must be implemented"
       end
 
-      # @param params [Hash] Solicitud creation parameters
+      # @param empleado_id [Integer] The employee ID
+      # @param empresa_id [Integer] The empresa ID
       # @return [Domain::Entities::Solicitud]
-      def self.crear(params)
+      def self.crear(empleado_id:, empresa_id:)
         raise NotImplementedError, "#{name}##{__method__} must be implemented"
       end
 
       # @param id [Integer] The solicitud ID
+      # @param obra_id [Integer] The obra ID
       # @return [Domain::Entities::Solicitud]
-      def self.aceptar(id:)
+      def self.aceptar(id:, obra_id:)
         raise NotImplementedError, "#{name}##{__method__} must be implemented"
       end
 

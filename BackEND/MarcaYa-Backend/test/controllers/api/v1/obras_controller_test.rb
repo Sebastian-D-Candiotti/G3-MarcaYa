@@ -6,6 +6,7 @@ class Api::V1::ObrasControllerTest < ActionDispatch::IntegrationTest
   setup do
     @obra = obras(:activa)
     @empresa_id = ActiveRecord::FixtureSet.identify(:activa, :empresas)
+    authenticate_as :empresa_activa
   end
 
   # ---- GET /api/v1/obras ----
@@ -56,10 +57,12 @@ class Api::V1::ObrasControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Nueva obra", body["nombre"]
   end
 
-  test "create with missing empresa_id raises error (current code does not validate)" do
-    assert_raises(ActiveRecord::NotNullViolation) do
-      post api_v1_obras_url, params: { nombre: "Obra sin empresa" }, as: :json
-    end
+  test "create with missing empresa_id returns 422" do
+    post api_v1_obras_url, params: { nombre: "Obra sin empresa" }, as: :json
+
+    assert_response :unprocessable_entity
+    body = response.parsed_body
+    assert body.key?("errors")
   end
 
   # ---- PUT /api/v1/obras/:id ----

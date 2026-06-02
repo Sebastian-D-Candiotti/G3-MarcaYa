@@ -10,3 +10,13 @@ activa:
   direccion: Av. Principal 123
   foto_url: https://example.com/foto.jpg
   estado: activo
+
+empresa_b:
+  usuario_id: <%= ActiveRecord::FixtureSet.identify(:empresa_inactiva) %>
+  nombre_empresa: Empresa B S.A.C.
+  ruc: 20987654321
+  descripcion: Otra empresa de prueba
+  telefono: 999111222
+  direccion: Av. Secundaria 456
+  estado: activo
+

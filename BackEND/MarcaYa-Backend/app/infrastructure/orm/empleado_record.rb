@@ -11,6 +11,9 @@ module Infrastructure
                               foreign_key: :empleado_id
       has_many :valoraciones, class_name: "Infrastructure::Orm::ValoracionRecord",
                                foreign_key: :empleado_id
+      has_many :empleado_paradas, class_name: "Infrastructure::Orm::EmpleadoParadaRecord",
+                                   foreign_key: :empleado_id, dependent: :destroy
     end
   end
 end
+

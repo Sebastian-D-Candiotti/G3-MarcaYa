@@ -21,3 +21,14 @@ activa:
   capacidad_empleados: 50
   codigo_obra: OB-001
   usuario_creador_id: <%= ActiveRecord::FixtureSet.identify(:empresa_activa, :usuarios) %>
+
+obra_b:
+  empresa_id: <%= ActiveRecord::FixtureSet.identify(:empresa_b, :empresas) %>
+  nombre: Obra B de prueba
+  latitud: -12.05
+  longitud: -77.05
+  radio_metros: 100
+  hora_inicio: <%= '"08:00:00"' %>
+  hora_fin: <%= '"17:00:00"' %>
+  estado: activa
+

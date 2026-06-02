@@ -27,3 +27,12 @@
 /tmp/storage/*
 !/tmp/storage/
 !/tmp/storage/.keep
+
+# Ignore vendored gems (bundle install puts them here).
+/vendor/bundle/
+
+# Ignore test files (kept locally for development/verification).
+/test/
+
+# macOS
+.DS_Store

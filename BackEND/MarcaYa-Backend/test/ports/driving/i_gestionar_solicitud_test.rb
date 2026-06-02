@@ -16,13 +16,13 @@ class Ports::Driving::IGestionarSolicitudTest < Minitest::Test
 
   def test_crear_raises_not_implemented
     assert_raises(NotImplementedError) do
-      Ports::Driving::IGestionarSolicitud.crear({ empleado_id: 1, obra_id: 1 })
+      Ports::Driving::IGestionarSolicitud.crear(empleado_id: 1, empresa_id: 1)
     end
   end
 
   def test_aceptar_raises_not_implemented
     assert_raises(NotImplementedError) do
-      Ports::Driving::IGestionarSolicitud.aceptar(id: 1)
+      Ports::Driving::IGestionarSolicitud.aceptar(id: 1, obra_id: 1)
     end
   end
 

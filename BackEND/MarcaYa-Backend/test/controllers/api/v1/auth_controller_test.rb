@@ -1,8 +1,8 @@
 require "test_helper"
 
 class Api::V1::AuthControllerTest < ActionDispatch::IntegrationTest
-  # Characterization tests — lock CURRENT behavior before refactoring.
-  # These tests document what the existing API does, even if the behavior is not ideal.
+  # Characterization tests — updated for hexagonal architecture refactoring.
+  # Auth now uses bcrypt + JWT (not plain text + token_demo).
 
   setup do
     @empresa = usuarios(:empresa_activa)
@@ -12,14 +12,14 @@ class Api::V1::AuthControllerTest < ActionDispatch::IntegrationTest
 
   # ---- POST /api/v1/auth/login ----
 
-  test "login empresa with valid credentials returns 200 with token_demo and perfil" do
+  test "login empresa with valid credentials returns 200 with token and perfil" do
     post api_v1_auth_login_url, params: { correo: @empresa.correo, clave: "plaintext123" }, as: :json
 
     assert_response :ok
     body = response.parsed_body
 
-    # Current behavior: hardcoded "token_demo"
-    assert_equal "token_demo", body["token"]
+    # Auth now returns a real JWT instead of "token_demo"
+    assert body["token"].present?
     assert_equal "empresa", body["rol"]
 
     perfil = body["perfil"]
@@ -27,13 +27,13 @@ class Api::V1::AuthControllerTest < ActionDispatch::IntegrationTest
     assert_equal @empresa.id, perfil["id"]
   end
 
-  test "login empleado with valid credentials returns 200 with token_demo and perfil" do
+  test "login empleado with valid credentials returns 200 with token and perfil" do
     post api_v1_auth_login_url, params: { correo: @empleado.correo, clave: "pass456" }, as: :json
 
     assert_response :ok
     body = response.parsed_body
 
-    assert_equal "token_demo", body["token"]
+    assert body["token"].present?
     assert_equal "empleado", body["rol"]
 
     perfil = body["perfil"]
@@ -46,7 +46,6 @@ class Api::V1::AuthControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :unauthorized
     body = response.parsed_body
-    # Current behavior: specific error message
     assert_equal "Contraseña incorrecta", body["error"]
   end
 
@@ -55,7 +54,6 @@ class Api::V1::AuthControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :unauthorized
     body = response.parsed_body
-    # Current behavior: specific error message
     assert_equal "Usuario no encontrado", body["error"]
   end
 
@@ -70,12 +68,16 @@ class Api::V1::AuthControllerTest < ActionDispatch::IntegrationTest
   # ---- POST /api/v1/auth/registro ----
 
   test "registro with valid params returns 201" do
-    post api_v1_auth_registro_url, params: { correo: "nuevo@test.com", clave: "mipassword", rol: "empleado" }, as: :json
+    post api_v1_auth_registro_url, params: {
+      correo: "nuevo@test.com", clave: "mipassword",
+      rol: "empleado", nombre: "Nuevo", apellido: "Usuario"
+    }, as: :json
 
     assert_response :created
     body = response.parsed_body
     assert_equal "Usuario registrado", body["mensaje"]
     assert body["id"].present?
+    assert body["token"].present?
   end
 
   # ---- Helper assertions ----

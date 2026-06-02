@@ -1,100 +1,107 @@
-class Api::V1::SolicitudesController < ApplicationController
+class Api::V1::SolicitudesController < Api::V1::BaseController
 
   # GET /api/v1/solicitudes
   def index
-    solicitudes = Solicitud.where(estado: 'pendiente')
+    solicitudes = Rails.configuration.di.solicitud_facade.listar
 
     resultado = solicitudes.map do |s|
-        empleado = s.empleado
-        obra = s.obra
+      empleado = Rails.configuration.di.repos[:empleado].find_by_id!(s.empleado_id) rescue nil
+      empresa = Rails.configuration.di.repos[:empresa].find_by_id!(s.empresa_id) rescue nil
 
-        {
+      {
         id: s.id,
-        estado: s.estado,
-
+        estado: s.estado.to_s,
         empleado: {
-            id: empleado.id,
-            nombre: empleado.nombre,
-            apellido: empleado.apellido,
-            dni: empleado.dni
+          id: empleado&.id,
+          nombre: empleado&.nombre,
+          apellido: empleado&.apellido,
+          dni: empleado&.dni
         },
-
-        obra: {
-            id: obra.id,
-            nombre: obra.nombre
+        empresa: {
+          id: empresa&.id,
+          nombre: empresa&.nombre_empresa
         }
-        }
+      }
     end
 
     render json: resultado
-    end
+  end
+
   # POST /api/v1/solicitudes
   def create
-    solicitud = Solicitud.create!(
-        empleado_id: params[:empleado_id],
-        obra_id: params[:obra_id],
-        estado: 'pendiente'
-        )
-    render json: solicitud
+    solicitud = Rails.configuration.di.solicitud_facade.crear(
+      empleado_id: params[:empleado_id],
+      empresa_id: params[:empresa_id]
+    )
+
+    render json: Serializer::SolicitudSerializer.as_json(solicitud)
+  rescue ::Domain::Errors::ValidacionError => e
+    render json: { errors: [e.message] }, status: :unprocessable_entity
   end
 
   # PUT /api/v1/solicitudes/:id/aceptar
   def aceptar
-    solicitud = Solicitud.find(params[:id])
-    solicitud.update!(estado: 'aceptada')
-    render json: solicitud
+    solicitud = Rails.configuration.di.solicitud_facade.aceptar(
+      id: params[:id],
+      obra_id: params[:obra_id]
+    )
+    render json: Serializer::SolicitudSerializer.as_json(solicitud)
+  rescue ::Domain::Errors::SolicitudNoEncontradaError
+    render json: { error: "Solicitud no encontrada" }, status: :not_found
+  rescue ::Domain::Errors::TransicionEstadoInvalidaError, ::Domain::Errors::ValidacionError => e
+    render json: { error: e.message }, status: :unprocessable_entity
   end
 
   # PUT /api/v1/solicitudes/:id/rechazar
   def rechazar
-    solicitud = Solicitud.find(params[:id])
-    solicitud.update!(estado: 'rechazada')
-    render json: solicitud
+    solicitud = Rails.configuration.di.solicitud_facade.rechazar(id: params[:id])
+    render json: Serializer::SolicitudSerializer.as_json(solicitud)
+  rescue ::Domain::Errors::SolicitudNoEncontradaError
+    render json: { error: "Solicitud no encontrada" }, status: :not_found
+  rescue ::Domain::Errors::TransicionEstadoInvalidaError => e
+    render json: { error: e.message }, status: :unprocessable_entity
   end
 
+  # GET /api/v1/empleados/:id/obras
   def obras_empleado
-    solicitudes = Solicitud
-                    .where(
-                        empleado_id: params[:id],
-                        estado: 'aceptada'
-                    )
-                    .distinct
+    obras = Rails.configuration.di.empleado_facade.obtener_obras(empleado_id: params[:id])
 
-    resultado = solicitudes.map do |s|
-        obra = s.obra
-
-        {
-        id: obra.id,
-        nombre: obra.nombre,
-        latitud: obra.latitud,
-        longitud: obra.longitud,
-        radio: obra.radio
-        }
+    resultado = obras.map do |o|
+      {
+        id: o.id,
+        nombre: o.nombre,
+        latitud: o.latitud,
+        longitud: o.longitud,
+        radio: o.radio_metros
+      }
     end
 
     render json: resultado
+  rescue ::Domain::Errors::UsuarioNoEncontradoError,
+         ::Domain::Errors::ObraNoEncontradaError
+    render json: { error: "Empleado no encontrado" }, status: :not_found
+  end
+
+  # GET /api/v1/empleados/:id/historial_solicitudes
+  def historial_empleado
+    solicitudes = Rails.configuration.di.repos[:solicitud].listar_por_empleado(params[:id])
+                                                    .sort_by(&:created_at)
+                                                    .reverse
+
+    resultado = solicitudes.map do |s|
+      empresa = Rails.configuration.di.repos[:empresa].find_by_id!(s.empresa_id) rescue nil
+
+      {
+        id: s.id,
+        estado: s.estado.to_s,
+        fecha: s.created_at,
+        empresa: {
+          id: empresa&.id,
+          nombre: empresa&.nombre_empresa
+        }
+      }
     end
 
-    def historial_empleado
-        solicitudes = Solicitud.where(
-            empleado_id: params[:id]
-        ).order(created_at: :desc)
-
-        resultado = solicitudes.map do |s|
-            obra = s.obra
-
-            {
-            id: s.id,
-            estado: s.estado,
-            fecha: s.created_at,
-            obra: {
-                id: obra.id,
-                nombre: obra.nombre
-            }
-            }
-        end
-
-        render json: resultado
-        end
-
+    render json: resultado
+  end
 end

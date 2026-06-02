@@ -1,28 +1,29 @@
 require "test_helper"
 
 class Api::V1::EmpleadosControllerTest < ActionDispatch::IntegrationTest
-  # Characterization tests — lock CURRENT behavior before refactoring.
+  # Characterization tests — updated for hexagonal architecture refactoring.
+  # Syntax errors fixed; empleados endpoints now delegate to facades.
 
   setup do
     @empleado = empleados(:activo)
+    authenticate_as :empleado_activo
   end
-
-  # ---- GET /api/v1/empleados/:id/obras (routed through solicitudes#obras_empleado, no named route) ----
-
-  # SKIPPED: Known bug — solicitudes#obras_empleado calls obra.radio but the column is
-  # radio_metros. This raises NoMethodError. Will be fixed during refactoring.
-  # test "obras returns 200 with array of works for the employee" do
-  #   get "/api/v1/empleados/#{@empleado.id}/obras", as: :json
-  #   assert_response :ok
-  # end
 
   # ---- GET /api/v1/empleados/actuales ----
 
-  # SKIPPED: Known bug — def actuales is nested inside def obras in empleados_controller.rb,
-  # so the method is not defined until obras is first called. This returns 404.
-  # This is a code smell that will be fixed during refactoring.
-  # test "actuales returns 200 with array of active employees" do
-  #   get actuales_api_v1_empleados_url, params: { empresa_id: 0 }, as: :json
-  #   assert_response :ok
-  # end
+  test "actuales returns 200 with array of active employees" do
+    get actuales_api_v1_empleados_url, as: :json
+
+    assert_response :ok
+    body = response.parsed_body
+    assert body.is_a?(Array)
+    assert body.any?
+    entry = body.first
+    assert entry.key?("id")
+    assert entry.key?("nombre")
+    assert entry.key?("apellido")
+    assert entry.key?("dni")
+    assert entry.key?("descripcion")
+    assert entry.key?("telefono")
+  end
 end

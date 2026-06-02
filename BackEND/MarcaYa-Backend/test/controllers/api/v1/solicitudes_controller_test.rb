@@ -1,12 +1,14 @@
 require "test_helper"
 
 class Api::V1::SolicitudesControllerTest < ActionDispatch::IntegrationTest
-  # Characterization tests — lock CURRENT behavior before refactoring.
+  # Characterization tests — updated for hexagonal architecture refactoring.
+  # Domain rules now enforce valid state transitions (pendiente -> aceptada/rechazada).
 
   setup do
     @solicitud_pendiente = solicitudes(:pendiente)
     @solicitud_aceptada = solicitudes(:aceptada)
     @empleado = empleados(:activo)
+    authenticate_as :empresa_activa
   end
 
   # ---- GET /api/v1/solicitudes ----
@@ -22,38 +24,62 @@ class Api::V1::SolicitudesControllerTest < ActionDispatch::IntegrationTest
     assert entry.key?("id")
     assert entry.key?("estado")
     assert entry.key?("empleado")
-    assert entry.key?("obra")
+    assert entry.key?("empresa")
+    refute entry.key?("obra")
     assert_equal "pendiente", entry["estado"]
   end
 
   # ---- POST /api/v1/solicitudes ----
 
-  test "create with valid params returns 200 (current behavior uses create! + render)" do
+  test "create with valid params returns 422 when duplicate (domain rule enforced)" do
     post api_v1_solicitudes_url, params: {
       empleado_id: @empleado.id,
-      obra_id: @solicitud_pendiente.obra_id
+      empresa_id: @solicitud_pendiente.empresa_id
     }, as: :json
 
-    assert_response :ok
+    assert_response :unprocessable_entity
     body = response.parsed_body
-    assert body.key?("id")
-    assert_equal "pendiente", body["estado"]
+    assert_includes body["errors"].first, "solicitud pendiente"
   end
 
-  # ---- PUT /api/v1/solicitudes/:id/aceptar (no named route) ----
+  test "create with valid params for another company succeeds" do
+    empresa_b = empresas(:empresa_b)
+    post api_v1_solicitudes_url, params: {
+      empleado_id: @empleado.id,
+      empresa_id: empresa_b.id
+    }, as: :json
 
-  test "aceptar returns 200 with updated estado" do
-    put "/api/v1/solicitudes/#{@solicitud_pendiente.id}/aceptar", as: :json
+    assert_response :success
+    body = response.parsed_body
+    assert_equal "pendiente", body["estado"]
+    assert_equal empresa_b.id, body["empresaId"]
+  end
+
+  # ---- PUT /api/v1/solicitudes/:id/aceptar ----
+
+  test "aceptar returns 200 with updated estado when company matches" do
+    obra = obras(:activa)
+    put "/api/v1/solicitudes/#{@solicitud_pendiente.id}/aceptar", params: { obra_id: obra.id }, as: :json
 
     assert_response :ok
     body = response.parsed_body
     assert_equal "aceptada", body["estado"]
   end
 
-  # ---- PUT /api/v1/solicitudes/:id/rechazar (no named route) ----
+  test "aceptar returns 422 when obra belongs to different company" do
+    obra_mismatch = obras(:obra_b)
+    put "/api/v1/solicitudes/#{@solicitud_pendiente.id}/aceptar", params: { obra_id: obra_mismatch.id }, as: :json
+
+    assert_response :unprocessable_entity
+    body = response.parsed_body
+    assert_equal "La obra no pertenece a la empresa de la solicitud", body["error"]
+  end
+
+  # ---- PUT /api/v1/solicitudes/:id/rechazar ----
 
   test "rechazar returns 200 with updated estado" do
-    put "/api/v1/solicitudes/#{@solicitud_aceptada.id}/rechazar", as: :json
+    # Use a pending solicitud — domain rules enforce valid state transitions
+    put "/api/v1/solicitudes/#{@solicitud_pendiente.id}/rechazar", as: :json
 
     assert_response :ok
     body = response.parsed_body
@@ -62,12 +88,13 @@ class Api::V1::SolicitudesControllerTest < ActionDispatch::IntegrationTest
 
   # ---- GET /api/v1/empleados/:id/obras (routed through solicitudes#obras_empleado) ----
 
-  # SKIPPED: Known bug — solicitudes#obras_empleado calls obra.radio but the column is
-  # radio_metros. This raises NoMethodError. Will be fixed when refactoring.
-  # test "obras_empleado returns 200" do
-  #   get "/api/v1/empleados/#{@empleado.id}/obras", as: :json
-  #   assert_response :ok
-  # end
+  test "obras_empleado returns 200 with array of works for the employee" do
+    get "/api/v1/empleados/#{@empleado.id}/obras", as: :json
+
+    assert_response :ok
+    body = response.parsed_body
+    assert body.is_a?(Array)
+  end
 
   # ---- GET /api/v1/empleados/:id/historial_solicitudes ----
 
@@ -77,5 +104,8 @@ class Api::V1::SolicitudesControllerTest < ActionDispatch::IntegrationTest
     assert_response :ok
     body = response.parsed_body
     assert body.is_a?(Array)
+    entry = body.first
+    assert entry.key?("empresa")
+    refute entry.key?("obra")
   end
 end

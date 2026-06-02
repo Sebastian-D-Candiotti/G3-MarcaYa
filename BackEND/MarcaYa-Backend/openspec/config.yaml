@@ -1,0 +1,78 @@
+schema: spec-driven
+
+context: |
+  Tech stack: Ruby 4.0.4, Rails 8.1.3 (API-only), PostgreSQL, Puma
+  Architecture: Hexagonal (Ports & Adapters) — domain/entities, domain/services, ports/driven+driving, infrastructure/repositories+services, application/facades+use_cases, controllers/api/v1, serializers
+  Testing: Minitest (68 test files), fixtures, rails test, no coverage tool
+  Auth: JWT (custom service) + bcrypt (password hashing)
+  Style: RuboCop Rails Omakase, conventional commits
+  Deployment: Docker + Kamal, Thruster
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+    - Consider impact on all hexagonal layers (domain, ports, infrastructure, application, controllers)
+  specs:
+    - Use Given/When/Then for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+  design:
+    - Include sequence diagrams for complex flows
+    - Document architecture decisions with rationale
+    - Maintain hexagonal layer boundaries in all designs
+  tasks:
+    - Group by phase, use hierarchical numbering
+    - Keep tasks completable in one session
+    - Map tasks to hexagonal layers (domain → ports → infrastructure → application → controllers)
+  apply:
+    - Follow existing code patterns and hexagonal architecture
+    - Place entities in app/domain/entities/, value objects in app/domain/value_objects/
+    - Place driven ports in app/ports/driven/, driving ports in app/ports/driving/
+    - Place AR repositories in app/infrastructure/repositories/, services in app/infrastructure/services/
+    - Place use cases in app/application/use_cases/, facades in app/application/facades/
+    - Place API controllers in app/controllers/api/v1/
+    - Place serializers in app/serializers/
+    - Use Domain::Errors for custom error classes
+    - Use ActiveRecord::Base subclasses in app/models/ for persistence only
+    tdd: true
+    test_command: "bundle exec rails test"
+  verify:
+    test_command: "bundle exec rails test"
+    build_command: "bundle exec rails db:prepare RAILS_ENV=test"
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas
+
+testing:
+  strict_tdd: true
+  runner:
+    command: "bundle exec rails test"
+    framework: Minitest
+  layers:
+    unit:
+      available: true
+      tools: "domain/entities/*_test.rb, domain/services/*_test.rb, domain/value_objects/*_test.rb"
+    application:
+      available: true
+      tools: "application/use_cases/**/*_test.rb, application/facades/*_test.rb"
+    controller:
+      available: true
+      tools: "controllers/api/**/*_test.rb"
+    infrastructure:
+      available: true
+      tools: "infrastructure/repositories/*_test.rb, infrastructure/services/*_test.rb"
+    model:
+      available: true
+      tools: "models/*_test.rb"
+  coverage:
+    available: false
+    command: "—"
+  quality:
+    linter:
+      available: true
+      command: "bundle exec rubocop"
+    security_scan:
+      available: true
+      command: "bundle exec brakeman"
+    dependency_audit:
+      available: true
+      command: "bundle exec bundler-audit"

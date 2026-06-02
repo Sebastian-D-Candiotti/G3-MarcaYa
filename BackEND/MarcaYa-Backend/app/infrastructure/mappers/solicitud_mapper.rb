@@ -8,7 +8,7 @@ module Infrastructure
         Domain::Entities::Solicitud.new(
           id: record.id,
           empleado_id: record.empleado_id,
-          obra_id: record.obra_id,
+          empresa_id: record.empresa_id,
           estado: record.estado,
           created_at: record.created_at,
           updated_at: record.updated_at
@@ -19,7 +19,7 @@ module Infrastructure
       def self.to_record_attrs(entity)
         attrs = {
           empleado_id: entity.empleado_id,
-          obra_id: entity.obra_id,
+          empresa_id: entity.empresa_id,
           estado: entity.estado.to_s
         }
         attrs[:id] = entity.id if entity.id

@@ -13,6 +13,11 @@ module Ports
       end
 
       # @return [Array<Domain::Entities::Obra>]
+      def self.todos
+        raise NotImplementedError, "#{name}##{__method__} must be implemented"
+      end
+
+      # @return [Array<Domain::Entities::Obra>]
       def self.listar_activas
         raise NotImplementedError, "#{name}##{__method__} must be implemented"
       end

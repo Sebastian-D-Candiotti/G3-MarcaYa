@@ -5,9 +5,9 @@ module Infrastructure
     class UsuarioRecord < ActiveRecord::Base
       self.table_name = "usuarios"
 
-      # Use has_secure_password with the existing clave_hash column
-      # validations: false because existing records may have plain-text passwords
-      has_secure_password :clave_hash, validations: false
+      # NOTE: Password hashing is handled by BcryptPasswordService (hexagonal layer).
+      # We do NOT use has_secure_password because it intercepts the clave_hash
+      # column getter and returns nil, breaking our mapper.
 
       has_many :empleados, class_name: "Infrastructure::Orm::EmpleadoRecord",
                             foreign_key: :usuario_id

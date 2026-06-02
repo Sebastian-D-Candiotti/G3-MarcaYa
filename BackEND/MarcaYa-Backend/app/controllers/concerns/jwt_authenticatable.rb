@@ -16,7 +16,7 @@ module JwtAuthenticatable
   extend ActiveSupport::Concern
 
   included do
-    before_action :authenticate!, except: [:login, :registro] if respond_to?(:before_action)
+    before_action :authenticate! if respond_to?(:before_action)
   end
 
   private
@@ -25,8 +25,8 @@ module JwtAuthenticatable
     token = extract_token
     raise JWT::DecodeError, "Missing token" unless token
 
-    payload = Jwt.decode(token)
-    @current_user = Usuario.find(payload["user_id"])
+    payload = Infrastructure::Services::JwtTokenService.decode(token)
+    @current_user = Infrastructure::Orm::UsuarioRecord.find(payload["user_id"])
   rescue JWT::DecodeError, ActiveRecord::RecordNotFound
     render json: { error: "No autorizado" }, status: :unauthorized
   end

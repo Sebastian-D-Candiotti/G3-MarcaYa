@@ -11,7 +11,7 @@ require_relative "../../../app/infrastructure/repositories/ar_usuario_repository
 
 class Infrastructure::Repositories::ArUsuarioRepositoryTest < ActiveSupport::TestCase
   def setup
-    @repository = Infrastructure::Repositories::ArUsuarioRepository
+    @repository = Infrastructure::Repositories::ArUsuarioRepository.new
   end
 
   test "find_by_id! returns domain entity for existing record" do

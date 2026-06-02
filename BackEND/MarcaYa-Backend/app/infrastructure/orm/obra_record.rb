@@ -9,6 +9,9 @@ module Infrastructure
                             foreign_key: :empresa_id
       has_many :solicitudes, class_name: "Infrastructure::Orm::SolicitudRecord",
                               foreign_key: :obra_id
+      has_many :paradas, class_name: "Infrastructure::Orm::ParadaRecord",
+                          foreign_key: :obra_id, dependent: :destroy
     end
   end
 end
+

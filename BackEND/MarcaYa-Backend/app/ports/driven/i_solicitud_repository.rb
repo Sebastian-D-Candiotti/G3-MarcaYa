@@ -18,9 +18,9 @@ module Ports
         raise NotImplementedError, "#{name}##{__method__} must be implemented"
       end
 
-      # @param obra_id [Integer] The obra ID
+      # @param empresa_id [Integer] The empresa ID
       # @return [Array<Domain::Entities::Solicitud>]
-      def self.listar_por_obra(obra_id)
+      def self.listar_por_empresa(empresa_id)
         raise NotImplementedError, "#{name}##{__method__} must be implemented"
       end
 

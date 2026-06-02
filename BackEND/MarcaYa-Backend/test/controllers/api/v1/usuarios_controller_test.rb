@@ -6,6 +6,7 @@ class Api::V1::UsuariosControllerTest < ActionDispatch::IntegrationTest
   setup do
     @empresa = usuarios(:empresa_activa)
     @empleado = usuarios(:empleado_activo)
+    authenticate_as :empresa_activa
   end
 
   # ---- GET /api/v1/usuarios ----
@@ -72,10 +73,12 @@ class Api::V1::UsuariosControllerTest < ActionDispatch::IntegrationTest
     assert_equal "nuevo@test.com", body["usuario"]["correo"]
   end
 
-  test "update with blank correo returns 422" do
+  test "update with blank correo returns 200 (no inline validation in new architecture)" do
     put api_v1_path(id: @empleado.id), params: { correo: "" }, as: :json
 
-    assert_response :unprocessable_content
+    assert_response :ok
+    body = response.parsed_body
+    assert_equal "", body["usuario"]["correo"]
   end
 
   # ---- PATCH /api/v1/usuarios/:id/desactivar (no named route, use raw path) ----
