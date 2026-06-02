@@ -52,6 +52,11 @@ Rails.application.routes.draw do
         end
       end
 
+      # VALORACIONES
+      post   "valoraciones", to: "valoraciones#crear"
+      get    "valoraciones/:usuario_id", to: "valoraciones#listar"
+      get    "valoraciones/:usuario_id/promedio", to: "valoraciones#promedio"
+
       # ASISTENCIA
       namespace :asistencia do
         post 'marcar-entrada', to: 'asistencias#marcar_entrada'

@@ -54,6 +54,13 @@ module DependencyContainer
       )
     end
 
+    def valoracion_facade
+      @valoracion_facade ||= Application::Facades::ValoracionFacade.new(
+        valoracion_repo: repos[:valoracion],
+        empleado_repo: repos[:empleado]
+      )
+    end
+
     def asistencia_facade
       @asistencia_facade ||= Application::Facades::AsistenciaFacade.new(
         asistencia_repo: repos[:asistencia],
