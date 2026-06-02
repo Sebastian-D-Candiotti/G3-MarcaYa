@@ -569,6 +569,81 @@ Estado actual de una parada específica. EMPRESA/ADMIN.
 
 ---
 
+## Valoraciones
+
+### POST `/valoraciones`
+
+Crear una valoración. Autenticado (empleado).
+
+**Request:**
+```json
+{
+  "empresa_id": 1,
+  "puntuacion": 5,
+  "comentario": "Excelente empresa, muy profesional"
+}
+```
+
+**Response 201:**
+```json
+{
+  "id": 1,
+  "empleadoId": 1,
+  "empresaId": 1,
+  "puntuacion": 5,
+  "comentario": "Excelente empresa, muy profesional",
+  "createdAt": "2026-06-01T10:00:00Z"
+}
+```
+
+**Errors:**
+- `404` — No se encontró empleado asociado al usuario
+- `422` — Puntuación debe ser un entero entre 1 y 5
+
+---
+
+### GET `/valoraciones/:usuario_id`
+
+Ver valoraciones de un usuario/empresa. Autenticado.
+
+**Response 200:**
+```json
+[
+  {
+    "id": 1,
+    "empleadoId": 1,
+    "empresaId": 1,
+    "puntuacion": 5,
+    "comentario": "Excelente",
+    "createdAt": "2026-06-01T10:00:00Z"
+  },
+  {
+    "id": 2,
+    "empleadoId": 2,
+    "empresaId": 1,
+    "puntuacion": 4,
+    "comentario": "Muy bien",
+    "createdAt": "2026-06-01T11:00:00Z"
+  }
+]
+```
+
+---
+
+### GET `/valoraciones/:usuario_id/promedio`
+
+Obtener promedio de valoraciones. Autenticado.
+
+**Response 200:**
+```json
+{
+  "promedio": 4.5,
+  "total": 10
+}
+```
+
+---
+
 ## Errores Generales
 
 Todos los endpoints pueden devolver:
@@ -626,8 +701,8 @@ El sistema valida si las coordenadas GPS están dentro del radio configurado de 
 | **Asistencia** | ✅ **Completo** | **6** |
 | Reportes | ❌ Pendiente | 0 |
 | Cronograma | ❌ Pendiente | 0 |
-| Valoraciones | ❌ Pendiente | 0 |
+| Valoraciones | ✅ Completo | 3 |
 | Suscripciones | ❌ Pendiente | 0 |
 | Password Reset | ❌ Pendiente | 0 |
 
-**Total endpoints implementados: 33**
+**Total endpoints implementados: 42**
