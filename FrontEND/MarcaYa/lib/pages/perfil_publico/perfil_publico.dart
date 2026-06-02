@@ -266,12 +266,12 @@ class _PerfilPublicoPageState extends State<PerfilPublicoPage> {
                               final auth = Provider.of<AuthProvider>(context, listen: false);
 
                               final empleadoId = auth.currentUserProfile!.id; // ID del empleado logueado
-                              final obraId = int.parse(obra['id'].toString()); // ID de la obra seleccionada
+                              final empresaId = int.parse(usuario!['id'].toString()); // ID de la empresa
 
                               try {
                                 await ApiService.instance.solicitarIngreso(
-                                  obraId: obraId,
                                   empleadoId: empleadoId,
+                                  empresaId: empresaId,
                                 );
 
                                 ScaffoldMessenger.of(context).showSnackBar(

@@ -42,7 +42,16 @@ class _VerSolicitudesPageState extends State<VerSolicitudesPage> {
 
   void _aceptar(dynamic solicitud) async {
     try {
-      await ApiService.instance.aceptarSolicitud(solicitud['id']);
+      // Al aceptar, se asigna a una obra. Por defecto usamos un selector simple.
+      // En una versión futura se podría elegir la obra desde un dropdown.
+      final obraId = await _seleccionarObra();
+      if (obraId == null) return; // usuario canceló
+
+      await ApiService.instance.aceptarSolicitud(
+        solicitud['id'],
+        obraId: obraId,
+      );
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -54,6 +63,48 @@ class _VerSolicitudesPageState extends State<VerSolicitudesPage> {
     } catch (e) {
       debugPrint('Error aceptar solicitud: $e');
     }
+  }
+
+  /// Diálogo simple para ingresar el ID de obra donde asignar al empleado.
+  /// En producción, debería ser un selector de obras de la empresa.
+  Future<int?> _seleccionarObra() async {
+    final controller = TextEditingController();
+    final obraId = await showDialog<int>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Asignar a obra'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Ingresá el ID de la obra donde asignar al empleado:'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'ID de obra',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final id = int.tryParse(controller.text);
+              if (id != null) Navigator.pop(ctx, id);
+            },
+            child: const Text('Aceptar'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    return obraId;
   }
 
   void _rechazar(dynamic solicitud) async {

@@ -1,178 +1,68 @@
 # MarcaYa-Backend 🚀
 
-Backend desarrollado en Ruby on Rails para el sistema MarcaYa.  
-Este proyecto funciona como API REST conectada a PostgreSQL y consumida desde Flutter.
+API REST de MarcaYA — Ruby on Rails 8.1 + PostgreSQL.
 
----
+## Requisitos
 
-# 📋 Requisitos Previos
-
-Antes de ejecutar el proyecto, instalar:
-
-- Ruby 4.x
-- Ruby on Rails 8.x
-- PostgreSQL
-- Git
+- Ruby 4.0.x
+- Rails 8.1.x
+- PostgreSQL 16+
 - Bundler
 
----
-
-# 📦 Instalación del Proyecto
-
-## 1. Clonar repositorio
+## Inicio rápido
 
 ```bash
-git clone URL_DEL_REPOSITORIO
-```
-
-## 2. Entrar al proyecto
-
-```bash
-cd MarcaYa-Backend
-```
-
-## 3. Instalar dependencias
-
-```bash
+# 1. Dependencias
 bundle install
-```
 
----
+# 2. Configurar database.yml (cambiar password de PostgreSQL)
+#    Ver: config/database.yml
 
-# 🐘 Configuración PostgreSQL
-
-## Crear base de datos PostgreSQL
-
-Abrir pgAdmin o SQL Shell y ejecutar:
-
-```sql
-CREATE DATABASE "MarcaYa";
-```
-
----
-
-# ⚙️ Configurar `database.yml`
-
-Abrir:
-
-```text
-config/database.yml
-```
-
-y verificar:
-
-```yml
-default: &default
-  adapter: postgresql
-  encoding: unicode
-  pool: 5
-  host: 127.0.0.1
-  username: postgres
-  password: TU_PASSWORD
-  port: 5432
-
-development:
-  <<: *default
-  database: MarcaYa
-```
-
-⚠️ Reemplazar `TU_PASSWORD` por la contraseña local de PostgreSQL.
-
----
-
-# 🛠️ Migraciones
-
-Crear tablas automáticamente:
-
-```bash
+# 3. Crear BD y migrar
 rails db:create
-```
-
-Luego:
-
-```bash
 rails db:migrate
-```
 
----
-
-# 🌱 Datos Iniciales (Opcional)
-
-Insertar datos de prueba:
-
-```bash
+# 4. Sembrar datos de prueba
 rails db:seed
+
+# 5. Iniciar servidor
+rails s -b 0.0.0.0 -p 3000
 ```
 
----
+## Credenciales de prueba (después de db:seed)
 
-# ▶️ Levantar Backend
+| Rol       | Correo                  | Contraseña |
+|-----------|------------------------|------------|
+| Empresa   | empresa@marcaya.com    | 123456     |
+| Empleado  | empleado@marcaya.com   | 123456     |
 
-Ejecutar:
+## Tests
 
 ```bash
-rails s -b 0.0.0.0
+rails test
 ```
 
-El backend quedará disponible en:
+## Arquitectura
 
-```text
-http://localhost:3000
 ```
-
----
-
-# 🌐 API Base URL
-
-```text
-http://localhost:3000/api/v1
-```
-
----
-
-# 🔑 Login de Prueba
-
-## Empresa
-
-```text
-Correo:
-empresa@markaya.com
-
-Contraseña:
-123456
-```
-
-## Empleado
-
-```text
-Correo:
-empleado@markaya.com
-
-Contraseña:
-123456
-```
-
----
-
-# 📁 Estructura Principal
-
-```text
 app/
- ├── controllers/
- ├── models/
- ├── services/
- └── views/
-
-db/
- ├── migrate/
- └── seeds.rb
+├── controllers/api/v1/    → Endpoints REST
+├── application/
+│   ├── facades/           → Fachadas (punto de entrada a use cases)
+│   └── use_cases/         → Casos de uso
+├── domain/
+│   ├── entities/          → Entidades de dominio
+│   ├── value_objects/     → Value Objects (CoordenadaGps, etc.)
+│   └── services/          → Servicios de dominio (GPS validation, etc.)
+├── infrastructure/
+│   ├── repositories/      → Implementaciones AR de repositorios
+│   ├── orm/               → Active Record models (persistencia)
+│   ├── mappers/           → Mappers ORM ←→ Entidad
+│   └── services/          → Servicios infra (BCrypt, JWT)
+├── ports/
+│   ├── driving/           → Interfaces de entrada (facades)
+│   └── driven/            → Interfaces de salida (repos)
+└── models/                → Active Record models (solo para queries directas)
 ```
 
----
-
-# 🚀 Tecnologías Utilizadas
-
-- Ruby on Rails
-- PostgreSQL
-- Flutter
-- Git
+Ver el `README.md` raíz del proyecto para instrucciones completas de setup.

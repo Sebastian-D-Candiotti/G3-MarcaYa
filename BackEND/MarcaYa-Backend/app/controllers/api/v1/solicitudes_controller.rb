@@ -62,6 +62,57 @@ class Api::V1::SolicitudesController < Api::V1::BaseController
     render json: { error: e.message }, status: :unprocessable_entity
   end
 
+  # GET /api/v1/solicitudes/:id
+  def show
+    solicitud = Rails.configuration.di.repos[:solicitud].find_by_id!(params[:id])
+
+    empleado = Rails.configuration.di.repos[:empleado].find_by_id!(solicitud.empleado_id) rescue nil
+    empresa = Rails.configuration.di.repos[:empresa].find_by_id!(solicitud.empresa_id) rescue nil
+
+    render json: {
+      id: solicitud.id,
+      estado: solicitud.estado.to_s,
+      empleado: {
+        id: empleado&.id,
+        nombre: empleado&.nombre,
+        apellido: empleado&.apellido,
+        dni: empleado&.dni
+      },
+      empresa: {
+        id: empresa&.id,
+        nombre: empresa&.nombre_empresa
+      }
+    }
+  rescue ::Domain::Errors::SolicitudNoEncontradaError
+    render json: { error: "Solicitud no encontrada" }, status: :not_found
+  end
+
+  # GET /api/v1/solicitudes/mis-solicitudes
+  def mis_solicitudes
+    empleado = Rails.configuration.di.repos[:empleado].find_by_usuario_id(current_user.id)
+    return render json: [] unless empleado
+
+    solicitudes = Rails.configuration.di.repos[:solicitud].listar_por_empleado(empleado.id)
+                                                     .sort_by(&:created_at)
+                                                     .reverse
+
+    resultado = solicitudes.map do |s|
+      empresa = Rails.configuration.di.repos[:empresa].find_by_id!(s.empresa_id) rescue nil
+
+      {
+        id: s.id,
+        estado: s.estado.to_s,
+        fecha: s.created_at,
+        empresa: {
+          id: empresa&.id,
+          nombre: empresa&.nombre_empresa
+        }
+      }
+    end
+
+    render json: resultado
+  end
+
   # GET /api/v1/empleados/:id/obras
   def obras_empleado
     obras = Rails.configuration.di.empleado_facade.obtener_obras(empleado_id: params[:id])

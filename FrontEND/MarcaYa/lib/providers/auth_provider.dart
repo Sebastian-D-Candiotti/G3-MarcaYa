@@ -71,10 +71,8 @@ class AuthProvider extends ChangeNotifier {
   // ==========================================
   Future<void> fetchProfile() async {
     try {
-      final data = await ApiService.instance.obtenerPerfil();
-
-      final perfilJson = data['perfil'] as Map<String, dynamic>;
-      final perfil = AppUser.fromJson(perfilJson);
+      final data = await ApiService.instance.obtenerMiPerfil();
+      final perfil = AppUser.fromJson(data);
 
       final idx = _state.users.indexWhere(
             (u) => u.id == perfil.id,
@@ -102,17 +100,17 @@ class AuthProvider extends ChangeNotifier {
     required String correo,
   }) async {
     try {
-      final data =
-      await ApiService.instance.actualizarPerfil(
+      final usuarioId = _state.currentUser != null
+          ? int.parse(_state.currentUser!.id)
+          : 0;
+
+      final data = await ApiService.instance.actualizarPerfil(
+        usuarioId,
         nombre: nombre,
         correo: correo,
       );
 
-      final perfilJson =
-      data['perfil'] as Map<String, dynamic>;
-
-      final perfil =
-      AppUser.fromJson(perfilJson);
+      final perfil = AppUser.fromJson(data);
 
       final idx = _state.users.indexWhere(
             (u) => u.id == perfil.id,

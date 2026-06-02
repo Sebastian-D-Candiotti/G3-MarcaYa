@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:provider/provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../src/api_service.dart';
 
 class MarcarAsistenciaPage extends StatefulWidget {
   final int obraId;
@@ -31,13 +34,12 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
   static const Color rojo = Color(0xFFE53935);
   static const Color gris = Color(0xFFBDBDBD);
 
-  // Coordenadas temporales de la obra.
-  // Luego estas vendrán desde PostgreSQL/Rails.
+  // Coordenadas del centro de obra para visualización en mapa
   double get obraLat => widget.latitud;
   double get obraLng => widget.longitud;
   double get radioMetros => widget.radio;
 
-  // Horarios temporales de obra.
+  // Horarios de obra (hardcodeados; idealmente vendrían del backend)
   static const int horaInicio = 8;
   static const int minutoInicio = 0;
   static const int horaFin = 18;
@@ -53,6 +55,13 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
   String? _tipoSeleccionado;
 
   DateTime _horaActual = DateTime.now();
+
+  // API state
+  int? _paradaId;
+  String _paradaNombre = '';
+  List<Map<String, dynamic>> _paradasDisponibles = [];
+  bool _cargandoParadas = true;
+  bool _enviando = false;
 
   double? get _distanciaMetros {
     if (_posicionActual == null) return null;
@@ -127,6 +136,9 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
 
     _iniciarGps();
 
+    // Cargar paradas después del primer frame para tener contexto disponible
+    WidgetsBinding.instance.addPostFrameCallback((_) => _cargarParadas());
+
     _timer = Timer.periodic(
       const Duration(seconds: 1),
           (_) {
@@ -139,6 +151,41 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
     );
   }
 
+  Future<void> _cargarParadas() async {
+    try {
+      final auth = context.read<AuthProvider>();
+      final empleadoId = int.tryParse(auth.currentUserProfile?.id ?? '');
+      if (empleadoId == null) {
+        setState(() {
+          _cargandoParadas = false;
+          _errorGps = 'No se pudo identificar al empleado';
+        });
+        return;
+      }
+
+      final paradas = await ApiService.instance.obtenerParadasEmpleado(empleadoId);
+      final filtradas = paradas
+          .where((p) => p['obra_id'] == widget.obraId)
+          .map((p) => p as Map<String, dynamic>)
+          .toList();
+
+      setState(() {
+        _paradasDisponibles = filtradas;
+        _cargandoParadas = false;
+        if (filtradas.isNotEmpty) {
+          _paradaId = int.parse(filtradas.first['id'].toString());
+          _paradaNombre = filtradas.first['nombre'] ?? '';
+        }
+      });
+    } catch (e) {
+      debugPrint('Error cargando paradas: $e');
+      setState(() {
+        _cargandoParadas = false;
+        _errorGps ??= 'Error al cargar paradas disponibles';
+      });
+    }
+  }
+
 
   @override
   void dispose() {
@@ -149,25 +196,6 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
 
   Future<void> _iniciarGps() async {
     try {
-      setState(() {
-
-        _gpsCargando = false;
-        _errorGps = null;
-        _posicionActual = Position(
-          longitude: -77.083000,
-          latitude: -12.073000,
-          timestamp: DateTime.now(),
-          accuracy: 1,
-          altitude: 0,
-          altitudeAccuracy: 1,
-          heading: 0,
-          headingAccuracy: 1,
-          speed: 0,
-          speedAccuracy: 1,
-        );
-
-      });
-
       final servicioActivo =
       await Geolocator.isLocationServiceEnabled();
 
@@ -231,25 +259,55 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
     }
   }
 
-  void _confirmarMarcacion() {
-    if (!_puedeConfirmar) return;
+  Future<void> _confirmarMarcacion() async {
+    if (!_puedeConfirmar || _paradaId == null || _posicionActual == null) return;
 
-    final tipo = _tipoSeleccionado == 'entrada'
-        ? 'Entrada'
-        : 'Salida';
+    setState(() => _enviando = true);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '$tipo registrada correctamente para ${widget.obraNombre}',
+    try {
+      final tipo = _tipoSeleccionado == 'entrada' ? 'entrada' : 'salida';
+
+      Map<String, dynamic> resultado;
+      if (tipo == 'entrada') {
+        resultado = await ApiService.instance.marcarEntrada(
+          paradaId: _paradaId!,
+          latitud: _posicionActual!.latitude,
+          longitud: _posicionActual!.longitude,
+        );
+      } else {
+        resultado = await ApiService.instance.marcarSalida(
+          paradaId: _paradaId!,
+          latitud: _posicionActual!.latitude,
+          longitud: _posicionActual!.longitude,
+        );
+      }
+
+      if (!mounted) return;
+
+      final tipoTexto = tipo == 'entrada' ? 'Entrada' : 'Salida';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '$tipoTexto registrada — ${resultado['observaciones'] ?? widget.obraNombre}',
+          ),
+          backgroundColor: resultado['valida_gps'] == true ? azul : Colors.orange,
         ),
-        backgroundColor: azul,
-      ),
-    );
+      );
 
-    setState(() {
-      _tipoSeleccionado = null;
-    });
+      setState(() {
+        _tipoSeleccionado = null;
+        _enviando = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _enviando = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al registrar: $e'),
+          backgroundColor: rojo,
+        ),
+      );
+    }
   }
 
   String _formatearHora(DateTime fecha) {
@@ -304,6 +362,10 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
           children: [
 
             _obraCard(),
+
+            const SizedBox(height: 18),
+
+            _selectorParada(),
 
             const SizedBox(height: 18),
 
@@ -709,27 +771,133 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
     );
   }
 
+  Widget _selectorParada() {
+    if (_cargandoParadas) {
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Row(
+          children: [
+            SizedBox(
+              width: 18, height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            SizedBox(width: 10),
+            Text('Cargando paradas...', style: TextStyle(color: Colors.grey)),
+          ],
+        ),
+      );
+    }
+
+    if (_paradasDisponibles.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.orange.shade50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.orange.shade300),
+        ),
+        child: const Row(
+          children: [
+            Icon(Icons.warning_amber, color: Colors.orange, size: 22),
+            SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'No tenés paradas asignadas en esta obra. '
+                'No podés marcar asistencia.',
+                style: TextStyle(color: Colors.orange, fontSize: 13),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEAF8F8),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: azul, width: 1.3),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.location_on, color: azul, size: 22),
+          const SizedBox(width: 10),
+          Expanded(
+            child: _paradasDisponibles.length > 1
+                ? DropdownButtonHideUnderline(
+                    child: DropdownButton<int>(
+                      value: _paradaId,
+                      isExpanded: true,
+                      items: _paradasDisponibles.map((p) {
+                        final pid = int.parse(p['id'].toString());
+                        return DropdownMenuItem(
+                          value: pid,
+                          child: Text(
+                            p['nombre'] ?? 'Parada #$pid',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: azul,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (v) {
+                        if (v == null) return;
+                        setState(() {
+                          _paradaId = v;
+                          _paradaNombre = _paradasDisponibles
+                              .firstWhere((p) => int.parse(p['id'].toString()) == v)['nombre'] ?? '';
+                        });
+                      },
+                    ),
+                  )
+                : Text(
+                    _paradaNombre,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: azul,
+                      fontSize: 15,
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _botonConfirmar() {
+    final habilitado = _puedeConfirmar && _paradaId != null && !_enviando;
+
     return Center(
       child: SizedBox(
         width: 160,
         height: 45,
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(
-            backgroundColor: _puedeConfirmar ? azul : gris,
+            backgroundColor: habilitado ? azul : gris,
             foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(22),
             ),
           ),
-          onPressed:
-          _puedeConfirmar ? _confirmarMarcacion : null,
-          child: const Text(
-            'Confirmar',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          onPressed: habilitado ? () { _confirmarMarcacion(); } : null,
+          child: _enviando
+              ? const SizedBox(
+                  width: 22, height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : const Text(
+                  'Confirmar',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
         ),
       ),
     );

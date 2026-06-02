@@ -108,4 +108,50 @@ class Api::V1::SolicitudesControllerTest < ActionDispatch::IntegrationTest
     assert entry.key?("empresa")
     refute entry.key?("obra")
   end
+
+  # ---- GET /api/v1/solicitudes/:id ----
+
+  test "show returns 200 with solicitud data" do
+    get "/api/v1/solicitudes/#{@solicitud_pendiente.id}", as: :json
+
+    assert_response :ok
+    body = response.parsed_body
+    assert_equal @solicitud_pendiente.id, body["id"]
+    assert_equal "pendiente", body["estado"]
+    assert body.key?("empleado")
+    assert body.key?("empresa")
+  end
+
+  test "show with invalid id returns 404" do
+    get "/api/v1/solicitudes/999999", as: :json
+
+    assert_response :not_found
+  end
+
+  # ---- GET /api/v1/solicitudes/mis-solicitudes ----
+
+  test "mis_solicitudes as empleado returns 200 with filtered solicitudes" do
+    authenticate_as :empleado_activo
+    get "/api/v1/solicitudes/mis-solicitudes", as: :json
+
+    assert_response :ok
+    body = response.parsed_body
+    assert body.is_a?(Array)
+    if body.any?
+      entry = body.first
+      assert entry.key?("id")
+      assert entry.key?("estado")
+      assert entry.key?("empresa")
+    end
+  end
+
+  test "mis_solicitudes as empresa returns 200 with empty array (no empleado)" do
+    authenticate_as :empresa_activa
+    get "/api/v1/solicitudes/mis-solicitudes", as: :json
+
+    assert_response :ok
+    body = response.parsed_body
+    assert body.is_a?(Array)
+    assert body.empty?
+  end
 end

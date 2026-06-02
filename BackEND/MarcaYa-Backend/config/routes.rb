@@ -9,6 +9,10 @@ Rails.application.routes.draw do
       post "auth/login",    to: "auth#login"
       post "auth/registro", to: "auth#registro"
 
+      # PERFIL (current user profile)
+      get  "perfil", to: "perfil#show"
+      put  "perfil", to: "perfil#update"
+
       # OBRAS (with nested paradas)
       resources :obras do
         member do
@@ -34,10 +38,13 @@ Rails.application.routes.draw do
       resources :usuarios, only: [:index]
 
       # SOLICITUDES
-      resources :solicitudes, only: [:index, :create]
+      # IMPORTANT: mis-solicitudes must come before resources block to avoid :id param match
+      get "solicitudes/mis-solicitudes", to: "solicitudes#mis_solicitudes"
+      get "solicitudes/:id",            to: "solicitudes#show"
+      put "solicitudes/:id/aceptar",    to: "solicitudes#aceptar"
+      put "solicitudes/:id/rechazar",   to: "solicitudes#rechazar"
 
-      put "solicitudes/:id/aceptar", to: "solicitudes#aceptar"
-      put "solicitudes/:id/rechazar", to: "solicitudes#rechazar"
+      resources :solicitudes, only: [:index, :create]
 
       # EMPLEADOS
       get "empleados/:id/obras",
@@ -49,6 +56,11 @@ Rails.application.routes.draw do
       resources :empleados do
         collection do
           get :actuales
+        end
+        member do
+          put :desactivar
+          get :asistencias
+          get :paradas
         end
       end
 
@@ -67,7 +79,11 @@ Rails.application.routes.draw do
         get 'tiempo-real/:parada_id', to: 'asistencias#tiempo_real_parada'
       end
 
+      # REPORTES
+      namespace :reportes do
+        get "asistencia", to: "reportes#asistencia"
+      end
+
     end
   end
-
 end
