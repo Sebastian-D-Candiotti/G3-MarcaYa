@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
@@ -7,7 +8,9 @@ import '../../providers/auth_provider.dart';
 import '../../src/api_service.dart';
 
 class AgregarParadaPage extends StatefulWidget {
-  const AgregarParadaPage({super.key});
+  final int? obraId;
+
+  const AgregarParadaPage({super.key, this.obraId});
 
   @override
   State<AgregarParadaPage> createState() => _AgregarParadaPageState();
@@ -29,10 +32,50 @@ class _AgregarParadaPageState extends State<AgregarParadaPage> {
   bool _cargandoObras = true;
   bool _enviando = false;
 
+  /// Centro y radio de la obra seleccionada (para limitar la parada)
+  LatLng? _obraCentro;
+  double? _obraRadio;
+  bool _cargandoObra = false;
+
   @override
   void initState() {
     super.initState();
     _cargarObras();
+  }
+
+  Future<void> _cargarObraInfo(int obraId) async {
+    setState(() => _cargandoObra = true);
+    try {
+      final obra = await ApiService.instance.obtenerObra(obraId);
+      final lat = (obra['latitud'] as num?)?.toDouble();
+      final lon = (obra['longitud'] as num?)?.toDouble();
+      final radio = (obra['radioMetros'] as num?)?.toDouble();
+
+      if (lat != null && lon != null) {
+        final centro = LatLng(lat, lon);
+        setState(() {
+          _obraCentro = centro;
+          _obraRadio = radio;
+          centroMapa = centro;
+          latitud = lat;
+          longitud = lon;
+          _cargandoObra = false;
+        });
+        mapController.move(centro, 16);
+      } else {
+        _clearObraInfo();
+      }
+    } catch (_) {
+      _clearObraInfo();
+    }
+  }
+
+  void _clearObraInfo() {
+    setState(() {
+      _obraCentro = null;
+      _obraRadio = null;
+      _cargandoObra = false;
+    });
   }
 
   Future<void> _cargarObras() async {
@@ -49,7 +92,15 @@ class _AgregarParadaPageState extends State<AgregarParadaPage> {
       setState(() {
         _obras = data;
         _cargandoObras = false;
+        // Si nos pasaron obraId, preseleccionarla si existe en la lista
+        if (widget.obraId != null && data.any((o) => o['id'] == widget.obraId)) {
+          _obraSeleccionadaId = widget.obraId;
+        }
       });
+      // Cargar info de la obra preseleccionada para centrar el mapa
+      if (_obraSeleccionadaId != null) {
+        _cargarObraInfo(_obraSeleccionadaId!);
+      }
     } catch (e) {
       setState(() => _cargandoObras = false);
       debugPrint('Error al cargar obras: $e');
@@ -126,7 +177,14 @@ class _AgregarParadaPageState extends State<AgregarParadaPage> {
                         child: Text(o['nombre'] ?? ''),
                       );
                     }).toList(),
-                    onChanged: (v) => setState(() => _obraSeleccionadaId = v),
+                    onChanged: (v) {
+                      setState(() => _obraSeleccionadaId = v);
+                      if (v != null) {
+                        _cargarObraInfo(v);
+                      } else {
+                        _clearObraInfo();
+                      }
+                    },
                     validator: (v) => v == null ? 'Seleccioná una obra' : null,
                   ),
             const SizedBox(height: 16),
@@ -157,13 +215,28 @@ class _AgregarParadaPageState extends State<AgregarParadaPage> {
                       initialZoom: 16,
                       onPositionChanged: (position, hasGesture) {
                         final center = position.center;
-                        if (center != null) {
-                          setState(() {
-                            centroMapa = center;
-                            latitud = center.latitude;
-                            longitud = center.longitude;
-                          });
+                        if (center == null) return;
+
+                        // Solo validar límites cuando el usuario arrastra
+                        if (_obraCentro != null &&
+                            _obraRadio != null &&
+                            hasGesture) {
+                          final dist = Geolocator.distanceBetween(
+                            _obraCentro!.latitude,
+                            _obraCentro!.longitude,
+                            center.latitude,
+                            center.longitude,
+                          );
+                          if (dist > _obraRadio!) {
+                            return; // No actualiza → el pin no se mueve
+                          }
                         }
+
+                        setState(() {
+                          centroMapa = center;
+                          latitud = center.latitude;
+                          longitud = center.longitude;
+                        });
                       },
                     ),
                     children: [
@@ -174,6 +247,17 @@ class _AgregarParadaPageState extends State<AgregarParadaPage> {
                       ),
                       CircleLayer(
                         circles: [
+                          // Límite de la obra (verde)
+                          if (_obraCentro != null && _obraRadio != null)
+                            CircleMarker(
+                              point: _obraCentro!,
+                              radius: _obraRadio!,
+                              useRadiusInMeter: true,
+                              color: Colors.green.withOpacity(0.08),
+                              borderColor: Colors.green,
+                              borderStrokeWidth: 2,
+                            ),
+                          // Tolerancia de la parada (azul)
                           CircleMarker(
                             point: centroMapa,
                             radius: radioMetros,
@@ -193,6 +277,13 @@ class _AgregarParadaPageState extends State<AgregarParadaPage> {
                       size: 50,
                     ),
                   ),
+                  if (_cargandoObra)
+                    Container(
+                      color: Colors.black26,
+                      child: const Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                    ),
                 ],
               ),
             ),

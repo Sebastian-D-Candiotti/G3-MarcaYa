@@ -1,10 +1,7 @@
-// lib/pages/registrar_empresa/registrar_empresa.dart
-// VERSIÓN CONECTADA AL BACKEND RUBY
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../components/header_clipper.dart';
 import '../../src/api_service.dart';
+import '../../theme/app_theme.dart';
 
 class RegistrarEmpresaPage extends StatefulWidget {
   const RegistrarEmpresaPage({super.key});
@@ -14,62 +11,68 @@ class RegistrarEmpresaPage extends StatefulWidget {
 }
 
 class _RegistrarEmpresaPageState extends State<RegistrarEmpresaPage> {
-  final _correoController      = TextEditingController();
-  final _claveController       = TextEditingController();
-  final _confirmarController   = TextEditingController();
-  final _rucController         = TextEditingController();
-  final _razonSocialController = TextEditingController();
+  final _correoCtrl      = TextEditingController();
+  final _claveCtrl       = TextEditingController();
+  final _confirmarCtrl   = TextEditingController();
+  final _rucCtrl         = TextEditingController();
+  final _razonSocialCtrl = TextEditingController();
 
   bool _isLoading = false;
   String? _error;
+  bool _obscureClave = true;
+  bool _obscureConfirmar = true;
 
   @override
   void dispose() {
-    _correoController.dispose();
-    _claveController.dispose();
-    _confirmarController.dispose();
-    _rucController.dispose();
-    _razonSocialController.dispose();
+    _correoCtrl.dispose();
+    _claveCtrl.dispose();
+    _confirmarCtrl.dispose();
+    _rucCtrl.dispose();
+    _razonSocialCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _handleRegistro() async {
     // Validaciones
-    if (_claveController.text != _confirmarController.text) {
+    if (_claveCtrl.text != _confirmarCtrl.text) {
       setState(() => _error = 'Las contraseñas no coinciden');
       return;
     }
-    if (_rucController.text.length != 11) {
+    if (_claveCtrl.text.length < 6) {
+      setState(() => _error = 'La contraseña debe tener al menos 6 caracteres');
+      return;
+    }
+    if (_rucCtrl.text.trim().length != 11) {
       setState(() => _error = 'El RUC debe tener 11 dígitos');
       return;
     }
 
     setState(() {
       _isLoading = true;
-      _error     = null;
+      _error = null;
     });
 
     try {
       await ApiService.instance.registrarEmpresa(
-        correo:      _correoController.text.trim(),
-        clave:       _claveController.text,
-        ruc:         _rucController.text.trim(),
-        razonSocial: _razonSocialController.text.trim(),
+        correo:      _correoCtrl.text.trim(),
+        clave:       _claveCtrl.text,
+        ruc:         _rucCtrl.text.trim(),
+        razonSocial: _razonSocialCtrl.text.trim(),
       );
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Empresa registrada. Ahora inicia sesión.'),
-          backgroundColor: Colors.green,
+          content: Text('Empresa registrada correctamente. Ahora iniciá sesión.'),
+          backgroundColor: AppColors.success,
         ),
       );
 
       context.go('/');
     } on ApiException catch (e) {
       setState(() => _error = e.mensaje);
-    } catch (e) {
+    } catch (_) {
       setState(() => _error = 'No se pudo conectar al servidor');
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -79,88 +82,76 @@ class _RegistrarEmpresaPageState extends State<RegistrarEmpresaPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      appBar: AppBar(title: const Text('Registrar empresa')),
       body: SafeArea(
         child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // HEADER
-              ClipPath(
-                clipper: const HeaderClipper(),
-                child: Container(
-                  width: double.infinity,
-                  height: 100,
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Color(0xFFF4D35E), Color(0xFFF28C45)],
-                    ),
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'Registrar empresa',
-                      style: TextStyle(
-                        fontSize: 34,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
-                    ),
-                  ),
+              const Text(
+                'Datos de la empresa',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
                 ),
               ),
+              const SizedBox(height: 8),
+              const Text(
+                'Completá los datos para registrar tu empresa',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: 28),
 
-              const SizedBox(height: 30),
-
-              _buildInput('Correo electrónico', _correoController,
+              _buildField('Razón social', _razonSocialCtrl),
+              const SizedBox(height: 16),
+              _buildField('RUC (11 dígitos)', _rucCtrl,
+                  tipo: TextInputType.number, maxLength: 11),
+              const SizedBox(height: 16),
+              _buildField('Correo electrónico', _correoCtrl,
                   tipo: TextInputType.emailAddress),
-              const SizedBox(height: 20),
-              _buildInput('Contraseña', _claveController, obscure: true),
-              const SizedBox(height: 20),
-              _buildInput('Confirmar contraseña', _confirmarController, obscure: true),
-              const SizedBox(height: 20),
-              _buildInput('RUC (11 dígitos)', _rucController,
-                  tipo: TextInputType.number),
-              const SizedBox(height: 20),
-              _buildInput('Razón social', _razonSocialController),
+              const SizedBox(height: 16),
+              _buildField('Contraseña', _claveCtrl,
+                  obscure: true,
+                  obscureCtrl: () => setState(() => _obscureClave = !_obscureClave),
+                  isObscure: _obscureClave),
+              const SizedBox(height: 16),
+              _buildField('Confirmar contraseña', _confirmarCtrl,
+                  obscure: true,
+                  obscureCtrl: () => setState(() => _obscureConfirmar = !_obscureConfirmar),
+                  isObscure: _obscureConfirmar),
 
-              // ERROR
               if (_error != null)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                  padding: const EdgeInsets.only(top: 16),
                   child: Text(
                     _error!,
-                    style: const TextStyle(color: Colors.redAccent),
+                    style: const TextStyle(color: AppColors.error),
                     textAlign: TextAlign.center,
                   ),
                 ),
 
-              const SizedBox(height: 30),
+              const SizedBox(height: 32),
 
-              // BOTÓN
               SizedBox(
-                width: 170,
-                height: 60,
+                height: 52,
                 child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFF4B400),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(40),
-                    ),
-                  ),
                   onPressed: _isLoading ? null : _handleRegistro,
                   child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text(
-                    'Confirmar',
-                    style: TextStyle(
-                      fontSize: 24,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2.5,
+                          ),
+                        )
+                      : const Text('Crear cuenta',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
               ),
-
-              const SizedBox(height: 30),
             ],
           ),
         ),
@@ -168,37 +159,30 @@ class _RegistrarEmpresaPageState extends State<RegistrarEmpresaPage> {
     );
   }
 
-  Widget _buildInput(
-      String hint,
-      TextEditingController controller, {
-        bool obscure = false,
-        TextInputType tipo = TextInputType.text,
-      }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40),
-      child: TextField(
-        controller: controller,
-        obscureText: obscure,
-        keyboardType: tipo,
-        style: const TextStyle(color: Colors.white),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: const TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-          filled: true,
-          fillColor: const Color(0xFF5A5A5A),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 25, vertical: 18),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(40),
-            borderSide: BorderSide.none,
-          ),
-        ),
+  Widget _buildField(
+    String hint,
+    TextEditingController controller, {
+    bool obscure = false,
+    TextInputType tipo = TextInputType.text,
+    VoidCallback? obscureCtrl,
+    bool? isObscure,
+    int? maxLength,
+  }) {
+    return TextField(
+      controller: controller,
+      obscureText: obscure ? isObscure! : false,
+      keyboardType: tipo,
+      maxLength: maxLength,
+      decoration: InputDecoration(
+        hintText: hint,
+        counterText: '',
+        suffixIcon: obscure
+            ? IconButton(
+                icon: Icon(isObscure! ? Icons.visibility : Icons.visibility_off),
+                onPressed: obscureCtrl,
+              )
+            : null,
       ),
     );
   }
 }
-
-

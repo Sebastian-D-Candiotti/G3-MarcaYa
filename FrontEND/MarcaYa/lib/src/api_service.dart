@@ -108,32 +108,36 @@ class ApiService {
         'correo': correo,
         'clave':  clave,
         'rol':    'empresa',
-        'empresa': {'ruc': ruc, 'razon_social': razonSocial},
+        'nombre': razonSocial,
+        'ruc':    ruc,
       }),
     );
     _parsearRespuesta(res);
   }
 
   /// Registro de empleado
-  Future<void> registrarEmpleado({
+  Future<Map<String, dynamic>> registrarEmpleado({
     required String correo,
     required String clave,
     required String nombre,
-    required String codigo,
-    required int empresaId,
+    String? apellido,
+    String? dni,
   }) async {
+    final body = <String, dynamic>{
+      'correo':  correo,
+      'clave':   clave,
+      'rol':     'empleado',
+      'nombre':  nombre,
+    };
+    if (apellido != null) body['apellido'] = apellido;
+    if (dni != null) body['dni'] = dni;
+
     final res = await _client.post(
       Uri.parse('$kBaseUrl/auth/registro'),
       headers: await _headers(auth: false),
-      body: jsonEncode({
-        'correo':     correo,
-        'clave':      clave,
-        'rol':        'empleado',
-        'empresa_id': empresaId,
-        'empleado':   {'nombre': nombre, 'codigo': codigo},
-      }),
+      body: jsonEncode(body),
     );
-    _parsearRespuesta(res);
+    return _parsearRespuesta(res);
   }
 
   Future<void> logout() async {
@@ -276,6 +280,19 @@ class ApiService {
       final body = jsonDecode(res.body) as Map<String, dynamic>;
       throw ApiException(body['error'] ?? 'Error al eliminar parada', res.statusCode);
     }
+  }
+
+  /// Asigna un empleado a una parada (POST /api/v1/paradas/:id/empleados)
+  Future<void> asignarEmpleadoAParada({
+    required int paradaId,
+    required int empleadoId,
+  }) async {
+    final res = await _client.post(
+      Uri.parse('$kBaseUrl/paradas/$paradaId/empleados'),
+      headers: await _headers(),
+      body: jsonEncode({'empleado_id': empleadoId}),
+    );
+    _parsearRespuesta(res);
   }
 
   // ════════════════════════════════════════════════════════════

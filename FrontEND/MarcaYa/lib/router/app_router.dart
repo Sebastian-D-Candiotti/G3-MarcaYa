@@ -191,7 +191,9 @@ final appRouter = GoRouter(
 
     GoRoute(
       path: '/empresa/paradas/agregar',
-      builder: (_, __) => const AgregarParadaPage(),
+      builder: (context, state) => AgregarParadaPage(
+        obraId: state.extra as int?,
+      ),
     ),
     GoRoute(
       path: '/empresa/paradas/editar',

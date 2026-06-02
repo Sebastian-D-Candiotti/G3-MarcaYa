@@ -136,20 +136,118 @@ class _VerSolicitudesPageState extends State<VerSolicitudesPage> {
       extra: {'usuarioId': usuarioId as int},
     );
   }
+  /// Diálogo para seleccionar una parada de la obra elegida.
+  Future<int?> _seleccionarParada(int obraId) async {
+    List<dynamic> paradas;
+    try {
+      paradas = await ApiService.instance.obtenerParadas(obraId);
+    } catch (_) {
+      if (!mounted) return null;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error al cargar paradas de la obra')),
+      );
+      return null;
+    }
+
+    if (paradas.isEmpty) {
+      if (!mounted) return null;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Redirigiendo para crear una parada...'),
+        ),
+      );
+      // Navegar a crear parada preseleccionando la obra elegida
+      context.push('/empresa/paradas/agregar', extra: obraId);
+      return null;
+    }
+
+    int? paradaSeleccionada;
+
+    return showDialog<int>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Asignar a parada'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Seleccioná la parada donde el empleado marcará asistencia:'),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<int>(
+                  value: paradaSeleccionada,
+                  decoration: const InputDecoration(
+                    labelText: 'Parada',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: paradas.map<DropdownMenuItem<int>>((p) {
+                    return DropdownMenuItem(
+                      value: p['id'] as int,
+                      child: Text(p['nombre'] ?? 'Parada #${p['id']}'),
+                    );
+                  }).toList(),
+                  onChanged: (v) => setDialogState(() => paradaSeleccionada = v),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: paradaSeleccionada == null
+                  ? null
+                  : () => Navigator.pop(ctx, paradaSeleccionada),
+              child: const Text('Aceptar'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _aceptarSolicitud(dynamic s) async {
     try {
+      // 1. Seleccionar obra
       final obraId = await _seleccionarObra();
       if (obraId == null) return;
 
+      // 2. Seleccionar parada de esa obra
+      final paradaId = await _seleccionarParada(obraId);
+      if (paradaId == null) return;
+
+      // 3. Obtener empleado_id de la solicitud
+      final empleadoId = s['empleado']?['id'] as int?;
+      if (empleadoId == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error: no se pudo identificar al empleado')),
+        );
+        return;
+      }
+
+      // 4. Aceptar solicitud (crea asignación empleado → obra)
       await ApiService.instance.aceptarSolicitud(s['id'], obraId: obraId);
+
+      // 5. Asignar empleado a la parada
+      await ApiService.instance.asignarEmpleadoAParada(
+        paradaId: paradaId,
+        empleadoId: empleadoId,
+      );
+
       if (!mounted) return;
       setState(() {
         _solicitudes.removeWhere((sol) => sol['id'] == s['id']);
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Solicitud aceptada')),
+        const SnackBar(content: Text('Solicitud aceptada — empleado asignado a obra y parada')),
       );
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),
       );

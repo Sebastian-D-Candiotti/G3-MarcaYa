@@ -40,11 +40,12 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
   double get radioMetros => widget.radio;
 
   // Horarios de obra (hardcodeados; idealmente vendrían del backend)
+  // EN DESARROLLO: ventana amplia para pruebas (12h de tolerancia)
   static const int horaInicio = 8;
   static const int minutoInicio = 0;
   static const int horaFin = 18;
   static const int minutoFin = 0;
-  static const int toleranciaMinutos = 5;
+  static const int toleranciaMinutos = 720; // 12 horas = siempre disponible en desarrollo
 
   Position? _posicionActual;
   StreamSubscription<Position>? _positionSub;
@@ -165,7 +166,9 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
 
       final paradas = await ApiService.instance.obtenerParadasEmpleado(empleadoId);
       final filtradas = paradas
-          .where((p) => p['obra_id'] == widget.obraId)
+          .where((p) =>
+              p['obraId'] == widget.obraId ||
+              p['obra_id'] == widget.obraId)
           .map((p) => p as Map<String, dynamic>)
           .toList();
 
@@ -232,6 +235,7 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
 
       final posicion = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 15),
       );
 
       setState(() {
@@ -319,10 +323,10 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
   }
 
   String _textoDistancia() {
+    if (_gpsCargando) return 'Obteniendo GPS...';
+    if (_errorGps != null) return '—';
     final distancia = _distanciaMetros;
-
     if (distancia == null) return 'Calculando...';
-
     return '${distancia.toStringAsFixed(1)} m';
   }
 

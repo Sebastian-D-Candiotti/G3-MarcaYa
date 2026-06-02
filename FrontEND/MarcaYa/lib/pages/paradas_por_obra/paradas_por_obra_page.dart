@@ -96,6 +96,13 @@ class _ParadasPorObraPageState extends State<ParadasPorObraPage> {
     return Scaffold(
       appBar: AppBar(title: Text(title)),
       body: _buildBody(),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => context.push(
+          '/empresa/paradas/agregar',
+          extra: widget.obraId,
+        ),
+        child: const Icon(Icons.add),
+      ),
       bottomNavigationBar: const BottomNavbar(
         userRole: 'empresa',
         currentIndex: 3,

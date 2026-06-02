@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 import '../../src/api_service.dart';
@@ -21,10 +22,8 @@ class _AgregarObraPageState extends State<AgregarObraPage> {
   final capacidadController = TextEditingController();
   final MapController mapController = MapController();
 
-  LatLng centroMapa = const LatLng(
-    -12.046374,
-    -77.042793,
-  );
+  LatLng centroMapa = const LatLng(-12.046374, -77.042793);
+  bool _obteniendoUbicacion = true;
 
   double? latitud;
   double? longitud;
@@ -37,6 +36,48 @@ class _AgregarObraPageState extends State<AgregarObraPage> {
 
   TimeOfDay? horaInicio;
   TimeOfDay? horaFin;
+
+  @override
+  void initState() {
+    super.initState();
+    _irAUbicacionActual();
+  }
+
+  Future<void> _irAUbicacionActual() async {
+    try {
+      final servicio = await Geolocator.isLocationServiceEnabled();
+      if (!servicio) {
+        setState(() => _obteniendoUbicacion = false);
+        return;
+      }
+
+      var permiso = await Geolocator.checkPermission();
+      if (permiso == LocationPermission.denied) {
+        permiso = await Geolocator.requestPermission();
+      }
+      if (permiso == LocationPermission.deniedForever || permiso == LocationPermission.denied) {
+        setState(() => _obteniendoUbicacion = false);
+        return;
+      }
+
+      final posicion = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
+
+      final nuevaPosicion = LatLng(posicion.latitude, posicion.longitude);
+      setState(() {
+        centroMapa = nuevaPosicion;
+        latitud = posicion.latitude;
+        longitud = posicion.longitude;
+        _obteniendoUbicacion = false;
+      });
+      mapController.move(nuevaPosicion, 16);
+    } catch (_) {
+      setState(() => _obteniendoUbicacion = false);
+    }
+  }
 
   Future<void> seleccionarFechaInicio() async {
     final fecha = await showDatePicker(
@@ -248,65 +289,79 @@ class _AgregarObraPageState extends State<AgregarObraPage> {
                   alignment: Alignment.center,
                   children: [
 
-                    FlutterMap(
-                      mapController: mapController,
-                      options: MapOptions(
-                        initialCenter: centroMapa,
-                        initialZoom: 16,
-
-                        onPositionChanged: (
-                            position,
-                            hasGesture,
-                            ) {
-
-                          final center = position.center;
-
-                          if (center != null) {
-                            setState(() {
-
-                              centroMapa = center;
-
-                              latitud = center.latitude;
-                              longitud = center.longitude;
-
-                            });
-                          }
-                        },
-                      ),
-
-                      children: [
-
-                        TileLayer(
-                          urlTemplate:
-                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                          userAgentPackageName:
-                          'com.example.marcapp',
-                        ),
-
-                        CircleLayer(
-                          circles: [
-                            CircleMarker(
-                              point: centroMapa,
-                              radius: radioMetros,
-                              useRadiusInMeter: true,
-
-                              color: Colors.blue.withOpacity(0.15),
-
-                              borderColor: Colors.blue,
-                              borderStrokeWidth: 2,
-                            ),
+                    if (_obteniendoUbicacion)
+                      const Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            CircularProgressIndicator(),
+                            SizedBox(height: 12),
+                            Text('Obteniendo ubicación...'),
                           ],
                         ),
-                      ],
-                    ),
-
-                    const IgnorePointer(
-                      child: Icon(
-                        Icons.location_on,
-                        color: Colors.red,
-                        size: 50,
                       ),
-                    ),
+
+                    if (!_obteniendoUbicacion)
+                      FlutterMap(
+                        mapController: mapController,
+                        options: MapOptions(
+                          initialCenter: centroMapa,
+                          initialZoom: 16,
+
+                          onPositionChanged: (
+                              position,
+                              hasGesture,
+                              ) {
+
+                            final center = position.center;
+
+                            if (center != null) {
+                              setState(() {
+
+                                centroMapa = center;
+
+                                latitud = center.latitude;
+                                longitud = center.longitude;
+
+                              });
+                            }
+                          },
+                        ),
+
+                        children: [
+
+                          TileLayer(
+                            urlTemplate:
+                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                            userAgentPackageName:
+                            'com.example.marcapp',
+                          ),
+
+                          CircleLayer(
+                            circles: [
+                              CircleMarker(
+                                point: centroMapa,
+                                radius: radioMetros,
+                                useRadiusInMeter: true,
+
+                                color: Colors.blue.withOpacity(0.15),
+
+                                borderColor: Colors.blue,
+                                borderStrokeWidth: 2,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+
+                    if (!_obteniendoUbicacion)
+                      const IgnorePointer(
+                        child: Icon(
+                          Icons.location_on,
+                          color: Colors.red,
+                          size: 50,
+                        ),
+                      ),
                   ],
                 ),
               ),
