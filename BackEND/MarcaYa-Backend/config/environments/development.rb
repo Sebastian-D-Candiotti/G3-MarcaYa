@@ -30,7 +30,10 @@ Rails.application.configure do
   config.active_storage.service = :local
 
   # Don't care if the mailer can't send.
-  config.action_mailer.raise_delivery_errors = false
+  config.action_mailer.raise_delivery_errors = true
+
+  # Use Resend for email delivery in development (sends real emails)
+  config.action_mailer.delivery_method = :resend
 
   # Make template changes take effect immediately.
   config.action_mailer.perform_caching = false

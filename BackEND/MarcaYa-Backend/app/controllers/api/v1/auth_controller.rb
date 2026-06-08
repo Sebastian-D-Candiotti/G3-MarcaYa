@@ -1,5 +1,5 @@
 class Api::V1::AuthController < Api::V1::BaseController
-  skip_before_action :authenticate!, only: [:login, :registro]
+  skip_before_action :authenticate!, only: [:login, :registro, :solicitar_codigo, :verificar_codigo, :restablecer_contrasena]
 
   def login
     correo = params[:correo]
@@ -33,6 +33,37 @@ class Api::V1::AuthController < Api::V1::BaseController
       id: resultado[:usuario].id,
       token: resultado[:token]
     }, status: :created
+  rescue ::Domain::Errors::ValidacionError => e
+    render json: { error: e.message }, status: :unprocessable_entity
+  end
+
+  def solicitar_codigo
+    resultado = Rails.configuration.di.auth_facade.solicitar_codigo(
+      correo: params[:correo]
+    )
+    render json: resultado, status: :ok
+  end
+
+  def verificar_codigo
+    resultado = Rails.configuration.di.auth_facade.verificar_codigo(
+      correo: params[:correo],
+      codigo: params[:codigo]
+    )
+    render json: resultado, status: :ok
+  rescue ::Domain::Errors::CodigoInvalidoError
+    render json: { error: "Código inválido. Intente de nuevo." }, status: :unauthorized
+  rescue ::Domain::Errors::CodigoExpiradoError
+    render json: { error: "El código ha expirado. Solicite uno nuevo." }, status: :unauthorized
+  end
+
+  def restablecer_contrasena
+    resultado = Rails.configuration.di.auth_facade.restablecer_contrasena(
+      verification_token: params[:verification_token],
+      nueva_clave: params[:nueva_clave]
+    )
+    render json: resultado, status: :ok
+  rescue ::Domain::Errors::TokenRecuperacionInvalidoError
+    render json: { error: "Sesión de recuperación inválida. Comience de nuevo." }, status: :unauthorized
   rescue ::Domain::Errors::ValidacionError => e
     render json: { error: e.message }, status: :unprocessable_entity
   end

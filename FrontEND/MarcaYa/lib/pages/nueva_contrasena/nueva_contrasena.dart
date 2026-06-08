@@ -1,13 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../src/api_service.dart';
 import '../../components/header_clipper.dart';
 
-class NuevaContrasenaPage extends StatelessWidget {
+class NuevaContrasenaPage extends StatefulWidget {
 
   const NuevaContrasenaPage({super.key});
 
   @override
+  State<NuevaContrasenaPage> createState() => _NuevaContrasenaPageState();
+}
+
+class _NuevaContrasenaPageState extends State<NuevaContrasenaPage> {
+
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmController = TextEditingController();
+
+  @override
+  void dispose() {
+    _passwordController.dispose();
+    _confirmController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+
+    final auth = context.watch<AuthProvider>();
+    if (auth.verificationToken == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => context.go('/reset-password'));
+      return const SizedBox.shrink();
+    }
 
     return Scaffold(
 
@@ -46,7 +71,7 @@ class NuevaContrasenaPage extends StatelessWidget {
 
                   child: Text(
 
-                    'Nueva contraseña',
+                    'Nueva contrase\u00F1a',
 
                     style: TextStyle(
                       fontSize: 30,
@@ -64,13 +89,13 @@ class NuevaContrasenaPage extends StatelessWidget {
 
             const SizedBox(height: 50),
 
-            // INPUT NUEVA CONTRASEÑA
-            buildInput('Ingrese nueva contraseña'),
+            // INPUT NUEVA CONTRASE\u00D1A
+            buildInput('Ingrese nueva contrase\u00F1a', _passwordController),
 
             const SizedBox(height: 25),
 
             // INPUT CONFIRMAR
-            buildInput('Confirmar contraseña'),
+            buildInput('Confirmar contrase\u00F1a', _confirmController),
 
             const SizedBox(height: 40),
 
@@ -92,30 +117,68 @@ class NuevaContrasenaPage extends StatelessWidget {
 
                 ),
 
-                onPressed: () {
+                onPressed: () async {
+                  final password = _passwordController.text;
+                  final confirm = _confirmController.text;
 
-                  // MENSAJE
-                  ScaffoldMessenger.of(context).showSnackBar(
-
-                    const SnackBar(
-
-                      content: Text(
-                        'Contraseña cambiada exitosamente',
+                  if (password.isEmpty || confirm.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Complete ambos campos'),
+                        backgroundColor: Colors.red,
                       ),
+                    );
+                    return;
+                  }
 
-                      backgroundColor: Colors.green,
+                  if (password != confirm) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Las contrase\u00F1as no coinciden'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    return;
+                  }
 
-                    ),
+                  if (password.length < 8) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('La contrase\u00F1a debe tener al menos 8 caracteres'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    return;
+                  }
 
-                  );
-
-                  // ESPERA 2 SEGUNDOS
-                  Future.delayed(const Duration(seconds: 2), () {
-
-                    context.go('/');
-
-                  });
-
+                  try {
+                    final success = await context.read<AuthProvider>().restablecerContrasena(password);
+                    if (success && mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Contrase\u00F1a cambiada exitosamente'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                      Future.delayed(const Duration(seconds: 2), () {
+                        if (mounted) context.go('/');
+                      });
+                    }
+                  } on ApiException catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(e.mensaje),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Error de conexi\u00F3n. Intente de nuevo.'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
                 },
 
                 child: const Text(
@@ -147,13 +210,15 @@ class NuevaContrasenaPage extends StatelessWidget {
 }
 
 // INPUT
-Widget buildInput(String hint) {
+Widget buildInput(String hint, TextEditingController controller) {
 
   return Padding(
 
     padding: const EdgeInsets.symmetric(horizontal: 40),
 
     child: TextField(
+
+      controller: controller,
 
       obscureText: true,
 
@@ -193,4 +258,3 @@ Widget buildInput(String hint) {
   );
 
 }
-

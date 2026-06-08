@@ -1,10 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../components/header_clipper.dart';
 
-class RecuperarContrasenaPage extends StatelessWidget {
+class RecuperarContrasenaPage extends StatefulWidget {
 
   const RecuperarContrasenaPage({super.key});
+
+  @override
+  State<RecuperarContrasenaPage> createState() => _RecuperarContrasenaPageState();
+}
+
+class _RecuperarContrasenaPageState extends State<RecuperarContrasenaPage> {
+
+  final TextEditingController _emailController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,6 +89,8 @@ class RecuperarContrasenaPage extends StatelessWidget {
 
                 style: const TextStyle(color: Colors.white),
 
+                controller: _emailController,
+
                 decoration: InputDecoration(
 
                   hintText: 'Ingrese su correo',
@@ -126,10 +144,28 @@ class RecuperarContrasenaPage extends StatelessWidget {
 
                 ),
 
-                onPressed: () {
-
-                  context.push('/reset-password/code');
-
+                onPressed: () async {
+                  final email = _emailController.text.trim();
+                  if (email.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Ingrese un correo electrónico'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    return;
+                  }
+                  final success = await context.read<AuthProvider>().solicitarCodigo(email);
+                  if (success && mounted) {
+                    context.push('/reset-password/code');
+                  } else if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Error al enviar el código. Intente de nuevo.'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
                 },
 
                 child: const Text(

@@ -20,6 +20,9 @@ module Domain
     class EntradaActivaExistenteError < ValidacionError; end
     class EmpleadoNoAsignadoParadaError < ValidacionError; end
     class ParadaInactivaError < ValidacionError; end
+    class CodigoInvalidoError < StandardError; end
+    class CodigoExpiradoError < StandardError; end
+    class TokenRecuperacionInvalidoError < StandardError; end
   end
 end
 

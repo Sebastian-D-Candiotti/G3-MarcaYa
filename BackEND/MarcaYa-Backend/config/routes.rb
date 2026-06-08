@@ -6,8 +6,11 @@ Rails.application.routes.draw do
     namespace :v1 do
 
       # AUTH
-      post "auth/login",    to: "auth#login"
-      post "auth/registro", to: "auth#registro"
+      post "auth/login",             to: "auth#login"
+      post "auth/registro",          to: "auth#registro"
+      post "auth/solicitar-codigo",  to: "auth#solicitar_codigo"
+      post "auth/verificar-codigo",  to: "auth#verificar_codigo"
+      put  "auth/restablecer-contrasena", to: "auth#restablecer_contrasena"
 
       # PERFIL (current user profile)
       get  "perfil", to: "perfil#show"

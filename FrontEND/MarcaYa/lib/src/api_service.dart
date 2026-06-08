@@ -94,6 +94,39 @@ class ApiService {
     );
   }
 
+  /// Solicitar código de recuperación
+  Future<void> solicitarCodigo(String correo) async {
+    final res = await _client.post(
+      Uri.parse('$kBaseUrl/auth/solicitar-codigo'),
+      headers: await _headers(auth: false),
+      body: jsonEncode({'correo': correo}),
+    );
+    _parsearRespuesta(res);
+  }
+
+  /// Verificar código de recuperación
+  Future<Map<String, dynamic>> verificarCodigo(String correo, String codigo) async {
+    final res = await _client.post(
+      Uri.parse('$kBaseUrl/auth/verificar-codigo'),
+      headers: await _headers(auth: false),
+      body: jsonEncode({'correo': correo, 'codigo': codigo}),
+    );
+    return _parsearRespuesta(res);
+  }
+
+  /// Restablecer contraseña
+  Future<void> restablecerContrasena(String verificationToken, String nuevaClave) async {
+    final res = await _client.put(
+      Uri.parse('$kBaseUrl/auth/restablecer-contrasena'),
+      headers: await _headers(auth: false),
+      body: jsonEncode({
+        'verification_token': verificationToken,
+        'nueva_clave': nuevaClave,
+      }),
+    );
+    _parsearRespuesta(res);
+  }
+
   /// Registro de empresa
   Future<void> registrarEmpresa({
     required String correo,

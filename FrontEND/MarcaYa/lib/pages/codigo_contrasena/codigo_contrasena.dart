@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../src/api_service.dart';
 
 class CodigoContrasenaPage extends StatefulWidget {
 
@@ -23,6 +26,12 @@ class _CodigoContrasenaPageState
   @override
   Widget build(BuildContext context) {
 
+    final auth = context.watch<AuthProvider>();
+    if (auth.recoveryEmail == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => context.go('/reset-password'));
+      return const SizedBox.shrink();
+    }
+
     return Scaffold(
 
       backgroundColor: Colors.black,
@@ -44,7 +53,7 @@ class _CodigoContrasenaPageState
               // TEXTO
               const Text(
 
-                'Le hemos enviado un código de verificación a su correo, ingresarlo en el siguiente recuadro:',
+                'Le hemos enviado un c\u00F3digo de verificaci\u00F3n a su correo, ingresarlo en el siguiente recuadro:',
 
                 style: TextStyle(
                   color: Colors.white,
@@ -138,35 +147,42 @@ class _CodigoContrasenaPageState
 
                     ),
 
-                    onPressed: () {
+                    onPressed: () async {
 
                       // UNIR CODIGO
                       String codigo = controllers
                           .map((c) => c.text)
                           .join();
 
-                      // VALIDAR
-                      if (codigo == '123456') {
-
-                        context.push('/reset-password/new');
-
-                      } else {
-
-                        ScaffoldMessenger.of(context)
-                            .showSnackBar(
-
+                      if (codigo.length != 6) {
+                        ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-
-                            content: Text(
-                              'Código incorrecto',
-                            ),
-
+                            content: Text('Ingrese el c\u00F3digo completo de 6 d\u00EDgitos'),
                             backgroundColor: Colors.red,
-
                           ),
-
                         );
+                        return;
+                      }
 
+                      try {
+                        final token = await context.read<AuthProvider>().verificarCodigo(codigo);
+                        if (token != null && mounted) {
+                          context.push('/reset-password/new');
+                        }
+                      } on ApiException catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(e.mensaje),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Error de conexi\u00F3n. Intente de nuevo.'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
                       }
 
                     },
