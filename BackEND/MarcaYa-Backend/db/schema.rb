@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_02_000001) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_08_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -88,6 +88,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_02_000001) do
     t.string "estado", limit: 20, default: "activo"
     t.string "foto_url", limit: 500
     t.string "nombre_empresa", limit: 200, null: false
+    t.boolean "otp_verificado", default: false, null: false
     t.string "ruc", limit: 20, null: false
     t.string "telefono", limit: 30
     t.datetime "updated_at", precision: nil, default: -> { "CURRENT_TIMESTAMP" }
@@ -242,6 +243,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_02_000001) do
     t.date "fecha"
     t.integer "puntaje"
     t.datetime "updated_at", null: false
+  end
+
+  create_table "verificaciones_ruc", force: :cascade do |t|
+    t.string "codigo", null: false
+    t.datetime "created_at", null: false
+    t.datetime "expira_at", null: false
+    t.string "ruc", null: false
+    t.datetime "updated_at", null: false
+    t.index ["ruc"], name: "index_verificaciones_ruc_on_ruc", unique: true
   end
 
   add_foreign_key "asignaciones", "empleados", name: "asignaciones_empleado_id_fkey"

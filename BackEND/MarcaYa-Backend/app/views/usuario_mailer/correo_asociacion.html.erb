@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta content='text/html; charset=UTF-8' http-equiv='Content-Type' />
+    <style>
+      body { font-family: Arial, sans-serif; line-height: 1.6; color: #333333; }
+      .container { padding: 20px; border: 1px solid #eeeeee; border-radius: 5px; max-width: 600px; }
+      .header { font-size: 18px; font-weight: bold; margin-bottom: 10px; color: #1a73e8; }
+      .content { margin-bottom: 20px; }
+      .footer { font-size: 12px; color: #888888; border-top: 1px solid #eeeeee; padding-top: 10px; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">¡Bienvenido a MarcaYa!</div>
+      <div class="content">
+        <p>Hola <strong><%= @nombre %></strong>,</p>
+        <p>Tu cuenta con correo electrónico <strong><%= mail_to(@correo) %></strong> ha sido creada y asociada con éxito en nuestra plataforma.</p>
+        <p>Detalles del registro:</p>
+        <ul>
+          <li><strong>Rol:</strong> <%= @rol.to_s.capitalize %></li>
+          <li><strong>Nombre/Razón Social:</strong> <%= @nombre %></li>
+        </ul>
+        <p>Ya puedes iniciar sesión en la aplicación utilizando tus credenciales.</p>
+      </div>
+      <div class="footer">
+        Este es un correo automático, por favor no respondas a este mensaje.
+      </div>
+    </div>
+  </body>
+</html>

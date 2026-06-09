@@ -30,7 +30,24 @@ Rails.application.configure do
   config.active_storage.service = :local
 
   # Don't care if the mailer can't send.
-  config.action_mailer.raise_delivery_errors = false
+  # If SMTP credentials are provided, we raise delivery errors to help debug.
+  if ENV["SMTP_ADDRESS"].present? && ENV["SMTP_USERNAME"].present?
+    config.action_mailer.raise_delivery_errors = true
+    config.action_mailer.delivery_method = :smtp
+    config.action_mailer.smtp_settings = {
+      address:              ENV["SMTP_ADDRESS"],
+      port:                 ENV["SMTP_PORT"] || 587,
+      domain:               ENV["SMTP_DOMAIN"] || 'gmail.com',
+      user_name:            ENV["SMTP_USERNAME"],
+      password:             ENV["SMTP_PASSWORD"],
+      authentication:       ENV["SMTP_AUTHENTICATION"] || 'plain',
+      enable_starttls_auto: ENV["SMTP_ENABLE_STARTTLS_AUTO"] != 'false'
+    }
+    config.action_mailer.perform_deliveries = true
+  else
+    config.action_mailer.raise_delivery_errors = false
+    config.action_mailer.delivery_method = :test
+  end
 
   # Make template changes take effect immediately.
   config.action_mailer.perform_caching = false

@@ -95,24 +95,100 @@ class ApiService {
   }
 
   /// Registro de empresa
-  Future<void> registrarEmpresa({
+  Future<Map<String, dynamic>> registrarEmpresa({
     required String correo,
     required String clave,
     required String ruc,
     required String razonSocial,
+    String? registroTipo,
+    String? codigo,
   }) async {
+    final body = <String, dynamic>{
+      'correo': correo,
+      'clave':  clave,
+      'rol':    'empresa',
+      'nombre': razonSocial,
+      'ruc':    ruc,
+    };
+    if (registroTipo != null) body['registro_tipo'] = registroTipo;
+    if (codigo != null) body['codigo'] = codigo;
+
     final res = await _client.post(
       Uri.parse('$kBaseUrl/auth/registro'),
       headers: await _headers(auth: false),
+      body: jsonEncode(body),
+    );
+    final data = _parsearRespuesta(res);
+    if (data.containsKey('token')) {
+      await _guardarToken(data['token'] as String);
+    }
+    return data;
+  }
+
+  /// Obtener empresas oficiales (SUNAT)
+  Future<List<dynamic>> getSunatEmpresas() async {
+    final res = await _client.get(
+      Uri.parse('$kBaseUrl/sunat/empresas'),
+      headers: await _headers(auth: false),
+    );
+    return jsonDecode(res.body) as List<dynamic>;
+  }
+
+  /// Solicitar código de verificación SUNAT / manual
+  Future<Map<String, dynamic>> enviarCodigoSunat(String ruc, {String? correo}) async {
+    final body = <String, dynamic>{'ruc': ruc};
+    if (correo != null) body['correo'] = correo;
+
+    final res = await _client.post(
+      Uri.parse('$kBaseUrl/sunat/enviar-codigo'),
+      headers: await _headers(auth: false),
+      body: jsonEncode(body),
+    );
+    return _parsearRespuesta(res);
+  }
+
+  /// Verificar código OTP
+  Future<Map<String, dynamic>> verificarOtp({
+    required String ruc,
+    required String codigo,
+  }) async {
+    final res = await _client.post(
+      Uri.parse('$kBaseUrl/auth/verificar-otp'),
+      headers: await _headers(auth: false),
       body: jsonEncode({
-        'correo': correo,
-        'clave':  clave,
-        'rol':    'empresa',
-        'nombre': razonSocial,
-        'ruc':    ruc,
+        'ruc': ruc,
+        'codigo': codigo,
       }),
     );
-    _parsearRespuesta(res);
+    return _parsearRespuesta(res);
+  }
+
+  /// Aprobar cuenta de empresa (cambiar estado a activo)
+  Future<Map<String, dynamic>> aprobarEmpresa(int usuarioId) async {
+    final res = await _client.put(
+      Uri.parse('$kBaseUrl/usuarios/$usuarioId/aprobar'),
+      headers: await _headers(),
+    );
+    return _parsearRespuesta(res);
+  }
+
+  /// Consultar datos de empresa por RUC en SUNAT
+  Future<Map<String, dynamic>> consultarRucSunat(String ruc) async {
+    final res = await _client.get(
+      Uri.parse('$kBaseUrl/sunat/consulta?ruc=$ruc'),
+      headers: await _headers(auth: false),
+    );
+    return _parsearRespuesta(res);
+  }
+
+  /// Validar si un RUC es único en la base de datos
+  Future<bool> validarRucUnico(String ruc) async {
+    final res = await _client.get(
+      Uri.parse('$kBaseUrl/sunat/validar-ruc-unico?ruc=$ruc'),
+      headers: await _headers(auth: false),
+    );
+    final data = jsonDecode(res.body) as Map<String, dynamic>;
+    return data['unico'] == true;
   }
 
   /// Registro de empleado
@@ -137,7 +213,11 @@ class ApiService {
       headers: await _headers(auth: false),
       body: jsonEncode(body),
     );
-    return _parsearRespuesta(res);
+    final data = _parsearRespuesta(res);
+    if (data.containsKey('token')) {
+      await _guardarToken(data['token'] as String);
+    }
+    return data;
   }
 
   Future<void> logout() async {

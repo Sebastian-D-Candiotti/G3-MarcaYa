@@ -21,7 +21,9 @@ module Application
         )
         @solicitud_repo = Object.new
         @asignacion_repo = Object.new
+        @asignacion_repo.define_singleton_method(:listar_por_empleado) { |_| [] }
         @obra_repo = Object.new
+        @obra_repo.define_singleton_method(:listar_por_empresa) { |_| [] }
       end
 
       def test_listar_delegates_to_listar_solicitudes

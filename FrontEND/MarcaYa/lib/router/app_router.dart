@@ -24,11 +24,13 @@ import '../pages/ver_asistencia/ver_asistencia.dart';
 import '../pages/empleados_actuales/empleados_actuales.dart';
 import '../pages/paradas_por_obra/paradas_por_obra_page.dart';
 import '../pages/ver_solicitudes/ver_solicitudes.dart';
-import '../pages/confirmacion_registrar_empresa/confirmacion_registrar_empresa.dart';
+import '../pages/verificar_otp/verificar_otp_page.dart';
+import '../pages/locked/locked_page.dart';
 import '../pages/confirmacion_registrar_empleado/confirmacion_registrar_empleado.dart';
 import '../pages/perfil_publico/perfil_publico.dart';
 import '../pages/editar_perfil_empleado/editar_perfil_empleado_page.dart';
 import '../pages/editar_perfil_empresa/editar_perfil_empresa_page.dart';
+import '../src/app_state.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/',
@@ -39,6 +41,19 @@ final appRouter = GoRouter(
     final loggedIn = auth.isLoggedIn;
     final location = state.matchedLocation;
 
+    if (loggedIn) {
+      final user = auth.currentUserProfile;
+      if (user != null && user.rol == UserRole.empresa) {
+        if (!user.otpVerificado) {
+          if (location != '/verificar-otp') return '/verificar-otp';
+        } else if (user.estado == 'PENDIENTE') {
+          if (location != '/locked') return '/locked';
+        } else {
+          if (location == '/verificar-otp' || location == '/locked') return '/empresa';
+        }
+      }
+    }
+
     if (loggedIn && location == '/') {
       return auth.userRole == 'empleado'
           ? '/empleado'
@@ -47,7 +62,9 @@ final appRouter = GoRouter(
 
     final protected =
         location.startsWith('/empleado') ||
-            location.startsWith('/empresa');
+            location.startsWith('/empresa') ||
+            location == '/verificar-otp' ||
+            location == '/locked';
 
     if (!loggedIn && protected) {
       return '/';
@@ -220,11 +237,21 @@ final appRouter = GoRouter(
       builder: (_, __) => const VerSolicitudesPage(),
     ),
 
-    // CONFIRMACIONES
+    // VERIFICACIONES Y PANTALLAS DE ESPERA
     GoRoute(
-      path: '/confirmacion/empresa',
-      builder: (_, __) =>
-      const ConfirmacionRegistrarEmpresaPage(),
+      path: '/verificar-otp',
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>?;
+        return VerificarOtpPage(
+          ruc: extra?['ruc'] as String?,
+          correo: extra?['correo'] as String?,
+        );
+      },
+    ),
+
+    GoRoute(
+      path: '/locked',
+      builder: (_, __) => const LockedPage(),
     ),
 
     GoRoute(

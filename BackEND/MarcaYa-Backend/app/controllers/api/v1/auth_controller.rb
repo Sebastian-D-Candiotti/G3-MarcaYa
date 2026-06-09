@@ -1,5 +1,5 @@
 class Api::V1::AuthController < Api::V1::BaseController
-  skip_before_action :authenticate!, only: [:login, :registro]
+  skip_before_action :authenticate!, only: [:login, :registro, :verificar_otp]
 
   def login
     correo = params[:correo]
@@ -37,6 +37,46 @@ class Api::V1::AuthController < Api::V1::BaseController
     render json: { error: e.message }, status: :unprocessable_entity
   end
 
+  def verificar_otp
+    ruc = params[:ruc].to_s.strip
+    codigo = params[:codigo].to_s.strip
+
+    if ruc.empty? || codigo.empty?
+      render json: { error: "El RUC y el código de verificación son obligatorios" }, status: :unprocessable_entity
+      return
+    end
+
+    empresa_repo = Rails.configuration.di.repos[:empresa]
+    unless empresa_repo.verificar_codigo_ruc?(ruc, codigo)
+      render json: { error: "Código de verificación inválido o expirado" }, status: :unprocessable_entity
+      return
+    end
+
+    empresa = empresa_repo.find_by_ruc(ruc)
+    if empresa.nil?
+      render json: { error: "Empresa no registrada" }, status: :not_found
+      return
+    end
+
+    empresa_actualizada = Domain::Entities::Empresa.new(
+      id: empresa.id,
+      usuario_id: empresa.usuario_id,
+      nombre_empresa: empresa.nombre_empresa,
+      ruc: empresa.ruc,
+      descripcion: empresa.descripcion,
+      direccion: empresa.direccion,
+      telefono: empresa.telefono,
+      foto_url: empresa.foto_url,
+      estado: empresa.estado,
+      otp_verificado: true,
+      created_at: empresa.created_at,
+      updated_at: empresa.updated_at
+    )
+    empresa_repo.guardar(empresa_actualizada)
+
+    render json: { mensaje: "Código OTP verificado correctamente" }
+  end
+
   private
 
   def build_perfil(usuario)
@@ -61,7 +101,9 @@ class Api::V1::AuthController < Api::V1::BaseController
       telefono: empresa&.telefono,
       direccion: empresa&.direccion,
       ruc: empresa&.ruc,
-      foto_url: empresa&.foto_url
+      foto_url: empresa&.foto_url,
+      estado: empresa&.estado,
+      otp_verificado: empresa&.otp_verificado
     }
   end
 

@@ -60,7 +60,9 @@ class Api::V1::PerfilController < Api::V1::BaseController
       telefono: empresa&.telefono,
       direccion: empresa&.direccion,
       ruc: empresa&.ruc,
-      foto_url: empresa&.foto_url
+      foto_url: empresa&.foto_url,
+      estado: empresa&.estado,
+      otp_verificado: empresa&.otp_verificado
     }
   end
 

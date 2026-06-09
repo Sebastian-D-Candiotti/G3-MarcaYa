@@ -15,6 +15,7 @@ module Infrastructure
           telefono: record.telefono,
           foto_url: record.foto_url,
           estado: record.estado,
+          otp_verificado: record.otp_verificado,
           created_at: record.created_at,
           updated_at: record.updated_at
         )
@@ -30,7 +31,8 @@ module Infrastructure
           direccion: entity.direccion,
           telefono: entity.telefono,
           foto_url: entity.foto_url,
-          estado: entity.estado
+          estado: entity.estado,
+          otp_verificado: entity.otp_verificado
         }
         attrs[:id] = entity.id if entity.id
         attrs[:created_at] = entity.created_at if entity.created_at

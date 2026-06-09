@@ -23,6 +23,25 @@ module Ports
       def self.guardar(empresa)
         raise NotImplementedError, "#{name}##{__method__} must be implemented"
       end
+
+      # @param ruc [String] The RUC to verify
+      # @return [Boolean]
+      def self.exists_by_ruc?(ruc)
+        raise NotImplementedError, "#{name}##{__method__} must be implemented"
+      end
+
+      # @param ruc [String] The RUC to verify
+      # @param codigo [String] The verification code
+      # @return [Boolean]
+      def self.verificar_codigo_ruc?(ruc, codigo)
+        raise NotImplementedError, "#{name}##{__method__} must be implemented"
+      end
+
+      # @param ruc [String] The company RUC
+      # @return [Domain::Entities::Empresa, nil]
+      def self.find_by_ruc(ruc)
+        raise NotImplementedError, "#{name}##{__method__} must be implemented"
+      end
     end
   end
 end

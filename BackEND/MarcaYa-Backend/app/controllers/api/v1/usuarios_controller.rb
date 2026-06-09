@@ -72,6 +72,36 @@ class Api::V1::UsuariosController < Api::V1::BaseController
     render json: { error: "Usuario no encontrado" }, status: :not_found
   end
 
+  # PUT /api/v1/usuarios/:id/aprobar
+  def aprobar
+    usuario = Rails.configuration.di.repos[:usuario].find_by_id!(params[:id])
+    if usuario.es_empresa?
+      empresa_repo = Rails.configuration.di.repos[:empresa]
+      empresa = empresa_repo.find_by_usuario_id(usuario.id)
+      if empresa
+        empresa_actualizada = Domain::Entities::Empresa.new(
+          id: empresa.id,
+          usuario_id: empresa.usuario_id,
+          nombre_empresa: empresa.nombre_empresa,
+          ruc: empresa.ruc,
+          descripcion: empresa.descripcion,
+          direccion: empresa.direccion,
+          telefono: empresa.telefono,
+          foto_url: empresa.foto_url,
+          estado: "activo",
+          otp_verificado: empresa.otp_verificado,
+          created_at: empresa.created_at,
+          updated_at: empresa.updated_at
+        )
+        empresa_repo.guardar(empresa_actualizada)
+      end
+    end
+
+    render json: { mensaje: "Cuenta aprobada correctamente" }
+  rescue => e
+    render json: { error: e.message }, status: :unprocessable_entity
+  end
+
   private
 
   def render_empresa_show(usuario)

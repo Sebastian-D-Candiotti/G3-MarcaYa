@@ -4,9 +4,13 @@ require "minitest/autorun"
 require_relative "../../../../app/domain/entities/usuario"
 require_relative "../../../../app/domain/entities/empleado"
 require_relative "../../../../app/domain/entities/empresa"
+require_relative "../../../../app/domain/entities/sunat_empresa"
 require_relative "../../../../app/domain/value_objects/rol_usuario"
 require_relative "../../../../app/domain/errors"
+require_relative "../../../../app/domain/services/sunat_service"
 require_relative "../../../../app/application/use_cases/auth/registrar_usuario"
+
+
 
 module Application
   module UseCases
@@ -45,9 +49,11 @@ module Application
           r
         end
 
-        def repo_empresa
+        def repo_empresa(codigo_valido: "123456")
           r = Object.new
           r.define_singleton_method(:guardar) { |e| e }
+          r.define_singleton_method(:exists_by_ruc?) { |_ruc| false }
+          r.define_singleton_method(:verificar_codigo_ruc?) { |_ruc, code| code == codigo_valido }
           r
         end
 
@@ -117,6 +123,7 @@ module Application
           end
         end
 
+
         def test_ejecutar_creates_empresa_record_when_rol_is_empresa
           empresa_guardada = nil
           empresa_repo = Object.new
@@ -124,6 +131,8 @@ module Application
             empresa_guardada = e
             e
           end
+          empresa_repo.define_singleton_method(:exists_by_ruc?) { |_ruc| false }
+          empresa_repo.define_singleton_method(:verificar_codigo_ruc?) { |_ruc, code| true }
 
           use_case = RegistrarUsuario.new(
             usuario_repo: repo_usuario_sin_correo,
@@ -153,6 +162,8 @@ module Application
           empleado_repo.define_singleton_method(:guardar) { |_| empleado_guardado = true }
           empresa_repo_obj = Object.new
           empresa_repo_obj.define_singleton_method(:guardar) { |_| empresa_guardada = true }
+          empresa_repo_obj.define_singleton_method(:exists_by_ruc?) { |_ruc| false }
+          empresa_repo_obj.define_singleton_method(:verificar_codigo_ruc?) { |_ruc, code| true }
 
           use_case = RegistrarUsuario.new(
             usuario_repo: repo_usuario_sin_correo,
@@ -171,6 +182,113 @@ module Application
 
           refute empleado_guardado, "Should not create empleado for admin"
           refute empresa_guardada, "Should not create empresa for admin"
+        end
+
+        def test_ejecutar_manual_ruc_validations_fails_on_length
+          use_case = RegistrarUsuario.new(
+            usuario_repo: repo_usuario_sin_correo,
+            empleado_repo: repo_empleado,
+            empresa_repo: repo_empresa,
+            bcrypt_service: bcrypt_service,
+            jwt_service: jwt_service
+          )
+
+          assert_raises Domain::Errors::ValidacionError do
+            use_case.ejecutar(
+              correo: "empresa@test.com",
+              clave: "password123",
+              rol: "empresa",
+              nombre: "Mi Empresa S.A.",
+              ruc: "20123" # Too short
+            )
+          end
+        end
+
+        def test_ejecutar_manual_ruc_validations_fails_on_starting_digits
+          use_case = RegistrarUsuario.new(
+            usuario_repo: repo_usuario_sin_correo,
+            empleado_repo: repo_empleado,
+            empresa_repo: repo_empresa,
+            bcrypt_service: bcrypt_service,
+            jwt_service: jwt_service
+          )
+
+          assert_raises Domain::Errors::ValidacionError do
+            use_case.ejecutar(
+              correo: "empresa@test.com",
+              clave: "password123",
+              rol: "empresa",
+              nombre: "Mi Empresa S.A.",
+              ruc: "30123456789" # Doesn't start with 10 or 20
+            )
+          end
+        end
+
+        def test_ejecutar_manual_ruc_validations_fails_on_duplicate_ruc
+          empresa_repo = Object.new
+          empresa_repo.define_singleton_method(:exists_by_ruc?) { |_ruc| true }
+          empresa_repo.define_singleton_method(:verificar_codigo_ruc?) { |_ruc, code| true }
+
+          use_case = RegistrarUsuario.new(
+            usuario_repo: repo_usuario_sin_correo,
+            empleado_repo: repo_empleado,
+            empresa_repo: empresa_repo,
+            bcrypt_service: bcrypt_service,
+            jwt_service: jwt_service
+          )
+
+          assert_raises Domain::Errors::ValidacionError do
+            use_case.ejecutar(
+              correo: "empresa@test.com",
+              clave: "password123",
+              rol: "empresa",
+              nombre: "Mi Empresa S.A.",
+              ruc: "20123456789"
+            )
+          end
+        end
+
+        def test_ejecutar_sunat_verification_code_fails_with_invalid_code
+          use_case = RegistrarUsuario.new(
+            usuario_repo: repo_usuario_sin_correo,
+            empleado_repo: repo_empleado,
+            empresa_repo: repo_empresa(codigo_valido: "123456"),
+            bcrypt_service: bcrypt_service,
+            jwt_service: jwt_service
+          )
+
+          assert_raises Domain::Errors::ValidacionError do
+            use_case.ejecutar(
+              correo: "empresa@test.com",
+              clave: "password123",
+              rol: "empresa",
+              ruc: "20100055237",
+              registro_tipo: "sunat",
+              codigo: "wrong"
+            )
+          end
+        end
+
+        def test_ejecutar_sunat_verification_code_succeeds_with_valid_code
+          use_case = RegistrarUsuario.new(
+            usuario_repo: repo_usuario_sin_correo,
+            empleado_repo: repo_empleado,
+            empresa_repo: repo_empresa(codigo_valido: "123456"),
+            bcrypt_service: bcrypt_service,
+            jwt_service: jwt_service
+          )
+
+          result = use_case.ejecutar(
+            correo: "empresa@test.com",
+            clave: "password123",
+            rol: "empresa",
+            ruc: "20100055237",
+            registro_tipo: "sunat",
+            codigo: "123456"
+          )
+
+          assert_instance_of Domain::Entities::Usuario, result[:usuario]
+          assert_equal "fake.jwt.token", result[:token]
         end
       end
     end
