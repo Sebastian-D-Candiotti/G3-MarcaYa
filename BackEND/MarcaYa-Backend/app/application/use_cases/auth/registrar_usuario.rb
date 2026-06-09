@@ -6,12 +6,13 @@ module Application
       class RegistrarUsuario
         CAMPOS_OBLIGATORIOS = %i[correo clave rol nombre].freeze
 
-        def initialize(usuario_repo:, empleado_repo:, empresa_repo:, bcrypt_service:, jwt_service:)
+        def initialize(usuario_repo:, empleado_repo:, empresa_repo:, bcrypt_service:, jwt_service:, reniec_service:)
           @usuario_repo = usuario_repo
           @empleado_repo = empleado_repo
           @empresa_repo = empresa_repo
           @bcrypt_service = bcrypt_service
           @jwt_service = jwt_service
+          @reniec_service = reniec_service
         end
 
         def ejecutar(params)
@@ -23,6 +24,10 @@ module Application
 
           if @usuario_repo.exists_by_correo?(correo)
             raise Domain::Errors::ValidacionError, "El correo ya está registrado"
+          end
+
+          if rol.to_s == "empleado"
+            validar_empleado_con_reniec!(params)
           end
 
           clave_hash = @bcrypt_service.hash(clave)
@@ -51,6 +56,22 @@ module Application
 
           raise Domain::Errors::ValidacionError,
                 "Campos obligatorios faltantes: #{faltantes.join(', ')}"
+        end
+
+        def validar_empleado_con_reniec!(params)
+          dni = params[:dni].to_s.strip
+          unless dni.match?(/\A\d{8}\z/)
+            raise Domain::Errors::ValidacionError, "El DNI debe tener exactamente 8 números"
+          end
+          if @empleado_repo.exists_by_dni?(dni)
+            raise Domain::Errors::ValidacionError, "El DNI ya está registrado"
+          end
+          datos_reniec = @reniec_service.consultar(dni)
+          if datos_reniec.nil?
+            raise Domain::Errors::ValidacionError, "No se encontraron datos en RENIEC para este DNI"
+          end
+          params[:nombre] = datos_reniec[:nombres]
+          params[:apellido] = "#{datos_reniec[:apellido_paterno]} #{datos_reniec[:apellido_materno]}".strip
         end
 
         def crear_perfil!(usuario, params)

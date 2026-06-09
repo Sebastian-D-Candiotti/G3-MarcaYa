@@ -17,11 +17,9 @@ const String kBaseUrl = 'http://localhost:3000/api/v1';
 // ────────────────────────────────────────────────────────────
 
 class ApiService {
-  ApiService._({
-    http.Client? client,
-    FlutterSecureStorage? storage,
-  })  : _client = client ?? http.Client(),
-        _storage = storage ?? const FlutterSecureStorage();
+  ApiService._({http.Client? client, FlutterSecureStorage? storage})
+    : _client = client ?? http.Client(),
+      _storage = storage ?? const FlutterSecureStorage();
 
   static final ApiService instance = ApiService._();
 
@@ -63,8 +61,11 @@ class ApiService {
   Map<String, dynamic> _parsearRespuesta(http.Response res) {
     final body = jsonDecode(res.body) as Map<String, dynamic>;
     if (res.statusCode >= 400) {
-      final mensaje = body['error'] ??
-          (body['errors'] is List ? (body['errors'] as List).join(', ') : null) ??
+      final mensaje =
+          body['error'] ??
+          (body['errors'] is List
+              ? (body['errors'] as List).join(', ')
+              : null) ??
           body['errors'] ??
           'Error desconocido';
       throw ApiException(mensaje.toString(), res.statusCode);
@@ -88,8 +89,8 @@ class ApiService {
     await _guardarToken(data['token'] as String);
 
     return LoginResult(
-      token:  data['token'] as String,
-      rol:    data['rol']   as String,
+      token: data['token'] as String,
+      rol: data['rol'] as String,
       perfil: data['perfil'] as Map<String, dynamic>,
     );
   }
@@ -106,13 +107,23 @@ class ApiService {
       headers: await _headers(auth: false),
       body: jsonEncode({
         'correo': correo,
-        'clave':  clave,
-        'rol':    'empresa',
+        'clave': clave,
+        'rol': 'empresa',
         'nombre': razonSocial,
-        'ruc':    ruc,
+        'ruc': ruc,
       }),
     );
     _parsearRespuesta(res);
+  }
+
+  /// Consulta RENIEC por DNI
+  Future<Map<String, dynamic>> consultarReniec(String dni) async {
+    final res = await _client.get(
+      Uri.parse('$kBaseUrl/reniec/$dni'),
+      headers: await _headers(auth: false),
+    );
+
+    return _parsearRespuesta(res);
   }
 
   /// Registro de empleado
@@ -124,10 +135,10 @@ class ApiService {
     String? dni,
   }) async {
     final body = <String, dynamic>{
-      'correo':  correo,
-      'clave':   clave,
-      'rol':     'empleado',
-      'nombre':  nombre,
+      'correo': correo,
+      'clave': clave,
+      'rol': 'empleado',
+      'nombre': nombre,
     };
     if (apellido != null) body['apellido'] = apellido;
     if (dni != null) body['dni'] = dni;
@@ -153,10 +164,7 @@ class ApiService {
     if (empresaId != null) {
       url = '$url?empresa_id=$empresaId';
     }
-    final res = await _client.get(
-      Uri.parse(url),
-      headers: await _headers(),
-    );
+    final res = await _client.get(Uri.parse(url), headers: await _headers());
 
     return jsonDecode(res.body) as List<dynamic>;
   }
@@ -278,7 +286,10 @@ class ApiService {
     );
     if (res.statusCode >= 400) {
       final body = jsonDecode(res.body) as Map<String, dynamic>;
-      throw ApiException(body['error'] ?? 'Error al eliminar parada', res.statusCode);
+      throw ApiException(
+        body['error'] ?? 'Error al eliminar parada',
+        res.statusCode,
+      );
     }
   }
 
@@ -310,8 +321,8 @@ class ApiService {
       headers: await _headers(),
       body: jsonEncode({
         'parada_id': paradaId,
-        'latitud':   latitud,
-        'longitud':  longitud,
+        'latitud': latitud,
+        'longitud': longitud,
       }),
     );
     return _parsearRespuesta(res);
@@ -328,8 +339,8 @@ class ApiService {
       headers: await _headers(),
       body: jsonEncode({
         'parada_id': paradaId,
-        'latitud':   latitud,
-        'longitud':  longitud,
+        'latitud': latitud,
+        'longitud': longitud,
       }),
     );
     return _parsearRespuesta(res);
@@ -433,7 +444,10 @@ class ApiService {
     );
 
     if (res.statusCode >= 400) {
-      throw ApiException('Error al obtener asistencias del empleado', res.statusCode);
+      throw ApiException(
+        'Error al obtener asistencias del empleado',
+        res.statusCode,
+      );
     }
 
     final body = jsonDecode(res.body);
@@ -586,18 +600,14 @@ class ApiService {
     final res = await _client.post(
       Uri.parse('$kBaseUrl/solicitudes'),
       headers: await _headers(),
-      body: jsonEncode({
-        'empleado_id': empleadoId,
-        'empresa_id':  empresaId,
-      }),
+      body: jsonEncode({'empleado_id': empleadoId, 'empresa_id': empresaId}),
     );
 
     _parsearRespuesta(res);
   }
 
   /// Obtiene el historial de solicitudes de un empleado
-  Future<List<dynamic>> obtenerSolicitudesEmpleado(
-      String empleadoId) async {
+  Future<List<dynamic>> obtenerSolicitudesEmpleado(String empleadoId) async {
     final res = await _client.get(
       Uri.parse('$kBaseUrl/empleados/$empleadoId/historial_solicitudes'),
       headers: await _headers(),
@@ -625,8 +635,7 @@ class ApiService {
   }
 
   /// La empresa acepta una solicitud pendiente
-  Future<void> aceptarSolicitud(int solicitudId,
-      {required int obraId}) async {
+  Future<void> aceptarSolicitud(int solicitudId, {required int obraId}) async {
     final res = await _client.put(
       Uri.parse('$kBaseUrl/solicitudes/$solicitudId/aceptar'),
       headers: await _headers(),
@@ -685,8 +694,9 @@ class ApiService {
     if (paradaId != null) params['parada_id'] = paradaId.toString();
     if (obraId != null) params['obra_id'] = obraId.toString();
 
-    final uri = Uri.parse('$kBaseUrl/reportes/asistencia')
-        .replace(queryParameters: params.isNotEmpty ? params : null);
+    final uri = Uri.parse(
+      '$kBaseUrl/reportes/asistencia',
+    ).replace(queryParameters: params.isNotEmpty ? params : null);
     final res = await _client.get(uri, headers: await _headers());
     return jsonDecode(res.body) as List<dynamic>;
   }
@@ -702,7 +712,7 @@ class LoginResult {
   });
 
   final String token;
-  final String rol;                      // 'empresa' | 'empleado'
+  final String rol; // 'empresa' | 'empleado'
   final Map<String, dynamic> perfil;
 }
 

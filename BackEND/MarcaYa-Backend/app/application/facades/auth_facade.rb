@@ -5,7 +5,7 @@ module Application
     # Implements Ports::Driving::IAutenticarUsuario
     class AuthFacade
       def initialize(usuario_repo:, empleado_repo:, empresa_repo:,
-                     bcrypt_service:, jwt_service:)
+                     bcrypt_service:, jwt_service:, reniec_service:)
         @login_usuario = UseCases::Auth::LoginUsuario.new(
           usuario_repo: usuario_repo,
           bcrypt_service: bcrypt_service,
@@ -16,7 +16,8 @@ module Application
           empleado_repo: empleado_repo,
           empresa_repo: empresa_repo,
           bcrypt_service: bcrypt_service,
-          jwt_service: jwt_service
+          jwt_service: jwt_service,
+          reniec_service: reniec_service
         )
         @cerrar_sesion = UseCases::Auth::CerrarSesion.new
       end

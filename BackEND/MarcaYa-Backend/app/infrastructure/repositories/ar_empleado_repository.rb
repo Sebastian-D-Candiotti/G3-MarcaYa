@@ -18,6 +18,10 @@ module Infrastructure
         ::Infrastructure::Mappers::EmpleadoMapper.to_domain(record)
       end
 
+      def exists_by_dni?(dni)
+        ::Infrastructure::Orm::EmpleadoRecord.exists?(dni: dni)
+      end
+
       def todos
         ::Infrastructure::Orm::EmpleadoRecord.all.map { |r| ::Infrastructure::Mappers::EmpleadoMapper.to_domain(r) }
       end

@@ -13,16 +13,14 @@
 # gem "pg"
 #
 
-
 default: &default
   adapter: postgresql
   encoding: unicode
   pool: 5
   host: 127.0.0.1
   username: postgres
-  password: 1234S
+  password: joaquin0804
   port: 5432
-
 
 development:
   <<: *default
