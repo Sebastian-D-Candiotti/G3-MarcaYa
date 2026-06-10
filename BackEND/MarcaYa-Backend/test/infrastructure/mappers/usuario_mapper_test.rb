@@ -20,6 +20,8 @@ class Infrastructure::Mappers::UsuarioMapperTest < ActiveSupport::TestCase
     assert_equal @usuario_record.clave_hash, entity.clave_hash
     assert_equal @usuario_record.rol, entity.rol.to_s
     assert_equal @usuario_record.estado, entity.estado
+    assert_equal @usuario_record.estado_verificacion, entity.estado_verificacion
+    assert_equal @usuario_record.verificado_en.to_i, entity.verificado_en.to_i
   end
 
   test "to_domain preserves boolean estado" do
@@ -43,6 +45,8 @@ class Infrastructure::Mappers::UsuarioMapperTest < ActiveSupport::TestCase
     assert_equal entity.clave_hash, attrs[:clave_hash]
     assert_equal entity.rol.to_s, attrs[:rol]
     assert_equal entity.estado, attrs[:estado]
+    assert_equal entity.estado_verificacion, attrs[:estado_verificacion]
+    assert_equal entity.verificado_en, attrs[:verificado_en]
   end
 
   test "to_record_attrs excludes id for new records" do

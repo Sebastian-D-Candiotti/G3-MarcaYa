@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_02_000001) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_09_000100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -220,9 +220,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_02_000001) do
     t.string "correo", limit: 255, null: false
     t.datetime "created_at", precision: nil, default: -> { "CURRENT_TIMESTAMP" }
     t.boolean "estado", default: true
+    t.string "estado_verificacion", limit: 30, default: "ACTIVO", null: false
+    t.string "codigo_verificacion_digest", limit: 255
+    t.datetime "codigo_verificacion_expira_en"
+    t.datetime "verificado_en"
     t.string "rol", limit: 20, null: false
     t.datetime "updated_at", precision: nil, default: -> { "CURRENT_TIMESTAMP" }
 
+    t.index ["estado_verificacion"], name: "index_usuarios_on_estado_verificacion"
     t.unique_constraint ["correo"], name: "usuarios_correo_key"
   end
 

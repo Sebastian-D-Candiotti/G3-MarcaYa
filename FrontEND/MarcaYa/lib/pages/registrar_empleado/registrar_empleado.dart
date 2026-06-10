@@ -50,8 +50,10 @@ class _RegistrarEmpleadoPageState extends State<RegistrarEmpleadoPage> {
     });
 
     try {
+      final correo = _correoCtrl.text.trim();
+
       await ApiService.instance.registrarEmpleado(
-        correo:   _correoCtrl.text.trim(),
+        correo:   correo,
         clave:    _claveCtrl.text,
         nombre:   _nombreCtrl.text.trim(),
         apellido: _apellidoCtrl.text.trim().isNotEmpty ? _apellidoCtrl.text.trim() : null,
@@ -62,12 +64,15 @@ class _RegistrarEmpleadoPageState extends State<RegistrarEmpleadoPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Empleado registrado correctamente. Ahora iniciá sesión.'),
+          content: Text('Empleado registrado. Revisa tu correo para verificar la cuenta.'),
           backgroundColor: AppColors.success,
         ),
       );
 
-      context.go('/');
+      context.go('/register/verify', extra: {
+        'correo': correo,
+        'rol': 'empleado',
+      });
     } on ApiException catch (e) {
       setState(() => _error = e.mensaje);
     } catch (_) {

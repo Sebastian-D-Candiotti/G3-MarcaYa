@@ -53,8 +53,10 @@ class _RegistrarEmpresaPageState extends State<RegistrarEmpresaPage> {
     });
 
     try {
+      final correo = _correoCtrl.text.trim();
+
       await ApiService.instance.registrarEmpresa(
-        correo:      _correoCtrl.text.trim(),
+        correo:      correo,
         clave:       _claveCtrl.text,
         ruc:         _rucCtrl.text.trim(),
         razonSocial: _razonSocialCtrl.text.trim(),
@@ -64,12 +66,15 @@ class _RegistrarEmpresaPageState extends State<RegistrarEmpresaPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Empresa registrada correctamente. Ahora iniciá sesión.'),
+          content: Text('Empresa registrada. Revisa tu correo para verificar la cuenta.'),
           backgroundColor: AppColors.success,
         ),
       );
 
-      context.go('/');
+      context.go('/register/verify', extra: {
+        'correo': correo,
+        'rol': 'empresa',
+      });
     } on ApiException catch (e) {
       setState(() => _error = e.mensaje);
     } catch (_) {

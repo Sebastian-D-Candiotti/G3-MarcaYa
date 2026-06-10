@@ -12,7 +12,9 @@ module DependencyContainer
         empleado_repo: repos[:empleado],
         empresa_repo: repos[:empresa],
         bcrypt_service: Infrastructure::Services::BcryptPasswordService,
-        jwt_service: Infrastructure::Services::JwtTokenService
+        jwt_service: Infrastructure::Services::JwtTokenService,
+        verification_code_service: Infrastructure::Services::VerificationCodeService,
+        verification_mailer: VerificacionCuentaMailer
       )
     end
 

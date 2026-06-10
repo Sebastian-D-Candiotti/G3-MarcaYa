@@ -8,6 +8,8 @@ require_relative "../../../app/domain/value_objects/rol_usuario"
 require_relative "../../../app/domain/errors"
 require_relative "../../../app/application/use_cases/auth/login_usuario"
 require_relative "../../../app/application/use_cases/auth/registrar_usuario"
+require_relative "../../../app/application/use_cases/auth/verificar_cuenta"
+require_relative "../../../app/application/use_cases/auth/reenviar_codigo_verificacion"
 require_relative "../../../app/application/use_cases/auth/cerrar_sesion"
 require_relative "../../../app/application/facades/auth_facade"
 
@@ -18,6 +20,40 @@ module Application
         @usuario = Domain::Entities::Usuario.new(
           id: 1, correo: "test@test.com",
           clave_hash: "$2a$12$hash", rol: "empleado", estado: true
+        )
+      end
+
+      def verification_code_service
+        s = Object.new
+        s.define_singleton_method(:generate) { "123456" }
+        s.define_singleton_method(:digest) { |codigo| "digest-#{codigo}" }
+        s.define_singleton_method(:expires_at) { Time.now + 600 }
+        s.define_singleton_method(:matches?) { |codigo, digest| digest == "digest-#{codigo}" }
+        s
+      end
+
+      def verification_mailer
+        delivery = Object.new
+        delivery.define_singleton_method(:deliver_now) { true }
+
+        message = Object.new
+        message.define_singleton_method(:codigo_verificacion) { delivery }
+
+        mailer = Object.new
+        mailer.define_singleton_method(:with) { |_| message }
+        mailer
+      end
+
+      def build_facade(usuario_repo:, empleado_repo: Object.new, empresa_repo: Object.new,
+                       bcrypt_service: Object.new, jwt_service: Object.new)
+        AuthFacade.new(
+          usuario_repo: usuario_repo,
+          empleado_repo: empleado_repo,
+          empresa_repo: empresa_repo,
+          bcrypt_service: bcrypt_service,
+          jwt_service: jwt_service,
+          verification_code_service: verification_code_service,
+          verification_mailer: verification_mailer
         )
       end
 
@@ -34,10 +70,8 @@ module Application
         jwt_service = Object.new
         jwt_service.define_singleton_method(:encode) { |_| "fake.jwt.token" }
 
-        facade = AuthFacade.new(
+        facade = build_facade(
           usuario_repo: usuario_repo,
-          empleado_repo: Object.new,
-          empresa_repo: Object.new,
           bcrypt_service: bcrypt_service,
           jwt_service: jwt_service
         )
@@ -55,7 +89,10 @@ module Application
           Domain::Entities::Usuario.new(
             id: 10, correo: u.correo,
             clave_hash: u.clave_hash, rol: u.rol.valor,
-            estado: u.estado
+            estado: u.estado,
+            estado_verificacion: u.estado_verificacion,
+            codigo_verificacion_digest: u.codigo_verificacion_digest,
+            codigo_verificacion_expira_en: u.codigo_verificacion_expira_en
           )
         end
 
@@ -69,10 +106,9 @@ module Application
         jwt_service = Object.new
         jwt_service.define_singleton_method(:encode) { |_| "fake.jwt.token" }
 
-        facade = AuthFacade.new(
+        facade = build_facade(
           usuario_repo: usuario_repo,
           empleado_repo: empleado_repo,
-          empresa_repo: Object.new,
           bcrypt_service: bcrypt_service,
           jwt_service: jwt_service
         )
@@ -83,18 +119,13 @@ module Application
         )
 
         assert_instance_of Domain::Entities::Usuario, result[:usuario]
-        assert_equal "fake.jwt.token", result[:token]
+        assert result[:requiere_verificacion]
+        assert result[:usuario].pendiente_verificacion?
         assert_instance_of Domain::Entities::Empleado, guardado
       end
 
       def test_logout_returns_success_message
-        facade = AuthFacade.new(
-          usuario_repo: Object.new,
-          empleado_repo: Object.new,
-          empresa_repo: Object.new,
-          bcrypt_service: Object.new,
-          jwt_service: Object.new
-        )
+        facade = build_facade(usuario_repo: Object.new)
 
         result = facade.logout(usuario_id: 1)
         assert_equal "Sesión cerrada exitosamente", result[:mensaje]
@@ -110,10 +141,8 @@ module Application
         bcrypt_service.define_singleton_method(:verificar?) { |_, _| false }
         bcrypt_service.define_singleton_method(:hash) { |_| "$2a$12$hash" }
 
-        facade = AuthFacade.new(
+        facade = build_facade(
           usuario_repo: usuario_repo,
-          empleado_repo: Object.new,
-          empresa_repo: Object.new,
           bcrypt_service: bcrypt_service,
           jwt_service: Object.new
         )

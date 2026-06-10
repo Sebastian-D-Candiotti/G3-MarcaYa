@@ -8,6 +8,8 @@ Rails.application.routes.draw do
       # AUTH
       post "auth/login",    to: "auth#login"
       post "auth/registro", to: "auth#registro"
+      post "auth/verificacion/verificar", to: "auth#verificar_cuenta"
+      post "auth/verificacion/reenviar",  to: "auth#reenviar_codigo_verificacion"
 
       # PERFIL (current user profile)
       get  "perfil", to: "perfil#show"

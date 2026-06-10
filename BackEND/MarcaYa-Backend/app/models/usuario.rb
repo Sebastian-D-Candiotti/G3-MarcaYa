@@ -12,4 +12,10 @@ class Usuario < ApplicationRecord
   validates :rol,
             presence: true
 
+  validates :estado_verificacion,
+            inclusion: {
+              in: %w[PENDIENTE_VERIFICACION ACTIVO],
+              allow_nil: true
+            }
+
 end

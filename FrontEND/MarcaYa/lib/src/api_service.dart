@@ -95,7 +95,7 @@ class ApiService {
   }
 
   /// Registro de empresa
-  Future<void> registrarEmpresa({
+  Future<Map<String, dynamic>> registrarEmpresa({
     required String correo,
     required String clave,
     required String ruc,
@@ -112,7 +112,7 @@ class ApiService {
         'ruc':    ruc,
       }),
     );
-    _parsearRespuesta(res);
+    return _parsearRespuesta(res);
   }
 
   /// Registro de empleado
@@ -136,6 +136,29 @@ class ApiService {
       Uri.parse('$kBaseUrl/auth/registro'),
       headers: await _headers(auth: false),
       body: jsonEncode(body),
+    );
+    return _parsearRespuesta(res);
+  }
+
+  Future<Map<String, dynamic>> verificarCuenta({
+    required String correo,
+    required String codigo,
+  }) async {
+    final res = await _client.post(
+      Uri.parse('$kBaseUrl/auth/verificacion/verificar'),
+      headers: await _headers(auth: false),
+      body: jsonEncode({'correo': correo, 'codigo': codigo}),
+    );
+    return _parsearRespuesta(res);
+  }
+
+  Future<Map<String, dynamic>> reenviarCodigoVerificacion({
+    required String correo,
+  }) async {
+    final res = await _client.post(
+      Uri.parse('$kBaseUrl/auth/verificacion/reenviar'),
+      headers: await _headers(auth: false),
+      body: jsonEncode({'correo': correo}),
     );
     return _parsearRespuesta(res);
   }

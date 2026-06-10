@@ -6,6 +6,7 @@ import '../pages/sign_in/sign_in_page.dart';
 import '../pages/registrar_usuario/registrar_usuario.dart';
 import '../pages/registrar_empresa/registrar_empresa.dart';
 import '../pages/registrar_empleado/registrar_empleado.dart';
+import '../pages/verificacion_registro/verificacion_registro_page.dart';
 import '../pages/recuperar_contrasena/recuperar_contrasena.dart';
 import '../pages/codigo_contrasena/codigo_contrasena.dart';
 import '../pages/nueva_contrasena/nueva_contrasena.dart';
@@ -78,6 +79,21 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/register/empleado',
       builder: (_, __) => const RegistrarEmpleadoPage(),
+    ),
+
+    GoRoute(
+      path: '/register/verify',
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>?;
+        final correo = extra?['correo'] as String?;
+        final rol = extra?['rol'] as String? ?? 'usuario';
+
+        if (correo == null || correo.isEmpty) {
+          return const RegistrarUsuarioPage();
+        }
+
+        return VerificacionRegistroPage(correo: correo, rol: rol);
+      },
     ),
 
     // RECUPERAR CONTRASEÑA

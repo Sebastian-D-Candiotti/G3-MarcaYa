@@ -21,6 +21,12 @@ module Application
             clave_hash: "secret789",
             rol: "empresa", estado: false
           )
+          @usuario_pendiente = Domain::Entities::Usuario.new(
+            id: 3, correo: "pendiente@test.com",
+            clave_hash: "pending123",
+            rol: "empleado", estado: false,
+            estado_verificacion: Domain::Entities::Usuario::ESTADO_VERIFICACION_PENDIENTE
+          )
           @called = []
         end
 
@@ -146,6 +152,18 @@ module Application
 
           assert_raises Domain::Errors::UsuarioInactivoError do
             use_case.ejecutar(correo: "inactiva@test.com", clave: "secret789")
+          end
+        end
+
+        def test_ejecutar_raises_cuenta_pendiente_for_pending_user
+          use_case = LoginUsuario.new(
+            usuario_repo: repo_que_encuentra(@usuario_pendiente),
+            bcrypt_service: bcrypt_que_verifica(true),
+            jwt_service: jwt_que_genera
+          )
+
+          assert_raises Domain::Errors::CuentaPendienteVerificacionError do
+            use_case.ejecutar(correo: "pendiente@test.com", clave: "pending123")
           end
         end
       end
