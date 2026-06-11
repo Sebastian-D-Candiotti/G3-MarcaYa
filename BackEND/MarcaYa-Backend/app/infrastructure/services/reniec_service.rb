@@ -9,15 +9,10 @@ module Infrastructure
   module Services
     class ReniecService
       API_URL = "https://graphperu.daustinn.com/api/query".freeze
-      NOMBRES_FALLBACK = %w[JUAN CARLOS MARIA ANA LUIS MIGUEL SOFIA CARLA PEDRO ROSA JOSE DIEGO PAULA ANDREA MATEO].freeze
-      APELLIDOS_FALLBACK = %w[GONZALES LOPEZ TORRES QUISPE RAMOS FLORES DIAZ GARCIA MARTINEZ SANCHEZ ROMERO VEGA CASTRO PAREDES REYES].freeze
 
       def consultar(dni)
         return nil unless dni.to_s.match?(/\A\d{8}\z/)
-
-        if defined?(Rails) && Rails.env.test?
-          return datos_fake(dni)
-        end
+        return datos_fake(dni) if defined?(Rails) && Rails.env.test?
 
         api_consulta(dni)
       end
@@ -41,15 +36,17 @@ module Infrastructure
           apellido_materno: data["maternalLastName"]
         }
       rescue Net::TimeoutError, Net::OpenTimeout, Errno::ECONNREFUSED, Errno::EHOSTUNREACH, SocketError
-        datos_fake(dni)
+        nil
       end
 
       def datos_fake(dni)
         idx = dni.to_i
+        nombres_base = %w[JUAN CARLOS MARIA ANA LUIS MIGUEL SOFIA CARLA PEDRO ROSA]
+        apellidos_base = %w[GONZALES LOPEZ TORRES QUISPE RAMOS FLORES DIAZ GARCIA MARTINEZ SANCHEZ]
         {
-          nombres: "#{NOMBRES_FALLBACK[idx % NOMBRES_FALLBACK.size]} #{NOMBRES_FALLBACK[(idx / 10) % NOMBRES_FALLBACK.size]}",
-          apellido_paterno: APELLIDOS_FALLBACK[(idx / 100) % APELLIDOS_FALLBACK.size],
-          apellido_materno: APELLIDOS_FALLBACK[(idx / 1000) % APELLIDOS_FALLBACK.size]
+          nombres: "#{nombres_base[idx % nombres_base.size]} #{nombres_base[(idx / 10) % nombres_base.size]}",
+          apellido_paterno: apellidos_base[(idx / 100) % apellidos_base.size],
+          apellido_materno: apellidos_base[(idx / 1000) % apellidos_base.size]
         }
       end
     end
