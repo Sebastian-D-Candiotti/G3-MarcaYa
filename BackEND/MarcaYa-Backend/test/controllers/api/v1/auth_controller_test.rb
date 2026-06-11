@@ -8,6 +8,8 @@ class Api::V1::AuthControllerTest < ActionDispatch::IntegrationTest
     @empresa = usuarios(:empresa_activa)
     @empleado = usuarios(:empleado_activo)
     @inactivo = usuarios(:empresa_inactiva)
+    @pendiente = usuarios(:empleado_pendiente)
+    ActionMailer::Base.deliveries.clear
   end
 
   # ---- POST /api/v1/auth/login ----
@@ -46,7 +48,7 @@ class Api::V1::AuthControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :unauthorized
     body = response.parsed_body
-    assert_equal "Contraseña incorrecta", body["error"]
+    assert_equal "Contrasena incorrecta", body["error"]
   end
 
   test "login with unknown email returns 401" do
@@ -65,19 +67,79 @@ class Api::V1::AuthControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Usuario no encontrado", body["error"]
   end
 
+  test "login with pending verification user returns 403" do
+    post api_v1_auth_login_url, params: { correo: @pendiente.correo, clave: "pending123" }, as: :json
+
+    assert_response :forbidden
+    body = response.parsed_body
+    assert_equal "Cuenta pendiente de verificacion", body["error"]
+  end
+
   # ---- POST /api/v1/auth/registro ----
 
   test "registro with valid params returns 201" do
-    post api_v1_auth_registro_url, params: {
-      correo: "nuevo@test.com", clave: "mipassword",
-      rol: "empleado", nombre: "Nuevo", apellido: "Usuario"
-    }, as: :json
+    assert_difference -> { ActionMailer::Base.deliveries.size }, 1 do
+      post api_v1_auth_registro_url, params: {
+        correo: "nuevo@test.com", clave: "mipassword",
+        rol: "empleado", nombre: "Nuevo", apellido: "Usuario"
+      }, as: :json
+    end
 
     assert_response :created
     body = response.parsed_body
-    assert_equal "Usuario registrado", body["mensaje"]
+    assert_equal "Usuario registrado. Revisa tu correo para verificar la cuenta.", body["mensaje"]
     assert body["id"].present?
-    assert body["token"].present?
+    assert_equal "PENDIENTE_VERIFICACION", body["estado_verificacion"]
+    assert_equal true, body["requiere_verificacion"]
+    assert_nil body["token"]
+
+    usuario = Usuario.find_by!(correo: "nuevo@test.com")
+    assert_equal false, usuario.estado
+    assert_equal "PENDIENTE_VERIFICACION", usuario.estado_verificacion
+    assert usuario.codigo_verificacion_digest.present?
+    assert usuario.codigo_verificacion_expira_en.present?
+  end
+
+  test "verificar cuenta with valid code activates pending user" do
+    post "/api/v1/auth/verificacion/verificar",
+         params: { correo: @pendiente.correo, codigo: "123456" },
+         as: :json
+
+    assert_response :ok
+    body = response.parsed_body
+    assert_equal "Cuenta verificada", body["mensaje"]
+    assert_equal "ACTIVO", body["usuario"]["estado_verificacion"]
+
+    @pendiente.reload
+    assert_equal true, @pendiente.estado
+    assert_equal "ACTIVO", @pendiente.estado_verificacion
+    assert_nil @pendiente.codigo_verificacion_digest
+    assert_nil @pendiente.codigo_verificacion_expira_en
+  end
+
+  test "verificar cuenta with wrong code returns 422" do
+    post "/api/v1/auth/verificacion/verificar",
+         params: { correo: @pendiente.correo, codigo: "999999" },
+         as: :json
+
+    assert_response :unprocessable_entity
+    assert_equal "Codigo incorrecto", response.parsed_body["error"]
+  end
+
+  test "reenviar codigo updates pending verification code" do
+    assert_difference -> { ActionMailer::Base.deliveries.size }, 1 do
+      post "/api/v1/auth/verificacion/reenviar",
+           params: { correo: @pendiente.correo },
+           as: :json
+    end
+
+    assert_response :ok
+    assert_equal "Codigo reenviado", response.parsed_body["mensaje"]
+
+    @pendiente.reload
+    assert_equal false, @pendiente.estado
+    assert_equal "PENDIENTE_VERIFICACION", @pendiente.estado_verificacion
+    assert @pendiente.codigo_verificacion_digest.present?
   end
 
   # ---- Helper assertions ----

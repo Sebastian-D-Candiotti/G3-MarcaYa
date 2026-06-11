@@ -6,12 +6,14 @@ Rails.application.routes.draw do
     namespace :v1 do
 
       # AUTH
-      post "auth/login",                  to: "auth#login"
-      post "auth/registro",               to: "auth#registro"
-      post "auth/solicitar-codigo",       to: "auth#solicitar_codigo"
-      post "auth/verificar-codigo",       to: "auth#verificar_codigo"
-      put  "auth/restablecer-contrasena", to: "auth#restablecer_contrasena"
-      post "auth/verificar-otp",          to: "auth#verificar_otp"
+      post "auth/login",                     to: "auth#login"
+      post "auth/registro",                  to: "auth#registro"
+      post "auth/solicitar-codigo",          to: "auth#solicitar_codigo"
+      post "auth/verificar-codigo",          to: "auth#verificar_codigo"
+      put  "auth/restablecer-contrasena",    to: "auth#restablecer_contrasena"
+      post "auth/verificar-otp",             to: "auth#verificar_otp"
+      post "auth/verificacion/verificar",    to: "auth#verificar_cuenta"
+      post "auth/verificacion/reenviar",     to: "auth#reenviar_codigo_verificacion"
 
       # SUNAT
       get  "sunat/empresas",          to: "sunat#index"

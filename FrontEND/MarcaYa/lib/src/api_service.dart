@@ -253,6 +253,29 @@ class ApiService {
     return data;
   }
 
+  Future<Map<String, dynamic>> verificarCuenta({
+    required String correo,
+    required String codigo,
+  }) async {
+    final res = await _client.post(
+      Uri.parse('$kBaseUrl/auth/verificacion/verificar'),
+      headers: await _headers(auth: false),
+      body: jsonEncode({'correo': correo, 'codigo': codigo}),
+    );
+    return _parsearRespuesta(res);
+  }
+
+  Future<Map<String, dynamic>> reenviarCodigoVerificacion({
+    required String correo,
+  }) async {
+    final res = await _client.post(
+      Uri.parse('$kBaseUrl/auth/verificacion/reenviar'),
+      headers: await _headers(auth: false),
+      body: jsonEncode({'correo': correo}),
+    );
+    return _parsearRespuesta(res);
+  }
+
   Future<void> logout() async {
     await borrarToken();
   }

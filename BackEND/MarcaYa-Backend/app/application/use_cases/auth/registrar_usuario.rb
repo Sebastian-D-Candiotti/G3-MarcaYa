@@ -6,12 +6,15 @@ module Application
       class RegistrarUsuario
         CAMPOS_OBLIGATORIOS = %i[correo clave rol nombre].freeze
 
-        def initialize(usuario_repo:, empleado_repo:, empresa_repo:, bcrypt_service:, jwt_service:)
+        def initialize(usuario_repo:, empleado_repo:, empresa_repo:, bcrypt_service:, jwt_service:,
+                       verification_code_service:, verification_mailer:)
           @usuario_repo = usuario_repo
           @empleado_repo = empleado_repo
           @empresa_repo = empresa_repo
           @bcrypt_service = bcrypt_service
           @jwt_service = jwt_service
+          @verification_code_service = verification_code_service
+          @verification_mailer = verification_mailer
         end
 
         def ejecutar(params)
@@ -66,15 +69,21 @@ module Application
           end
 
           clave_hash = @bcrypt_service.hash(clave)
+          codigo = @verification_code_service.generate
 
           usuario = @usuario_repo.guardar(
             Domain::Entities::Usuario.new(
               id: nil, correo: correo, clave_hash: clave_hash,
-              rol: rol, estado: true
+              rol: rol,
+              estado: false,
+              estado_verificacion: Domain::Entities::Usuario::ESTADO_VERIFICACION_PENDIENTE,
+              codigo_verificacion_digest: @verification_code_service.digest(codigo),
+              codigo_verificacion_expira_en: @verification_code_service.expires_at
             )
           )
 
           crear_perfil!(usuario, params)
+          enviar_codigo!(correo: usuario.correo, codigo: codigo)
 
           # Si es flujo manual de empresa, generamos y enviamos el código OTP
           if rol.to_s == "empresa" && params[:registro_tipo].to_s == "manual"
@@ -89,51 +98,16 @@ module Application
                           "CÓDIGO DE VERIFICACIÓN: #{codigo_otp}\n" \
                           "========================================\n"
             puts mensaje_otp
-            if defined?(Rails) && Rails.respond_to?(:logger) && Rails.logger
-              Rails.logger.info(mensaje_otp)
-            end
+            Rails.logger.info(mensaje_otp) if defined?(Rails) && Rails.logger
 
             begin
-              if defined?(UsuarioMailer)
-                UsuarioMailer.correo_verificacion_ruc(correo, codigo_otp, params[:nombre]).deliver_now
-              end
+              UsuarioMailer.correo_verificacion_ruc(correo, codigo_otp, params[:nombre]).deliver_now if defined?(UsuarioMailer)
             rescue StandardError => e
-              if defined?(Rails) && Rails.respond_to?(:logger) && Rails.logger
-                Rails.logger.error("Error al enviar correo de verificacion via ActionMailer: #{e.message}")
-              end
+              Rails.logger.error("Error al enviar correo de verificacion via ActionMailer: #{e.message}") if defined?(Rails) && Rails.logger
             end
           end
 
-          # Enviar correo de confirmación/asociación al correo de creación
-          nombre_perfil = rol.to_s == "empresa" ? params[:nombre] : "#{params[:nombre]} #{params[:apellido]}".strip
-
-          # Imprimir en consola/logs para visibilidad instantánea
-          mensaje_asociacion = "\n========================================\n" \
-                               "[MAILER] Correo de Asociacion Enviado a: #{correo}\n" \
-                               "Asunto: Confirmacion de Registro y Asociacion - MarcaYa\n" \
-                               "Mensaje: Bienvenido a MarcaYa. Tu cuenta ha sido creada y asociada exitosamente como #{rol} (#{nombre_perfil}).\n" \
-                               "========================================\n"
-          puts mensaje_asociacion
-          if defined?(Rails) && Rails.respond_to?(:logger) && Rails.logger
-            Rails.logger.info(mensaje_asociacion)
-          end
-
-          # Llamar al ActionMailer de Rails si está definido
-          begin
-            if defined?(UsuarioMailer)
-              UsuarioMailer.correo_asociacion(correo, rol, nombre_perfil).deliver_now
-            end
-          rescue StandardError => e
-            if defined?(Rails) && Rails.respond_to?(:logger) && Rails.logger
-              Rails.logger.error("Error al enviar correo de asociacion via ActionMailer: #{e.message}")
-            else
-              puts "Error al enviar correo de asociacion via ActionMailer: #{e.message}"
-            end
-          end
-
-          token = @jwt_service.encode("user_id" => usuario.id, "rol" => usuario.rol.valor)
-
-          { usuario: usuario, token: token }
+          { usuario: usuario, requiere_verificacion: true }
         end
 
         private
@@ -184,6 +158,16 @@ module Application
               )
             )
           end
+        end
+
+        def enviar_codigo!(correo:, codigo:)
+          @verification_mailer
+            .with(correo: correo, codigo: codigo, minutos_validez: 10)
+            .codigo_verificacion
+            .deliver_now
+        rescue StandardError => e
+          raise Domain::Errors::CorreoVerificacionNoEnviadoError,
+                "No se pudo enviar el correo de verificacion: #{e.message}"
         end
       end
     end

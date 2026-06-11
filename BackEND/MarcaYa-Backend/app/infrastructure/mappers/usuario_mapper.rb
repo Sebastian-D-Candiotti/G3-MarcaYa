@@ -16,6 +16,10 @@ module Infrastructure
           estado: record.estado,
           codigo_recuperacion: record.codigo_recuperacion,
           codigo_expira: record.codigo_expira,
+          estado_verificacion: record.estado_verificacion,
+          codigo_verificacion_digest: record.codigo_verificacion_digest,
+          codigo_verificacion_expira_en: record.codigo_verificacion_expira_en,
+          verificado_en: record.verificado_en,
           created_at: record.created_at,
           updated_at: record.updated_at
         )
@@ -32,7 +36,11 @@ module Infrastructure
           rol: entity.rol.to_s,
           estado: entity.estado,
           codigo_recuperacion: entity.codigo_recuperacion,
-          codigo_expira: entity.codigo_expira
+          codigo_expira: entity.codigo_expira,
+          estado_verificacion: entity.estado_verificacion,
+          codigo_verificacion_digest: entity.codigo_verificacion_digest,
+          codigo_verificacion_expira_en: entity.codigo_verificacion_expira_en,
+          verificado_en: entity.verificado_en
         }
         attrs[:id] = entity.id if entity.id
         attrs[:created_at] = entity.created_at if entity.created_at

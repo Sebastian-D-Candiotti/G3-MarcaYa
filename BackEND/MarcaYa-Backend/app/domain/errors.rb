@@ -6,6 +6,11 @@ module Domain
     class UsuarioNoEncontradoError < StandardError; end
     class CredencialesInvalidasError < StandardError; end
     class UsuarioInactivoError < StandardError; end
+    class CuentaPendienteVerificacionError < StandardError; end
+    class CodigoVerificacionInvalidoError < StandardError; end
+    class CodigoVerificacionVencidoError < StandardError; end
+    class CodigoVerificacionUsadoError < StandardError; end
+    class CorreoVerificacionNoEnviadoError < StandardError; end
     class SolicitudNoEncontradaError < StandardError; end
     class TransicionEstadoInvalidaError < StandardError; end
     class ObraNoEncontradaError < StandardError; end

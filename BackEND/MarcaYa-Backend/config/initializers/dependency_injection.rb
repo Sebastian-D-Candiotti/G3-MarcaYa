@@ -13,7 +13,9 @@ module DependencyContainer
         empresa_repo: repos[:empresa],
         bcrypt_service: Infrastructure::Services::BcryptPasswordService,
         jwt_service: Infrastructure::Services::JwtTokenService,
-        notificador: Infrastructure::Services::ResendEmailService.new
+        notificador: Infrastructure::Services::ResendEmailService.new,
+        verification_code_service: Infrastructure::Services::VerificationCodeService,
+        verification_mailer: VerificacionCuentaMailer
       )
     end
 

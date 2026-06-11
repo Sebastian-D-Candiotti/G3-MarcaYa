@@ -20,6 +20,7 @@ module Application
             raise Domain::Errors::CredencialesInvalidasError
           end
 
+          raise Domain::Errors::CuentaPendienteVerificacionError if usuario.pendiente_verificacion?
           raise Domain::Errors::UsuarioInactivoError unless usuario.activo?
 
           migrar_si_es_plano!(usuario, clave)
@@ -43,6 +44,10 @@ module Application
             estado: usuario.estado,
             codigo_recuperacion: usuario.codigo_recuperacion,
             codigo_expira: usuario.codigo_expira,
+            estado_verificacion: usuario.estado_verificacion,
+            codigo_verificacion_digest: usuario.codigo_verificacion_digest,
+            codigo_verificacion_expira_en: usuario.codigo_verificacion_expira_en,
+            verificado_en: usuario.verificado_en,
             created_at: usuario.created_at,
             updated_at: usuario.updated_at
           )

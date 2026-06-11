@@ -31,7 +31,10 @@ module Application
             Domain::Entities::Usuario.new(
               id: 10, correo: u.correo,
               clave_hash: u.clave_hash, rol: u.rol.valor,
-              estado: u.estado
+              estado: u.estado,
+              estado_verificacion: u.estado_verificacion,
+              codigo_verificacion_digest: u.codigo_verificacion_digest,
+              codigo_verificacion_expira_en: u.codigo_verificacion_expira_en
             )
           end
           r
@@ -69,14 +72,42 @@ module Application
           s
         end
 
-        def test_ejecutar_returns_usuario_and_token_for_empleado
-          use_case = RegistrarUsuario.new(
-            usuario_repo: repo_usuario_sin_correo,
-            empleado_repo: repo_empleado,
-            empresa_repo: repo_empresa,
+        def verification_code_service
+          s = Object.new
+          s.define_singleton_method(:generate) { "123456" }
+          s.define_singleton_method(:digest) { |codigo| "digest-#{codigo}" }
+          s.define_singleton_method(:expires_at) { Time.now + 600 }
+          s
+        end
+
+        def verification_mailer
+          delivery = Object.new
+          delivery.define_singleton_method(:deliver_now) { true }
+
+          message = Object.new
+          message.define_singleton_method(:codigo_verificacion) { delivery }
+
+          mailer = Object.new
+          mailer.define_singleton_method(:with) { |_| message }
+          mailer
+        end
+
+        def build_use_case(usuario_repo: repo_usuario_sin_correo,
+                           empleado_repo: repo_empleado,
+                           empresa_repo: repo_empresa)
+          RegistrarUsuario.new(
+            usuario_repo: usuario_repo,
+            empleado_repo: empleado_repo,
+            empresa_repo: empresa_repo,
             bcrypt_service: bcrypt_service,
-            jwt_service: jwt_service
+            jwt_service: jwt_service,
+            verification_code_service: verification_code_service,
+            verification_mailer: verification_mailer
           )
+        end
+
+        def test_ejecutar_returns_pending_usuario_for_empleado
+          use_case = build_use_case
 
           result = use_case.ejecutar(
             correo: "nuevo@test.com",
@@ -87,17 +118,13 @@ module Application
           )
 
           assert_instance_of Domain::Entities::Usuario, result[:usuario]
-          assert_equal "fake.jwt.token", result[:token]
+          assert result[:requiere_verificacion]
+          refute result[:usuario].activo?
+          assert result[:usuario].pendiente_verificacion?
         end
 
         def test_ejecutar_raises_validacion_error_for_missing_fields
-          use_case = RegistrarUsuario.new(
-            usuario_repo: repo_usuario_sin_correo,
-            empleado_repo: repo_empleado,
-            empresa_repo: repo_empresa,
-            bcrypt_service: bcrypt_service,
-            jwt_service: jwt_service
-          )
+          use_case = build_use_case
 
           assert_raises Domain::Errors::ValidacionError do
             use_case.ejecutar(correo: "", clave: "", rol: "", nombre: "")
@@ -105,13 +132,7 @@ module Application
         end
 
         def test_ejecutar_raises_validacion_error_for_duplicate_email
-          use_case = RegistrarUsuario.new(
-            usuario_repo: repo_usuario_con_correo_existente,
-            empleado_repo: repo_empleado,
-            empresa_repo: repo_empresa,
-            bcrypt_service: bcrypt_service,
-            jwt_service: jwt_service
-          )
+          use_case = build_use_case(usuario_repo: repo_usuario_con_correo_existente)
 
           assert_raises Domain::Errors::ValidacionError do
             use_case.ejecutar(
@@ -134,13 +155,7 @@ module Application
           empresa_repo.define_singleton_method(:exists_by_ruc?) { |_ruc| false }
           empresa_repo.define_singleton_method(:verificar_codigo_ruc?) { |_ruc, code| true }
 
-          use_case = RegistrarUsuario.new(
-            usuario_repo: repo_usuario_sin_correo,
-            empleado_repo: repo_empleado,
-            empresa_repo: empresa_repo,
-            bcrypt_service: bcrypt_service,
-            jwt_service: jwt_service
-          )
+          use_case = build_use_case(empresa_repo: empresa_repo)
 
           use_case.ejecutar(
             correo: "empresa@test.com",
@@ -165,13 +180,7 @@ module Application
           empresa_repo_obj.define_singleton_method(:exists_by_ruc?) { |_ruc| false }
           empresa_repo_obj.define_singleton_method(:verificar_codigo_ruc?) { |_ruc, code| true }
 
-          use_case = RegistrarUsuario.new(
-            usuario_repo: repo_usuario_sin_correo,
-            empleado_repo: empleado_repo,
-            empresa_repo: empresa_repo_obj,
-            bcrypt_service: bcrypt_service,
-            jwt_service: jwt_service
-          )
+          use_case = build_use_case(empleado_repo: empleado_repo, empresa_repo: empresa_repo_obj)
 
           use_case.ejecutar(
             correo: "admin@test.com",

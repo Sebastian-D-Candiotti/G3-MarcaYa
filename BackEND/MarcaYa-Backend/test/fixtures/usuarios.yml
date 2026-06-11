@@ -7,6 +7,8 @@ empresa_activa:
   clave_hash: plaintext123
   rol: empresa
   estado: true
+  estado_verificacion: ACTIVO
+  verificado_en: <%= Time.current %>
   created_at: <%= Time.current %>
   updated_at: <%= Time.current %>
 
@@ -15,6 +17,8 @@ empleado_activo:
   clave_hash: pass456
   rol: empleado
   estado: true
+  estado_verificacion: ACTIVO
+  verificado_en: <%= Time.current %>
   created_at: <%= Time.current %>
   updated_at: <%= Time.current %>
 
@@ -23,5 +27,18 @@ empresa_inactiva:
   clave_hash: secret789
   rol: empresa
   estado: false
+  estado_verificacion: ACTIVO
+  verificado_en: <%= Time.current %>
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>
+
+empleado_pendiente:
+  correo: pendiente@test.com
+  clave_hash: pending123
+  rol: empleado
+  estado: false
+  estado_verificacion: PENDIENTE_VERIFICACION
+  codigo_verificacion_digest: <%= BCrypt::Password.create("123456") %>
+  codigo_verificacion_expira_en: <%= 10.minutes.from_now %>
   created_at: <%= Time.current %>
   updated_at: <%= Time.current %>

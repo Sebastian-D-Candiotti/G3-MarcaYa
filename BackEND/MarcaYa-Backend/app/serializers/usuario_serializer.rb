@@ -10,6 +10,7 @@ module Serializer
         correo: usuario.correo,
         rol: usuario.rol.to_s,
         estado: usuario.estado,
+        estadoVerificacion: usuario.estado_verificacion,
         fechaRegistro: usuario.created_at
       }
     end

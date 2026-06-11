@@ -90,6 +90,66 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   _setupSecureStorageMock();
 
+  group('Verificacion de cuenta', () {
+    test('verificarCuenta sends POST to /auth/verificacion/verificar', () async {
+      final client = _MockHttpClient(
+        handler: (request) async {
+          _verifyRequest(
+            request,
+            method: 'POST',
+            path: '/auth/verificacion/verificar',
+            bodyFields: {
+              'correo': 'nuevo@test.com',
+              'codigo': '123456',
+            },
+          );
+          return http.Response(
+            jsonEncode({
+              'mensaje': 'Cuenta verificada',
+              'usuario': {'estado_verificacion': 'ACTIVO'},
+            }),
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        },
+      );
+      final api = ApiService.createForTesting(client: client);
+
+      final result = await api.verificarCuenta(
+        correo: 'nuevo@test.com',
+        codigo: '123456',
+      );
+
+      expect(result['mensaje'], equals('Cuenta verificada'));
+    });
+
+    test('reenviarCodigoVerificacion sends POST to /auth/verificacion/reenviar',
+        () async {
+      final client = _MockHttpClient(
+        handler: (request) async {
+          _verifyRequest(
+            request,
+            method: 'POST',
+            path: '/auth/verificacion/reenviar',
+            bodyFields: {'correo': 'nuevo@test.com'},
+          );
+          return http.Response(
+            jsonEncode({'mensaje': 'Codigo reenviado'}),
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        },
+      );
+      final api = ApiService.createForTesting(client: client);
+
+      final result = await api.reenviarCodigoVerificacion(
+        correo: 'nuevo@test.com',
+      );
+
+      expect(result['mensaje'], equals('Codigo reenviado'));
+    });
+  });
+
   group('MarcarAsistencia', () {
     test('marcarEntrada sends POST to /asistencia/marcar-entrada with parada_id, latitud, longitud',
         () async {

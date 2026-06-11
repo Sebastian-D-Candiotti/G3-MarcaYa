@@ -5,7 +5,8 @@ module Application
     # Implements Ports::Driving::IAutenticarUsuario
     class AuthFacade
       def initialize(usuario_repo:, empleado_repo:, empresa_repo:,
-                     bcrypt_service:, jwt_service:, notificador:)
+                     bcrypt_service:, jwt_service:, notificador:,
+                     verification_code_service:, verification_mailer:)
         @usuario_repo = usuario_repo
         @bcrypt_service = bcrypt_service
         @jwt_service = jwt_service
@@ -20,7 +21,18 @@ module Application
           empleado_repo: empleado_repo,
           empresa_repo: empresa_repo,
           bcrypt_service: bcrypt_service,
-          jwt_service: jwt_service
+          jwt_service: jwt_service,
+          verification_code_service: verification_code_service,
+          verification_mailer: verification_mailer
+        )
+        @verificar_cuenta = UseCases::Auth::VerificarCuenta.new(
+          usuario_repo: usuario_repo,
+          verification_code_service: verification_code_service
+        )
+        @reenviar_codigo_verificacion = UseCases::Auth::ReenviarCodigoVerificacion.new(
+          usuario_repo: usuario_repo,
+          verification_code_service: verification_code_service,
+          verification_mailer: verification_mailer
         )
         @cerrar_sesion = UseCases::Auth::CerrarSesion.new
       end
@@ -31,6 +43,14 @@ module Application
 
       def registro(params)
         @registrar_usuario.ejecutar(params)
+      end
+
+      def verificar_cuenta(correo:, codigo:)
+        @verificar_cuenta.ejecutar(correo: correo, codigo: codigo)
+      end
+
+      def reenviar_codigo_verificacion(correo:)
+        @reenviar_codigo_verificacion.ejecutar(correo: correo)
       end
 
       def logout(usuario_id:)
