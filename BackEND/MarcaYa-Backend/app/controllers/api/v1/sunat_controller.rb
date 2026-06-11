@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Api::V1::SunatController < Api::V1::BaseController
-  skip_before_action :authenticate!, only: [:index, :enviar_codigo, :consulta]
+  skip_before_action :authenticate!, only: [:index, :enviar_codigo, :consulta, :validar_ruc_unico]
 
   # GET /api/v1/sunat/empresas
   def index
