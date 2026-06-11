@@ -107,7 +107,6 @@ class Api::V1::AuthController < Api::V1::BaseController
 
     render json: { mensaje: "Código OTP verificado correctamente" }
   end
-  end
 
   private
 
