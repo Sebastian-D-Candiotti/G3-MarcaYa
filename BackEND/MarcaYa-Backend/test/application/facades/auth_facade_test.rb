@@ -45,13 +45,14 @@ module Application
       end
 
       def build_facade(usuario_repo:, empleado_repo: Object.new, empresa_repo: Object.new,
-                       bcrypt_service: Object.new, jwt_service: Object.new)
+                       bcrypt_service: Object.new, jwt_service: Object.new, notificador: Object.new)
         AuthFacade.new(
           usuario_repo: usuario_repo,
           empleado_repo: empleado_repo,
           empresa_repo: empresa_repo,
           bcrypt_service: bcrypt_service,
           jwt_service: jwt_service,
+          notificador: notificador,
           verification_code_service: verification_code_service,
           verification_mailer: verification_mailer
         )

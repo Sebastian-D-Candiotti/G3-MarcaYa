@@ -199,7 +199,9 @@ module Application
             empleado_repo: repo_empleado,
             empresa_repo: repo_empresa,
             bcrypt_service: bcrypt_service,
-            jwt_service: jwt_service
+            jwt_service: jwt_service,
+            verification_code_service: verification_code_service,
+            verification_mailer: verification_mailer
           )
 
           assert_raises Domain::Errors::ValidacionError do
@@ -219,7 +221,9 @@ module Application
             empleado_repo: repo_empleado,
             empresa_repo: repo_empresa,
             bcrypt_service: bcrypt_service,
-            jwt_service: jwt_service
+            jwt_service: jwt_service,
+            verification_code_service: verification_code_service,
+            verification_mailer: verification_mailer
           )
 
           assert_raises Domain::Errors::ValidacionError do
@@ -243,7 +247,9 @@ module Application
             empleado_repo: repo_empleado,
             empresa_repo: empresa_repo,
             bcrypt_service: bcrypt_service,
-            jwt_service: jwt_service
+            jwt_service: jwt_service,
+            verification_code_service: verification_code_service,
+            verification_mailer: verification_mailer
           )
 
           assert_raises Domain::Errors::ValidacionError do
@@ -263,7 +269,9 @@ module Application
             empleado_repo: repo_empleado,
             empresa_repo: repo_empresa(codigo_valido: "123456"),
             bcrypt_service: bcrypt_service,
-            jwt_service: jwt_service
+            jwt_service: jwt_service,
+            verification_code_service: verification_code_service,
+            verification_mailer: verification_mailer
           )
 
           assert_raises Domain::Errors::ValidacionError do
@@ -284,7 +292,9 @@ module Application
             empleado_repo: repo_empleado,
             empresa_repo: repo_empresa(codigo_valido: "123456"),
             bcrypt_service: bcrypt_service,
-            jwt_service: jwt_service
+            jwt_service: jwt_service,
+            verification_code_service: verification_code_service,
+            verification_mailer: verification_mailer
           )
 
           result = use_case.ejecutar(
@@ -297,7 +307,7 @@ module Application
           )
 
           assert_instance_of Domain::Entities::Usuario, result[:usuario]
-          assert_equal "fake.jwt.token", result[:token]
+          assert result[:requiere_verificacion]
         end
       end
     end

@@ -218,16 +218,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_09_000100) do
     t.string "clave_hash", limit: 255, null: false
     t.datetime "codigo_expira", precision: nil
     t.string "codigo_recuperacion", limit: 10
+    t.string "codigo_verificacion_digest", limit: 255
+    t.datetime "codigo_verificacion_expira_en"
     t.string "correo", limit: 255, null: false
     t.datetime "created_at", precision: nil, default: -> { "CURRENT_TIMESTAMP" }
     t.boolean "estado", default: true
     t.string "estado_verificacion", limit: 30, default: "ACTIVO", null: false
-    t.string "codigo_verificacion_digest", limit: 255
-    t.datetime "codigo_verificacion_expira_en"
-    t.datetime "verificado_en"
     t.string "rol", limit: 20, null: false
     t.datetime "updated_at", precision: nil, default: -> { "CURRENT_TIMESTAMP" }
-
+    t.datetime "verificado_en"
     t.index ["estado_verificacion"], name: "index_usuarios_on_estado_verificacion"
     t.unique_constraint ["correo"], name: "usuarios_correo_key"
   end
