@@ -49,6 +49,7 @@ module Application
         def repo_empleado
           r = Object.new
           r.define_singleton_method(:guardar) { |e| e }
+          r.define_singleton_method(:exists_by_dni?) { |_| false }
           r
         end
 
@@ -92,6 +93,12 @@ module Application
           mailer
         end
 
+        def reniec_service
+          s = Object.new
+          s.define_singleton_method(:consultar) { |_dni| { nombres: "Juan", apellido_paterno: "Pérez", apellido_materno: "García" } }
+          s
+        end
+
         def build_use_case(usuario_repo: repo_usuario_sin_correo,
                            empleado_repo: repo_empleado,
                            empresa_repo: repo_empresa)
@@ -102,7 +109,8 @@ module Application
             bcrypt_service: bcrypt_service,
             jwt_service: jwt_service,
             verification_code_service: verification_code_service,
-            verification_mailer: verification_mailer
+            verification_mailer: verification_mailer,
+            reniec_service: reniec_service
           )
         end
 
@@ -114,7 +122,8 @@ module Application
             clave: "password123",
             rol: "empleado",
             nombre: "Juan",
-            apellido: "Pérez"
+            apellido: "Pérez",
+            dni: "87654321"
           )
 
           assert_instance_of Domain::Entities::Usuario, result[:usuario]
@@ -201,7 +210,8 @@ module Application
             bcrypt_service: bcrypt_service,
             jwt_service: jwt_service,
             verification_code_service: verification_code_service,
-            verification_mailer: verification_mailer
+            verification_mailer: verification_mailer,
+            reniec_service: reniec_service
           )
 
           assert_raises Domain::Errors::ValidacionError do
@@ -223,7 +233,8 @@ module Application
             bcrypt_service: bcrypt_service,
             jwt_service: jwt_service,
             verification_code_service: verification_code_service,
-            verification_mailer: verification_mailer
+            verification_mailer: verification_mailer,
+            reniec_service: reniec_service
           )
 
           assert_raises Domain::Errors::ValidacionError do
@@ -249,7 +260,8 @@ module Application
             bcrypt_service: bcrypt_service,
             jwt_service: jwt_service,
             verification_code_service: verification_code_service,
-            verification_mailer: verification_mailer
+            verification_mailer: verification_mailer,
+            reniec_service: reniec_service
           )
 
           assert_raises Domain::Errors::ValidacionError do
@@ -271,7 +283,8 @@ module Application
             bcrypt_service: bcrypt_service,
             jwt_service: jwt_service,
             verification_code_service: verification_code_service,
-            verification_mailer: verification_mailer
+            verification_mailer: verification_mailer,
+            reniec_service: reniec_service
           )
 
           assert_raises Domain::Errors::ValidacionError do
@@ -294,7 +307,8 @@ module Application
             bcrypt_service: bcrypt_service,
             jwt_service: jwt_service,
             verification_code_service: verification_code_service,
-            verification_mailer: verification_mailer
+            verification_mailer: verification_mailer,
+            reniec_service: reniec_service
           )
 
           result = use_case.ejecutar(

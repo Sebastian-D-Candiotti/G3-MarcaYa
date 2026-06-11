@@ -15,7 +15,8 @@ module DependencyContainer
         jwt_service: Infrastructure::Services::JwtTokenService,
         notificador: Infrastructure::Services::ResendEmailService.new,
         verification_code_service: Infrastructure::Services::VerificationCodeService,
-        verification_mailer: VerificacionCuentaMailer
+        verification_mailer: VerificacionCuentaMailer,
+        reniec_service: Infrastructure::Services::ReniecService.new
       )
     end
 

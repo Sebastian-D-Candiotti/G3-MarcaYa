@@ -6,7 +6,8 @@ module Application
     class AuthFacade
       def initialize(usuario_repo:, empleado_repo:, empresa_repo:,
                      bcrypt_service:, jwt_service:, notificador:,
-                     verification_code_service:, verification_mailer:)
+                     verification_code_service:, verification_mailer:,
+                     reniec_service:)
         @usuario_repo = usuario_repo
         @bcrypt_service = bcrypt_service
         @jwt_service = jwt_service
@@ -23,7 +24,8 @@ module Application
           bcrypt_service: bcrypt_service,
           jwt_service: jwt_service,
           verification_code_service: verification_code_service,
-          verification_mailer: verification_mailer
+          verification_mailer: verification_mailer,
+          reniec_service: reniec_service
         )
         @verificar_cuenta = UseCases::Auth::VerificarCuenta.new(
           usuario_repo: usuario_repo,

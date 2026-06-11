@@ -45,7 +45,8 @@ module Application
       end
 
       def build_facade(usuario_repo:, empleado_repo: Object.new, empresa_repo: Object.new,
-                       bcrypt_service: Object.new, jwt_service: Object.new, notificador: Object.new)
+                       bcrypt_service: Object.new, jwt_service: Object.new, notificador: Object.new,
+                       reniec_service: Object.new)
         AuthFacade.new(
           usuario_repo: usuario_repo,
           empleado_repo: empleado_repo,
@@ -54,7 +55,8 @@ module Application
           jwt_service: jwt_service,
           notificador: notificador,
           verification_code_service: verification_code_service,
-          verification_mailer: verification_mailer
+          verification_mailer: verification_mailer,
+          reniec_service: reniec_service
         )
       end
 
@@ -100,6 +102,10 @@ module Application
         empleado_repo = Object.new
         guardado = nil
         empleado_repo.define_singleton_method(:guardar) { |e| guardado = e; e }
+        empleado_repo.define_singleton_method(:exists_by_dni?) { |_| false }
+
+        reniec_service_mock = Object.new
+        reniec_service_mock.define_singleton_method(:consultar) { |_| { nombres: "Juan", apellido_paterno: "Pérez", apellido_materno: "García" } }
 
         bcrypt_service = Object.new
         bcrypt_service.define_singleton_method(:hash) { |_| "$2a$12$hash" }
@@ -111,12 +117,13 @@ module Application
           usuario_repo: usuario_repo,
           empleado_repo: empleado_repo,
           bcrypt_service: bcrypt_service,
-          jwt_service: jwt_service
+          jwt_service: jwt_service,
+          reniec_service: reniec_service_mock
         )
 
         result = facade.registro(
           correo: "nuevo@test.com", clave: "pass123",
-          rol: "empleado", nombre: "Juan"
+          rol: "empleado", nombre: "Juan", dni: "87654321"
         )
 
         assert_instance_of Domain::Entities::Usuario, result[:usuario]

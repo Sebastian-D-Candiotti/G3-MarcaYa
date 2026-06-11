@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../src/api_service.dart';
 import '../../theme/app_theme.dart';
+import 'package:flutter/services.dart';
 
 class RegistrarEmpleadoPage extends StatefulWidget {
   const RegistrarEmpleadoPage({super.key});
@@ -11,17 +12,19 @@ class RegistrarEmpleadoPage extends StatefulWidget {
 }
 
 class _RegistrarEmpleadoPageState extends State<RegistrarEmpleadoPage> {
-  final _correoCtrl    = TextEditingController();
-  final _claveCtrl     = TextEditingController();
+  final _correoCtrl = TextEditingController();
+  final _claveCtrl = TextEditingController();
   final _confirmarCtrl = TextEditingController();
-  final _nombreCtrl    = TextEditingController();
-  final _apellidoCtrl  = TextEditingController();
-  final _dniCtrl       = TextEditingController();
+  final _nombreCtrl = TextEditingController();
+  final _apellidoCtrl = TextEditingController();
+  final _dniCtrl = TextEditingController();
 
   bool _isLoading = false;
   String? _error;
   bool _obscureClave = true;
   bool _obscureConfirmar = true;
+  bool _isConsultandoReniec = false;
+  bool _dniValidadoConReniec = false;
 
   @override
   void dispose() {
@@ -35,10 +38,20 @@ class _RegistrarEmpleadoPageState extends State<RegistrarEmpleadoPage> {
   }
 
   Future<void> _handleRegistro() async {
+    final dni = _dniCtrl.text.trim();
+
+    // 1. Validar que el DNI tenga exactamente 8 números
+    if (!RegExp(r'^\d{8}$').hasMatch(dni)) {
+      setState(() => _error = 'El DNI debe tener exactamente 8 números');
+      return;
+    }
+
+    // 2. Validar contraseña
     if (_claveCtrl.text != _confirmarCtrl.text) {
       setState(() => _error = 'Las contraseñas no coinciden');
       return;
     }
+
     if (_claveCtrl.text.length < 6) {
       setState(() => _error = 'La contraseña debe tener al menos 6 caracteres');
       return;
@@ -53,11 +66,11 @@ class _RegistrarEmpleadoPageState extends State<RegistrarEmpleadoPage> {
       final correo = _correoCtrl.text.trim();
 
       await ApiService.instance.registrarEmpleado(
-        correo:   correo,
-        clave:    _claveCtrl.text,
-        nombre:   _nombreCtrl.text.trim(),
-        apellido: _apellidoCtrl.text.trim().isNotEmpty ? _apellidoCtrl.text.trim() : null,
-        dni:      _dniCtrl.text.trim().isNotEmpty ? _dniCtrl.text.trim() : null,
+        correo: _correoCtrl.text.trim(),
+        clave: _claveCtrl.text,
+        nombre: 'PENDIENTE_RENIEC',
+        apellido: '',
+        dni: dni,
       );
 
       if (!mounted) return;
@@ -107,24 +120,44 @@ class _RegistrarEmpleadoPageState extends State<RegistrarEmpleadoPage> {
               ),
               const SizedBox(height: 28),
 
-              _buildField('Nombres', _nombreCtrl),
+              _buildField('Nombres', _nombreCtrl, enabled: false),
               const SizedBox(height: 16),
-              _buildField('Apellidos', _apellidoCtrl),
+              _buildField('Apellidos', _apellidoCtrl, enabled: false),
               const SizedBox(height: 16),
-              _buildField('DNI', _dniCtrl, tipo: TextInputType.number, maxLength: 8),
+              _buildField(
+                'DNI',
+                _dniCtrl,
+                tipo: TextInputType.number,
+                maxLength: 8,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(8),
+                ],
+              ),
               const SizedBox(height: 16),
-              _buildField('Correo electrónico', _correoCtrl,
-                  tipo: TextInputType.emailAddress),
+              _buildField(
+                'Correo electrónico',
+                _correoCtrl,
+                tipo: TextInputType.emailAddress,
+              ),
               const SizedBox(height: 16),
-              _buildField('Contraseña', _claveCtrl,
-                  obscure: true,
-                  obscureCtrl: () => setState(() => _obscureClave = !_obscureClave),
-                  isObscure: _obscureClave),
+              _buildField(
+                'Contraseña',
+                _claveCtrl,
+                obscure: true,
+                obscureCtrl: () =>
+                    setState(() => _obscureClave = !_obscureClave),
+                isObscure: _obscureClave,
+              ),
               const SizedBox(height: 16),
-              _buildField('Confirmar contraseña', _confirmarCtrl,
-                  obscure: true,
-                  obscureCtrl: () => setState(() => _obscureConfirmar = !_obscureConfirmar),
-                  isObscure: _obscureConfirmar),
+              _buildField(
+                'Confirmar contraseña',
+                _confirmarCtrl,
+                obscure: true,
+                obscureCtrl: () =>
+                    setState(() => _obscureConfirmar = !_obscureConfirmar),
+                isObscure: _obscureConfirmar,
+              ),
 
               if (_error != null)
                 Padding(
@@ -151,9 +184,13 @@ class _RegistrarEmpleadoPageState extends State<RegistrarEmpleadoPage> {
                             strokeWidth: 2.5,
                           ),
                         )
-                      : const Text('Crear cuenta',
+                      : const Text(
+                          'Crear cuenta',
                           style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold)),
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ),
 
@@ -162,10 +199,7 @@ class _RegistrarEmpleadoPageState extends State<RegistrarEmpleadoPage> {
               Text(
                 'Después de registrarte, podrás buscar empresas y solicitar ingreso.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 13,
-                ),
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
               ),
             ],
           ),
@@ -182,18 +216,28 @@ class _RegistrarEmpleadoPageState extends State<RegistrarEmpleadoPage> {
     VoidCallback? obscureCtrl,
     bool? isObscure,
     int? maxLength,
+    bool enabled = true,
+    List<TextInputFormatter>? inputFormatters,
+    VoidCallback? onChanged,
   }) {
     return TextField(
       controller: controller,
+      enabled: enabled,
       obscureText: obscure ? isObscure! : false,
       keyboardType: tipo,
       maxLength: maxLength,
+      inputFormatters: inputFormatters,
+      onChanged: (_) {
+        if (onChanged != null) onChanged();
+      },
       decoration: InputDecoration(
         hintText: hint,
         counterText: '',
         suffixIcon: obscure
             ? IconButton(
-                icon: Icon(isObscure! ? Icons.visibility : Icons.visibility_off),
+                icon: Icon(
+                  isObscure! ? Icons.visibility : Icons.visibility_off,
+                ),
                 onPressed: obscureCtrl,
               )
             : null,

@@ -81,7 +81,8 @@ class Api::V1::AuthControllerTest < ActionDispatch::IntegrationTest
     assert_difference -> { ActionMailer::Base.deliveries.size }, 1 do
       post api_v1_auth_registro_url, params: {
         correo: "nuevo@test.com", clave: "mipassword",
-        rol: "empleado", nombre: "Nuevo", apellido: "Usuario"
+        rol: "empleado", nombre: "Nuevo", apellido: "Usuario",
+        dni: "87654321"
       }, as: :json
     end
 
