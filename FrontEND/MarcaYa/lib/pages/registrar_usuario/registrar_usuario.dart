@@ -34,7 +34,7 @@ class RegistrarUsuarioPage extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Seleccioná el tipo de usuario',
+                'Selecciona el tipo de usuario',
                 style: TextStyle(
                   fontSize: 16,
                   color: AppColors.textSecondary,

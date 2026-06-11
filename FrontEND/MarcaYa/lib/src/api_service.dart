@@ -9,10 +9,10 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 // ─── CAMBIA ESTA URL SEGÚN DONDE CORRA TU BACKEND ───────────
 // Emulador Android:  http://10.0.2.2:3000/api/v1
-// Google chrome: http://localhost:3000/api/v1
+// Google chrome: http://127.0.0.1:3000/api/v1
 // Dispositivo físico: http://TU_IP_LOCAL:3000/api/v1  (ej: 192.168.1.5)
 // Producción:        https://tu-dominio.com/api/v1
-const String kBaseUrl = 'http://localhost:3000/api/v1';
+const String kBaseUrl = 'http://127.0.0.1:3000/api/v1';
 
 // ────────────────────────────────────────────────────────────
 

@@ -3,29 +3,32 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../src/api_service.dart';
+import '../../theme/app_theme.dart';
 
 class CodigoContrasenaPage extends StatefulWidget {
-
   const CodigoContrasenaPage({super.key});
 
   @override
-  State<CodigoContrasenaPage> createState() =>
-      _CodigoContrasenaPageState();
-
+  State<CodigoContrasenaPage> createState() => _CodigoContrasenaPageState();
 }
 
-class _CodigoContrasenaPageState
-    extends State<CodigoContrasenaPage> {
-
-  final List<TextEditingController> controllers =
-  List.generate(
+class _CodigoContrasenaPageState extends State<CodigoContrasenaPage> {
+  final List<TextEditingController> controllers = List.generate(
     6,
-        (_) => TextEditingController(),
+    (_) => TextEditingController(),
   );
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    for (var controller in controllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-
     final auth = context.watch<AuthProvider>();
     if (auth.recoveryEmail == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) => context.go('/reset-password'));
@@ -33,136 +36,112 @@ class _CodigoContrasenaPageState
     }
 
     return Scaffold(
-
-      backgroundColor: Colors.black,
-
+      appBar: AppBar(
+        title: const Text('Verificar código'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/reset-password');
+            }
+          },
+        ),
+      ),
       body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Column(
+              children: [
+                const SizedBox(height: 60),
 
-        child: Padding(
-
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-
-          child: Column(
-
-            crossAxisAlignment: CrossAxisAlignment.start,
-
-            children: [
-
-              const SizedBox(height: 30),
-
-              // TEXTO
-              const Text(
-
-                'Le hemos enviado un c\u00F3digo de verificaci\u00F3n a su correo, ingresarlo en el siguiente recuadro:',
-
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
+                const Icon(
+                  Icons.mark_email_read_rounded,
+                  size: 80,
+                  color: AppColors.primary,
                 ),
+                const SizedBox(height: 24),
 
-              ),
-
-              const SizedBox(height: 40),
-
-              // CUADROS
-              Row(
-
-                mainAxisAlignment:
-                MainAxisAlignment.spaceBetween,
-
-                children: List.generate(
-
-                  6,
-
-                      (index) => SizedBox(
-
-                    width: 50,
-                    height: 60,
-
-                    child: TextField(
-
-                      controller: controllers[index],
-
-                      textAlign: TextAlign.center,
-
-                      keyboardType: TextInputType.number,
-
-                      maxLength: 1,
-
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-
-                      decoration: InputDecoration(
-
-                        counterText: '',
-
-                        filled: true,
-
-                        fillColor: const Color(0xFF5A5A5A),
-
-                        border: OutlineInputBorder(
-
-                          borderRadius:
-                          BorderRadius.circular(12),
-
-                          borderSide: BorderSide.none,
-
-                        ),
-
-                      ),
-
-                    ),
-
+                const Text(
+                  'Ingresa el código',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
                   ),
+                ),
+                const SizedBox(height: 8),
 
+                Text(
+                  'Enviamos un código de verificación de 6 dígitos a:\n${auth.recoveryEmail}',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
 
-              ),
+                const SizedBox(height: 48),
 
-              const SizedBox(height: 70),
-
-              // BOTON
-              Center(
-
-                child: SizedBox(
-
-                  width: 180,
-                  height: 60,
-
-                  child: ElevatedButton(
-
-                    style: ElevatedButton.styleFrom(
-
-                      backgroundColor:
-                      const Color(0xFFF4B400),
-
-                      shape: RoundedRectangleBorder(
-                        borderRadius:
-                        BorderRadius.circular(40),
+                // CUADROS
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: List.generate(
+                    6,
+                    (index) => SizedBox(
+                      width: 45,
+                      height: 56,
+                      child: TextField(
+                        controller: controllers[index],
+                        textAlign: TextAlign.center,
+                        keyboardType: TextInputType.number,
+                        maxLength: 1,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                        onChanged: (value) {
+                          if (value.isNotEmpty && index < 5) {
+                            FocusScope.of(context).nextFocus();
+                          } else if (value.isEmpty && index > 0) {
+                            FocusScope.of(context).previousFocus();
+                          }
+                        },
+                        decoration: const InputDecoration(
+                          counterText: '',
+                          contentPadding: EdgeInsets.zero,
+                        ),
                       ),
-
                     ),
+                  ),
+                ),
 
-                    onPressed: () async {
+                const SizedBox(height: 48),
 
-                      // UNIR CODIGO
-                      String codigo = controllers
-                          .map((c) => c.text)
-                          .join();
+                // BOTON
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : () async {
+                      String codigo = controllers.map((c) => c.text).join();
 
                       if (codigo.length != 6) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Ingrese el c\u00F3digo completo de 6 d\u00EDgitos'),
+                            content: Text('Ingrese el código completo de 6 dígitos'),
                             backgroundColor: Colors.red,
                           ),
                         );
                         return;
                       }
+
+                      setState(() {
+                        _isLoading = true;
+                      });
 
                       try {
                         final token = await context.read<AuthProvider>().verificarCodigo(codigo);
@@ -179,42 +158,54 @@ class _CodigoContrasenaPageState
                       } catch (e) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Error de conexi\u00F3n. Intente de nuevo.'),
+                            content: Text('Error de conexión. Intente de nuevo.'),
                             backgroundColor: Colors.red,
                           ),
                         );
+                      } finally {
+                        if (mounted) {
+                          setState(() {
+                            _isLoading = false;
+                          });
+                        }
                       }
-
                     },
-
-                    child: const Text(
-
-                      'Validar',
-
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-
-                    ),
-
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.5,
+                            ),
+                          )
+                        : const Text(
+                            'VALIDAR',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
                   ),
-
                 ),
 
-              ),
+                const SizedBox(height: 24),
 
-            ],
-
+                TextButton(
+                  onPressed: () => context.go('/reset-password'),
+                  child: const Text(
+                    'Volver a solicitar código',
+                    style: TextStyle(
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-
         ),
-
       ),
-
     );
-
   }
-
 }

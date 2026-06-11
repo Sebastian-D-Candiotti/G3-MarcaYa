@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 class PasswordRecoveryMailer < ApplicationMailer
-  default from: "MarcaYa <onboarding@resend.dev>"
 
   def codigo_recuperacion(correo, codigo)
     @codigo = codigo

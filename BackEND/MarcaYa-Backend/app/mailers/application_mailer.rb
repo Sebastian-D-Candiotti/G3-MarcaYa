@@ -1,4 +1,4 @@
 class ApplicationMailer < ActionMailer::Base
-  default from: "MarcaYa <onboarding@resend.dev>"
+  default from: ENV['SMTP_USERNAME'] || Rails.application.credentials.dig(:smtp, :username) || "onboarding@resend.dev"
   layout "mailer"
 end

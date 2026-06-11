@@ -32,8 +32,17 @@ Rails.application.configure do
   # Don't care if the mailer can't send.
   config.action_mailer.raise_delivery_errors = true
 
-  # Use Resend for email delivery in development (sends real emails)
-  config.action_mailer.delivery_method = :resend
+  # Use SMTP for email delivery in development (Gmail SMTP)
+  config.action_mailer.delivery_method = :smtp
+  config.action_mailer.smtp_settings = {
+    address:              'smtp.gmail.com',
+    port:                 587,
+    domain:               'gmail.com',
+    user_name:            ENV['SMTP_USERNAME'] || Rails.application.credentials.dig(:smtp, :username),
+    password:             ENV['SMTP_PASSWORD'] || Rails.application.credentials.dig(:smtp, :password),
+    authentication:       'plain',
+    enable_starttls_auto: true
+  }
 
   # Make template changes take effect immediately.
   config.action_mailer.perform_caching = false

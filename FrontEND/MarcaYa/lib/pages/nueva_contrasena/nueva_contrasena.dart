@@ -3,10 +3,9 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../src/api_service.dart';
-import '../../components/header_clipper.dart';
+import '../../theme/app_theme.dart';
 
 class NuevaContrasenaPage extends StatefulWidget {
-
   const NuevaContrasenaPage({super.key});
 
   @override
@@ -14,9 +13,11 @@ class NuevaContrasenaPage extends StatefulWidget {
 }
 
 class _NuevaContrasenaPageState extends State<NuevaContrasenaPage> {
-
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmController = TextEditingController();
+  bool _obscurePassword = true;
+  bool _obscureConfirm = true;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -27,7 +28,6 @@ class _NuevaContrasenaPageState extends State<NuevaContrasenaPage> {
 
   @override
   Widget build(BuildContext context) {
-
     final auth = context.watch<AuthProvider>();
     if (auth.verificationToken == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) => context.go('/reset-password'));
@@ -35,226 +35,201 @@ class _NuevaContrasenaPageState extends State<NuevaContrasenaPage> {
     }
 
     return Scaffold(
-
-      backgroundColor: Colors.black,
-
+      appBar: AppBar(
+        title: const Text('Nueva contraseña'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/reset-password');
+            }
+          },
+        ),
+      ),
       body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Column(
+              children: [
+                const SizedBox(height: 60),
 
-        child: Column(
-
-          children: [
-
-            // HEADER
-            ClipPath(
-
-              clipper: const HeaderClipper(),
-
-              child: Container(
-
-                width: double.infinity,
-                height: 100,
-
-                decoration: const BoxDecoration(
-
-                  gradient: LinearGradient(
-
-                    colors: [
-                      Color(0xFFF4D35E),
-                      Color(0xFFF28C45),
-                    ],
-
-                  ),
-
+                const Icon(
+                  Icons.vpn_key_rounded,
+                  size: 80,
+                  color: AppColors.primary,
                 ),
+                const SizedBox(height: 24),
 
-                child: const Center(
-
-                  child: Text(
-
-                    'Nueva contrase\u00F1a',
-
-                    style: TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-
-                  ),
-
-                ),
-
-              ),
-
-            ),
-
-            const SizedBox(height: 50),
-
-            // INPUT NUEVA CONTRASE\u00D1A
-            buildInput('Ingrese nueva contrase\u00F1a', _passwordController),
-
-            const SizedBox(height: 25),
-
-            // INPUT CONFIRMAR
-            buildInput('Confirmar contrase\u00F1a', _confirmController),
-
-            const SizedBox(height: 40),
-
-            // BOTON
-            SizedBox(
-
-              width: 170,
-              height: 60,
-
-              child: ElevatedButton(
-
-                style: ElevatedButton.styleFrom(
-
-                  backgroundColor: const Color(0xFFF4B400),
-
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(40),
-                  ),
-
-                ),
-
-                onPressed: () async {
-                  final password = _passwordController.text;
-                  final confirm = _confirmController.text;
-
-                  if (password.isEmpty || confirm.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Complete ambos campos'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                    return;
-                  }
-
-                  if (password != confirm) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Las contrase\u00F1as no coinciden'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                    return;
-                  }
-
-                  if (password.length < 8) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('La contrase\u00F1a debe tener al menos 8 caracteres'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                    return;
-                  }
-
-                  try {
-                    final success = await context.read<AuthProvider>().restablecerContrasena(password);
-                    if (success && mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Contrase\u00F1a cambiada exitosamente'),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
-                      Future.delayed(const Duration(seconds: 2), () {
-                        if (mounted) context.go('/');
-                      });
-                    }
-                  } on ApiException catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(e.mensaje),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Error de conexi\u00F3n. Intente de nuevo.'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
-                },
-
-                child: const Text(
-
-                  'Cambiar',
-
+                const Text(
+                  'Crear contraseña',
                   style: TextStyle(
-                    fontSize: 24,
-                    color: Colors.white,
+                    fontSize: 28,
                     fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
                   ),
+                ),
+                const SizedBox(height: 8),
 
+                const Text(
+                  'Ingresa tu nueva contraseña. Debe tener al menos 8 caracteres.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
 
-              ),
+                const SizedBox(height: 48),
 
+                // PASSWORD INPUT
+                TextField(
+                  controller: _passwordController,
+                  obscureText: _obscurePassword,
+                  decoration: InputDecoration(
+                    hintText: 'Nueva contraseña',
+                    prefixIcon: const Icon(Icons.lock_outline_rounded),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // CONFIRM PASSWORD INPUT
+                TextField(
+                  controller: _confirmController,
+                  obscureText: _obscureConfirm,
+                  decoration: InputDecoration(
+                    hintText: 'Confirmar contraseña',
+                    prefixIcon: const Icon(Icons.lock_outline_rounded),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureConfirm ? Icons.visibility : Icons.visibility_off,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscureConfirm = !_obscureConfirm;
+                        });
+                      },
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 32),
+
+                // BOTON
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : () async {
+                      final password = _passwordController.text;
+                      final confirm = _confirmController.text;
+
+                      if (password.isEmpty || confirm.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Complete ambos campos'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+
+                      if (password != confirm) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Las contraseñas no coinciden'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+
+                      if (password.length < 8) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('La contraseña debe tener al menos 8 caracteres'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+
+                      setState(() {
+                        _isLoading = true;
+                      });
+
+                      try {
+                        final success = await context.read<AuthProvider>().restablecerContrasena(password);
+                        if (success && mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Contraseña cambiada exitosamente'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                          Future.delayed(const Duration(seconds: 2), () {
+                            if (mounted) context.go('/');
+                          });
+                        }
+                      } on ApiException catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(e.mensaje),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Error de conexión. Intente de nuevo.'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      } finally {
+                        if (mounted) {
+                          setState(() {
+                            _isLoading = false;
+                          });
+                        }
+                      }
+                    },
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.5,
+                            ),
+                          )
+                        : const Text(
+                            'RESTABLECER',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                  ),
+                ),
+              ],
             ),
-
-          ],
-
+          ),
         ),
-
       ),
-
     );
-
   }
-
-}
-
-// INPUT
-Widget buildInput(String hint, TextEditingController controller) {
-
-  return Padding(
-
-    padding: const EdgeInsets.symmetric(horizontal: 40),
-
-    child: TextField(
-
-      controller: controller,
-
-      obscureText: true,
-
-      style: const TextStyle(color: Colors.white),
-
-      decoration: InputDecoration(
-
-        hintText: hint,
-
-        hintStyle: const TextStyle(
-          color: Colors.white,
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-        ),
-
-        filled: true,
-
-        fillColor: const Color(0xFF5A5A5A),
-
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 25,
-          vertical: 18,
-        ),
-
-        border: OutlineInputBorder(
-
-          borderRadius: BorderRadius.circular(40),
-
-          borderSide: BorderSide.none,
-
-        ),
-
-      ),
-
-    ),
-
-  );
-
 }

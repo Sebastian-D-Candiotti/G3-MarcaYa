@@ -2,7 +2,7 @@
 
 module Domain
   module Ports
-    module INotificadorEmail
+    module InotificadorEmail
       def enviar_codigo(destino:, codigo:)
         raise NotImplementedError
       end
