@@ -78,9 +78,50 @@ Joaquín hizo la validación de DNI contra RENIEC al registrar empleados. Su bra
 
 ---
 
+## Mario — Recuperación de contraseña
+
+**Commits:** `4fb65f0` (backend + frontend), `e05d57a` (email + UI)
+
+Mario implementó el flujo completo de recuperación de contraseña desde cero, antes de que llegaran los branches de los demás. No hay conflictos porque fue directo a `main` sin que nadie más hubiera tocado esa parte.
+
+**Qué hizo:**
+
+| Capa | Archivos | Detalle |
+|---|---|---|
+| Puerto driven | `app/domain/ports/inotificador_email.rb` | Interfaz para enviar emails de recuperación |
+| Use cases | `solicitar_codigo_recuperacion.rb`, `verificar_codigo_recuperacion.rb`, `restablecer_contrasena.rb` | 3 casos de uso: pedir código de 6 dígitos, verificarlo con expiry de 15 min, y cambiar la contraseña con bcrypt |
+| Facade | `auth_facade.rb` | +3 métodos que delegan a los use cases |
+| Controller | `auth_controller.rb` | 3 endpoints públicos (`solicitar-codigo`, `verificar-codigo`, `restablecer-contrasena`) |
+| Mailer | `password_recovery_mailer.rb` + templates HTML/txt | Manda el código por mail |
+| Servicio email | `resend_email_service.rb` → después migró a SMTP directo con Gmail | Arrancó con Resend, después lo cambió a Gmail SMTP con variables de entorno |
+| DI container | `dependency_injection.rb` | Registró `notificador` en el contenedor |
+| Frontend — 3 pantallas | `recuperar_contrasena.dart`, `codigo_contrasena.dart`, `nueva_contrasena.dart` | Input de email → 6 inputs individuales para el código → nueva contraseña con confirmación |
+| Provider | `auth_provider.dart` | Maneja `recoveryEmail` y `verificationToken` para pasar entre pantallas |
+| ApiService | `api_service.dart` | +3 métodos HTTP (`solicitarCodigo`, `verificarCodigo`, `restablecerContrasena`) |
+| Rutas frontend | `app_router.dart` | `/reset-password` → `/reset-password/code` → `/reset-password/new` |
+
+**Flujo:**
+
+1. El usuario pone su email en `/reset-password` → `POST /auth/solicitar-codigo`
+2. Si el email existe, llega un código de 6 dígitos al mail. Si no existe, igual devuelve 200 (anti-enumeration)
+3. El usuario ingresa el código en `/reset-password/code` → `POST /auth/verificar-codigo`
+4. Si el código es correcto y no expiró (15 min), devuelve un JWT de verificación (5 min de validez)
+5. El usuario pone su nueva contraseña en `/reset-password/new` → `PUT /auth/restablecer-contrasena`
+6. La contraseña se hashea con bcrypt y se guarda. El usuario vuelve al login.
+
+**Lo que después generó conflicto con los otros branches:**
+
+- **`skip_before_action`**: Mario agregó los 3 endpoints de recovery a la lista de públicos. Los otros branches después tocaron la misma línea y la pisaron.
+- **`auth_facade.rb`**: Mario agregó el `notificador` como dependencia. Los otros branches agregaron más dependencias y rompieron los tests porque los mocks no las incluían.
+- **`development.rb`**: Mario configuró SMTP condicional. Angelo después lo pisó con su configuración.
+- **SMTP**: Mario arrancó con Resend, después migró a Gmail SMTP directo con variables de entorno.
+
+---
+
 ## Estado final
 
 - Backend: 380 tests, 0 failures, 0 errors
 - 3 features mergeadas (~3400 líneas nuevas)
+- Flujo de recuperación de contraseña funcionando (Mario)
 - Todos los bugs post-merge corregidos
 - Pendiente: conseguir API key de Decolecta (gratis en decolecta.com/profile/) y ponerla en `.env`
