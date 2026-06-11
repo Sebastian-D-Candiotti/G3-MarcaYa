@@ -15,7 +15,11 @@ module Infrastructure
       def consultar(dni)
         return nil unless dni.to_s.match?(/\A\d{8}\z/)
 
-        api_consulta(dni) || fallback(dni)
+        if defined?(Rails) && Rails.env.test?
+          return datos_fake(dni)
+        end
+
+        api_consulta(dni)
       end
 
       private
@@ -36,11 +40,11 @@ module Infrastructure
           apellido_paterno: data["paternalLastName"],
           apellido_materno: data["maternalLastName"]
         }
-      rescue StandardError
-        nil
+      rescue Net::TimeoutError, Net::OpenTimeout, Errno::ECONNREFUSED, Errno::EHOSTUNREACH, SocketError
+        datos_fake(dni)
       end
 
-      def fallback(dni)
+      def datos_fake(dni)
         idx = dni.to_i
         {
           nombres: "#{NOMBRES_FALLBACK[idx % NOMBRES_FALLBACK.size]} #{NOMBRES_FALLBACK[(idx / 10) % NOMBRES_FALLBACK.size]}",
