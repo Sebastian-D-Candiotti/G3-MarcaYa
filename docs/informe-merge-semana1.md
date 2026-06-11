@@ -1,93 +1,86 @@
 # Informe de Merge — Semana 1
 
-Tres ramas de feature desarrolladas en paralelo se integraron a `main` con conflictos y errores post-merge. Este documento detalla qué se resolvió en cada una y qué bugs quedaron (y se corrigieron).
+Tres branches desarrollados en paralelo se mergearon a `main`. Esto es lo que falló en cada uno y cómo se arregló.
 
 ---
 
-## 1. `feature/Semana1_Angelo` → `main`
+## Angelo — Verificación OTP de RUC
 
-**Merge commit:** `08c27a9`
+**Branch:** `feature/Semana1_Angelo`
 
-### Conflictos (4 archivos)
+Angelo laburó la verificación por OTP para el RUC de empresas. El problema: su branch modificaba archivos que nosotros también habíamos tocado en `main` (auth controller, mailer, rutas), así que al mergear explotó todo.
 
-| Archivo | Conflicto | Resolución |
-|---|---|---|
-| `auth_controller.rb` | Ambas ramas modificaban `skip_before_action` y agregaban endpoints distintos | Unificar `skip_before_action` con todos los endpoints de ambas ramas; mantener `login`, `registro`, `solicitar_codigo`, `verificar_codigo`, `restablecer_contrasena`, `verificar_otp` |
-| `application_mailer.rb` | `default from` distinto en cada rama | Usar `ENV["SMTP_DEFAULT_FROM"]` como prioritario, con fallback a `ENV["SMTP_USERNAME"]` y luego credenciales |
-| `development.rb` | Configuración SMTP vs `:test` | Mantener SMTP condicional (solo si hay vars de entorno), con fallback a `:test` |
-| `routes.rb` | Rutas duplicadas/ausentes | Incluir rutas de auth (password recovery) + sunat (verificación OTP) |
+**Lo que falló:**
 
-### Errores post-merge
+- **`auth_controller.rb`**: él agregó endpoints para verificar OTP y tocó `skip_before_action`. Nosotros también habíamos agregado endpoints de recuperación de contraseña. Al mergear, los `skip_before_action` se pisaron y faltaban endpoints.
+- **`application_mailer.rb`**: él puso un `default from` con su mail, nosotros teníamos otro. Hubo que unificarlo con variable de entorno.
+- **`development.rb`**: la configuración SMTP quedó mezclada con el modo `:test` y no se mandaban mails.
+- **`routes.rb`**: sus rutas de SUNAT y las nuestras de recovery de contraseña se superponían.
 
-- **SyntaxError en `auth_controller.rb`** (`fe16360`): quedó un `end` extra tras resolver conflictos. Se eliminó.
-- **`NoMethodError: solicitar_codigo`**: el servidor Rails no recargó la clase `UsuarioMailer` tras el merge. Se reinició el servidor.
+**Errores post-merge:**
 
----
-
-## 2. `feature/historia-usuario-verificacion-cuenta` → `main`
-
-**Merge commit:** `bb03239`
-
-### Conflictos (8 archivos)
-
-| Archivo | Conflicto | Resolución |
-|---|---|---|
-| `auth_controller.rb` | Múltiples modificaciones en `skip_before_action` y endpoints | Unificar todos los endpoints de ambas ramas + nuevos de verificación |
-| `auth_facade.rb` | Dependencias distintas en `initialize` | Mantener `notificador` (password recovery) + nuevos servicios de verificación (`verification_code_service`, `verification_mailer`) |
-| `registrar_usuario.rb` | Flujo de registro divergente | Mantener flujo OTP manual de empresa + agregar `requiere_verificacion` en el resultado |
-| `dependency_injection.rb` | Configuración de servicios | Combinar `notificador` + servicios de verificación de cuenta |
-| `routes.rb` | Rutas de auth vs sunat vs verificación | Incluir rutas de auth, password recovery, sunat y verificación de cuenta |
-| `schema.rb` | Dos migraciones agregadas en paralelo | Actualizar a la versión más reciente fusionando ambas |
-| `registrar_empresa.dart` | Flujo de registro frontend | Redirigir a pantalla de verificación de cuenta después del registro |
-| `api_service.dart` | Métodos HTTP divergentes | Mantener métodos existentes + agregar nuevos de verificación |
-
-### Errores post-merge
-
-- **Tests fallaban** (`db2e253`): `registrar_usuario_test.rb` y `auth_facade_test.rb` no incluían las nuevas dependencias (`verification_code_service`, `verification_mailer`, `notificador`) en los mocks. Se actualizaron los tests y el `schema.rb` para reflejar el orden correcto de columnas.
+- Quedó un `end` de más en `auth_controller.rb` y Rails directamente no arrancaba. Lo saqué.
+- El server no reconocía `UsuarioMailer` (tiraba `NoMethodError`). Había que reiniciar Rails para que levante las clases nuevas.
 
 ---
 
-## 3. `feature/Semana1-Joaquin/Validar-DNI` → `main`
+## Verificación de cuenta — Confirmación por correo
 
-**Merge commit:** `8f013e2`
+**Branch:** `feature/historia-usuario-verificacion-cuenta`
 
-### Conflictos (6 archivos)
+Este branch agregaba el flujo de verificación de cuenta: cuando alguien se registra, queda en `PENDIENTE_VERIFICACION` hasta que confirma con un código que llega por mail.
 
-| Archivo | Conflicto | Resolución |
-|---|---|---|
-| `auth_facade.rb` | Dependencias en `initialize` | Agregar `reniec_service` a la lista de dependencias |
-| `registrar_usuario.rb` | Validación de DNI vs flujo existente | Validar DNI con RENIEC para empleados, RUC con OTP para empresas |
-| `database.yml` | Config de PostgreSQL distinta | Mantener host `127.0.0.1`, usuario `postgres`, password `mapalo58` |
-| `dependency_injection.rb` | Registro de servicios | Agregar `ReniecService` al contenedor de DI |
-| `registrar_empleado.dart` | Flujo de registro vs DNI | Enviar DNI al backend y que el backend valide con RENIEC |
-| `api_service.dart` | Métodos `verificarOtp` inconsistentes | Mantener `verificarOtp(ruc, codigo)` correcto |
+**Lo que falló:**
 
-### Errores post-merge
+- **`auth_controller.rb`**: otra vez `skip_before_action`. Tres branches distintos tocando la misma línea. Un desastre.
+- **`auth_facade.rb`** y **`registrar_usuario.rb`**: el branch agregaba dependencias nuevas (`verification_code_service`, `verification_mailer`) pero el `initialize` del facade y del use case no las tenía. Al mergear, Ruby se quejaba de que faltaban argumentos.
+- **`dependency_injection.rb`**: el container de DI tenía que levantar los servicios nuevos. El branch los registraba pero pisaba la config de password recovery que ya estaba en `main`.
+- **`routes.rb`**: rutas de verificación + sunat + auth todo mezclado.
+- **`schema.rb`**: dos migraciones en paralelo (una de ellos, otra nuestra) y el schema quedó inconsistente.
+- **Frontend (`registrar_empresa.dart`, `api_service.dart`)**: el flujo de registro no redirigía a verificación, y el `api_service` tenía métodos que se pisaban entre sí.
 
-| Commit | Problema | Solución |
-|---|---|---|
-| `867eb63` | `ReniecService` generaba datos fake pero solo si el DNI tenía 8 dígitos; no hacía llamadas HTTP reales | Generar datos fake para cualquier DNI válido |
-| `07bcbf1` | Inputs de nombre/apellido deshabilitados en el formulario de empleado | Habilitarlos para que el usuario pueda editarlos |
-| `2ed3a47` | No se consultaba RENIEC al registrar empleado; el DNI se guardaba sin validar | Agregar validación RENIEC en el caso de uso `registrar_usuario.rb` |
-| `45dae93` | `ReniecService` no hacía llamadas HTTP reales a GraphPeru; solo datos fake | Implementar `Net::HTTP` a `https://graphperu.daustinn.com/api/query/{dni}` |
-| `44ad7ad` | DNI no encontrado en API también caía a datos fake | Separar: DNI no existe → error, solo sin internet → datos fake |
-| `7c355a2` | Datos hardcodeados visibles para DNIs no encontrados | Eliminar `datos_fake` del flujo normal; solo en test |
-| `9b78e09` | Al cambiar el DNI en el frontend no se reseteaban los campos | Resetear nombres/apellido al editar el DNI |
-| `9c18953` | GraphPeru tiene datos limitados (muchos DNIs no existen en su DB) | Integrar Decolecta API como proveedor primario (requiere API key) |
+**Errores post-merge:**
+
+- Los tests unitarios quedaron rotos porque no pasaban las dependencias nuevas a los mocks. `registrar_usuario_test.rb`, `auth_facade_test.rb` — todos fallaban. Hubo que meter `verification_code_service`, `verification_mailer` y `notificador` en cada mock.
 
 ---
 
-## Errores comunes en los 3 merges
+## Joaquín — Validación de DNI con RENIEC
 
-1. **`skip_before_action` desincronizado**: cada rama agregaba endpoints públicos pero pisaba la lista de los otros. Hubo que unificarlo manualmente en cada merge.
-2. **Dependencias de `RegistrarUsuario` incompletas**: cada feature agregaba un servicio nuevo (sunat, verification, reniec) y los tests quedaban rotos hasta actualizar los mocks.
-3. **Servidor Rails no recarga clases nuevas**: tras mergear, aparecían `NoMethodError` que se solucionaban reiniciando el servidor.
+**Branch:** `feature/Semana1-Joaquin/Validar-DNI`
+
+Joaquín hizo la validación de DNI contra RENIEC al registrar empleados. Su branch venía después de los otros dos, así que heredó todos los conflictos anteriores más los suyos propios.
+
+**Lo que falló:**
+
+- **`auth_facade.rb`** y **`dependency_injection.rb`**: otra vez lo mismo — agregó `reniec_service` como dependencia y había que integrarlo sin romper lo que ya estaba.
+- **`registrar_usuario.rb`**: mezcló la validación de DNI para empleados con la validación de RUC para empresas. El código de RENIEC interfería con el flujo de OTP de Angelo.
+- **`database.yml`**: él había cambiado la config de PostgreSQL a valores distintos. Al mergear, la base dejó de conectar.
+- **`api_service.dart`**: el método `verificarOtp` estaba en dos versiones distintas (una con `ruc` y `codigo`, otra sin).
+
+**Errores post-merge (los peores):**
+
+| Problema | Por qué pasó | Qué se hizo |
+|---|---|---|
+| `ReniecService` solo generaba datos fake, sin llamar a ninguna API real | Joaquín dejó el servicio con datos hardcodeados, nunca conectó a una API de verdad | Se implementó `Net::HTTP` contra GraphPeru |
+| Esos datos fake aparecían para cualquier DNI, incluso los que no existen | La API de GraphPeru no tiene todos los DNIs, entonces cuando fallaba caía a datos generados | Se separó: DNI no encontrado → error, solo fallo de conexión → datos generados |
+| Los inputs de nombre y apellido estaban deshabilitados en el formulario | El frontend no dejaba editar los datos que venían de RENIEC | Se habilitaron los campos |
+| Si cambiabas el DNI, los nombres no se reseteaban | No había un listener que limpiara los campos al editar el DNI | Se agregó el reset |
+| La API de GraphPeru no encuentra muchos DNIs reales | GraphPeru tiene una base limitada, no es RENIEC oficial | Se integró Decolecta API como alternativa principal (requiere API key gratis) |
+
+---
+
+## Lo que se repitió en los 3 branches
+
+1. **`skip_before_action`**: los tres tocaron esa línea y cada uno la pisó. Es un anti-patrón tener que mergear manualmente siempre lo mismo.
+2. **Dependencias nuevas sin actualizar tests**: cada branch agregaba un servicio al use case pero los tests unitarios quedaban rotos porque no actualizaban los mocks.
+3. **No reiniciar el server después de mergear**: Rails cachea clases; si mergeás y no reiniciás, aparecen errores raros que no son bugs reales.
 
 ---
 
 ## Estado final
 
 - Backend: 380 tests, 0 failures, 0 errors
-- 3 features mergeadas, ~3400 líneas agregadas
-- Todos los errores post-merge corregidos
-- Pendiente: registrar API key de Decolecta en `.env` para consultas más completas
+- 3 features mergeadas (~3400 líneas nuevas)
+- Todos los bugs post-merge corregidos
+- Pendiente: conseguir API key de Decolecta (gratis en decolecta.com/profile/) y ponerla en `.env`
