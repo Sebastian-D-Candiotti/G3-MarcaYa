@@ -2,17 +2,24 @@
 // Reemplaza la lógica simulada de MarcaYAState por llamadas HTTP reales
 
 import 'dart:convert';
+import 'dart:io' show Platform;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-// ─── CAMBIA ESTA URL SEGÚN DONDE CORRA TU BACKEND ───────────
-// Emulador Android:  http://10.0.2.2:3000/api/v1
-// Google chrome: http://127.0.0.1:3000/api/v1
-// Dispositivo físico: http://TU_IP_LOCAL:3000/api/v1  (ej: 192.168.1.5)
-// Producción:        https://tu-dominio.com/api/v1
-const String kBaseUrl = 'http://127.0.0.1:3000/api/v1';
+// ─── URL DEL BACKEND ─────────────────────────────────────────
+// Android emulator → 10.0.2.2 (llega al localhost del host)
+// iOS simulator   → 127.0.0.1
+// Chrome/web      → 127.0.0.1
+// Físico          → IP local de tu máquina (ej: 192.168.1.5)
+// Producción      → https://tu-dominio.com/api/v1
+String get kBaseUrl {
+  try {
+    if (Platform.isAndroid) return 'http://10.0.2.2:3000/api/v1';
+  } catch (_) {}
+  return 'http://127.0.0.1:3000/api/v1';
+}
 
 // ────────────────────────────────────────────────────────────
 
