@@ -228,7 +228,7 @@ class ApiService {
   /// Consulta RENIEC por DNI
   Future<Map<String, dynamic>> consultarReniec(String dni) async {
     final res = await _client.get(
-      Uri.parse('$kBaseUrl/reniec/$dni'),
+      Uri.parse('$kBaseUrl/reniec/consultar?dni=$dni'),
       headers: await _headers(auth: false),
     );
 

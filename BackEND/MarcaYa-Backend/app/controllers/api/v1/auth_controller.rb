@@ -2,7 +2,8 @@ class Api::V1::AuthController < Api::V1::BaseController
   skip_before_action :authenticate!, only: [
     :login, :registro, :verificar_otp, :solicitar_codigo,
     :verificar_codigo, :restablecer_contrasena,
-    :verificar_cuenta, :reenviar_codigo_verificacion
+    :verificar_cuenta, :reenviar_codigo_verificacion,
+    :consultar_reniec
   ]
 
   def login
@@ -162,6 +163,28 @@ class Api::V1::AuthController < Api::V1::BaseController
     empresa_repo.guardar(empresa_actualizada)
 
     render json: { mensaje: "Código OTP verificado correctamente" }
+  end
+
+  def consultar_reniec
+    dni = params[:dni].to_s.strip
+
+    unless dni.match?(/\A\d{8}\z/)
+      render json: { error: "El DNI debe tener exactamente 8 numeros" }, status: :unprocessable_entity
+      return
+    end
+
+    datos = Infrastructure::Services::ReniecService.new.consultar(dni)
+
+    if datos.nil?
+      render json: { error: "No se encontraron datos en RENIEC para este DNI" }, status: :not_found
+      return
+    end
+
+    render json: {
+      nombres: datos[:nombres],
+      apellido_paterno: datos[:apellido_paterno],
+      apellido_materno: datos[:apellido_materno]
+    }
   end
 
   private

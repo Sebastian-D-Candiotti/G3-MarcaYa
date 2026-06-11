@@ -15,6 +15,9 @@ Rails.application.routes.draw do
       post "auth/verificacion/verificar",    to: "auth#verificar_cuenta"
       post "auth/verificacion/reenviar",     to: "auth#reenviar_codigo_verificacion"
 
+      # RENIEC
+      get  "reniec/consultar", to: "auth#consultar_reniec"
+
       # SUNAT
       get  "sunat/empresas",          to: "sunat#index"
       get  "sunat/consulta",          to: "sunat#consulta"
