@@ -15,6 +15,15 @@ module Application
         end
 
         def ejecutar(params)
+          # Si es registro SUNAT, precargamos el nombre de la empresa antes de validar campos
+          if params[:rol].to_s == "empresa" && (params[:registro_tipo].to_s == "sunat" || params[:codigo].present?)
+            ruc = params[:ruc].to_s.strip
+            empresa_sunat = Domain::Services::SunatService.buscar_por_ruc(ruc)
+            if empresa_sunat
+              params[:nombre] = empresa_sunat.razon_social
+            end
+          end
+
           validar_campos!(params)
 
           correo = params[:correo]
@@ -23,6 +32,37 @@ module Application
 
           if @usuario_repo.exists_by_correo?(correo)
             raise Domain::Errors::ValidacionError, "El correo ya está registrado"
+          end
+
+          if rol.to_s == "empresa"
+            ruc = params[:ruc].to_s.strip
+            registro_tipo = params[:registro_tipo].to_s.strip
+
+            if registro_tipo == "sunat"
+              codigo = params[:codigo].to_s.strip
+              if ruc.empty? || codigo.empty?
+                raise Domain::Errors::ValidacionError, "El RUC y el código de verificación son obligatorios para el registro SUNAT"
+              end
+
+              unless @empresa_repo.verificar_codigo_ruc?(ruc, codigo)
+                raise Domain::Errors::ValidacionError, "Código de verificación inválido o expirado"
+              end
+            else
+              # Registro manual
+              validar_correo_corporativo!(correo)
+
+              if ruc.length != 11
+                raise Domain::Errors::ValidacionError, "El RUC debe tener exactamente 11 dígitos"
+              end
+
+              unless ruc.start_with?("10", "20")
+                raise Domain::Errors::ValidacionError, "El RUC debe comenzar con 10 o 20"
+              end
+
+              if @empresa_repo.exists_by_ruc?(ruc)
+                raise Domain::Errors::ValidacionError, "El RUC ya se encuentra registrado"
+              end
+            end
           end
 
           clave_hash = @bcrypt_service.hash(clave)
@@ -36,9 +76,74 @@ module Application
 
           crear_perfil!(usuario, params)
 
+          # Si es flujo manual de empresa, generamos y enviamos el código OTP
+          if rol.to_s == "empresa" && params[:registro_tipo].to_s == "manual"
+            codigo_otp = rand(100000..999999).to_s
+            expira_at = 15.minutes.from_now
+            verificacion = Infrastructure::Orm::VerificacionRucRecord.find_or_initialize_by(ruc: params[:ruc].to_s.strip)
+            verificacion.update!(codigo: codigo_otp, expira_at: expira_at)
+
+            mensaje_otp = "\n========================================\n" \
+                          "[MAILER] Código de verificación manual enviado a: #{correo}\n" \
+                          "RUC: #{params[:ruc]} | Empresa: #{params[:nombre]}\n" \
+                          "CÓDIGO DE VERIFICACIÓN: #{codigo_otp}\n" \
+                          "========================================\n"
+            puts mensaje_otp
+            if defined?(Rails) && Rails.respond_to?(:logger) && Rails.logger
+              Rails.logger.info(mensaje_otp)
+            end
+
+            begin
+              if defined?(UsuarioMailer)
+                UsuarioMailer.correo_verificacion_ruc(correo, codigo_otp, params[:nombre]).deliver_now
+              end
+            rescue StandardError => e
+              if defined?(Rails) && Rails.respond_to?(:logger) && Rails.logger
+                Rails.logger.error("Error al enviar correo de verificacion via ActionMailer: #{e.message}")
+              end
+            end
+          end
+
+          # Enviar correo de confirmación/asociación al correo de creación
+          nombre_perfil = rol.to_s == "empresa" ? params[:nombre] : "#{params[:nombre]} #{params[:apellido]}".strip
+
+          # Imprimir en consola/logs para visibilidad instantánea
+          mensaje_asociacion = "\n========================================\n" \
+                               "[MAILER] Correo de Asociacion Enviado a: #{correo}\n" \
+                               "Asunto: Confirmacion de Registro y Asociacion - MarcaYa\n" \
+                               "Mensaje: Bienvenido a MarcaYa. Tu cuenta ha sido creada y asociada exitosamente como #{rol} (#{nombre_perfil}).\n" \
+                               "========================================\n"
+          puts mensaje_asociacion
+          if defined?(Rails) && Rails.respond_to?(:logger) && Rails.logger
+            Rails.logger.info(mensaje_asociacion)
+          end
+
+          # Llamar al ActionMailer de Rails si está definido
+          begin
+            if defined?(UsuarioMailer)
+              UsuarioMailer.correo_asociacion(correo, rol, nombre_perfil).deliver_now
+            end
+          rescue StandardError => e
+            if defined?(Rails) && Rails.respond_to?(:logger) && Rails.logger
+              Rails.logger.error("Error al enviar correo de asociacion via ActionMailer: #{e.message}")
+            else
+              puts "Error al enviar correo de asociacion via ActionMailer: #{e.message}"
+            end
+          end
+
           token = @jwt_service.encode("user_id" => usuario.id, "rol" => usuario.rol.valor)
 
           { usuario: usuario, token: token }
+        end
+
+        private
+
+        def validar_correo_corporativo!(correo)
+          dominio = correo.to_s.split("@").last.to_s.strip.downcase
+          dominios_publicos = %w[gmail.com hotmail.com yahoo.com outlook.com live.com icloud.com mail.com yahoo.es outlook.es]
+          if dominios_publicos.include?(dominio)
+            raise Domain::Errors::ValidacionError, "El correo electrónico debe ser un correo corporativo (no se permiten dominios públicos como Gmail, Hotmail, etc.)"
+          end
         end
 
         private
@@ -66,6 +171,7 @@ module Application
               )
             )
           elsif usuario.es_empresa?
+            is_otp_verificado = (params[:registro_tipo].to_s == "sunat" || params[:codigo].present?)
             @empresa_repo.guardar(
               Domain::Entities::Empresa.new(
                 id: nil, usuario_id: usuario.id,
@@ -73,7 +179,8 @@ module Application
                 ruc: params[:ruc] || "",
                 descripcion: params[:descripcion],
                 direccion: params[:direccion], telefono: params[:telefono],
-                foto_url: params[:foto_url], estado: "activo"
+                foto_url: params[:foto_url], estado: "PENDIENTE",
+                otp_verificado: is_otp_verificado
               )
             )
           end

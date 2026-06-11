@@ -19,6 +19,7 @@ class AppUser {
     this.claveHash,
     required this.rol,
     this.estado = 'activo',
+    this.otpVerificado = false,
     this.fechaRegistro,
     this.employeeId,
     this.empresaId,
@@ -40,6 +41,7 @@ class AppUser {
   final String? claveHash; // bcrypt hash desde backend real
   final UserRole rol;
   final String estado; // 'activo' | 'inactivo'
+  final bool otpVerificado;
   final DateTime? fechaRegistro;
   final String? employeeId; // id del empleado asociado (backend: employee_id)
   final String? empresaId; // id de la empresa (compañía del empleado)
@@ -70,6 +72,7 @@ class AppUser {
       correo: json['correo'] as String? ?? '',
       rol: _parseRole(json['rol'] as String? ?? 'empleado'),
       estado: json['estado'] as String? ?? 'activo',
+      otpVerificado: json['otp_verificado'] as bool? ?? json['otpVerificado'] as bool? ?? false,
       fechaRegistro: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'] as String)
           : json['fechaRegistro'] != null

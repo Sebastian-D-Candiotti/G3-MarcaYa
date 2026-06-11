@@ -6,11 +6,18 @@ Rails.application.routes.draw do
     namespace :v1 do
 
       # AUTH
-      post "auth/login",             to: "auth#login"
-      post "auth/registro",          to: "auth#registro"
-      post "auth/solicitar-codigo",  to: "auth#solicitar_codigo"
-      post "auth/verificar-codigo",  to: "auth#verificar_codigo"
+      post "auth/login",                  to: "auth#login"
+      post "auth/registro",               to: "auth#registro"
+      post "auth/solicitar-codigo",       to: "auth#solicitar_codigo"
+      post "auth/verificar-codigo",       to: "auth#verificar_codigo"
       put  "auth/restablecer-contrasena", to: "auth#restablecer_contrasena"
+      post "auth/verificar-otp",          to: "auth#verificar_otp"
+
+      # SUNAT
+      get  "sunat/empresas",          to: "sunat#index"
+      get  "sunat/consulta",          to: "sunat#consulta"
+      post "sunat/enviar-codigo",     to: "sunat#enviar_codigo"
+      get  "sunat/validar-ruc-unico", to: "sunat#validar_ruc_unico"
 
       # PERFIL (current user profile)
       get  "perfil", to: "perfil#show"
@@ -37,6 +44,7 @@ Rails.application.routes.draw do
       get   "usuarios/:id",            to: "usuarios#show"
       put   "usuarios/:id",            to: "usuarios#update"
       patch "usuarios/:id/desactivar", to: "usuarios#desactivar"
+      put   "usuarios/:id/aprobar",    to: "usuarios#aprobar"
 
       resources :usuarios, only: [:index]
 

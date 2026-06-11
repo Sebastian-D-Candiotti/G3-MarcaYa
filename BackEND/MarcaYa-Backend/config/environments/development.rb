@@ -29,20 +29,24 @@ Rails.application.configure do
   # Store uploaded files on the local file system (see config/storage.yml for options).
   config.active_storage.service = :local
 
-  # Don't care if the mailer can't send.
-  config.action_mailer.raise_delivery_errors = true
-
-  # Use SMTP for email delivery in development (Gmail SMTP)
-  config.action_mailer.delivery_method = :smtp
-  config.action_mailer.smtp_settings = {
-    address:              'smtp.gmail.com',
-    port:                 587,
-    domain:               'gmail.com',
-    user_name:            ENV['SMTP_USERNAME'] || Rails.application.credentials.dig(:smtp, :username),
-    password:             ENV['SMTP_PASSWORD'] || Rails.application.credentials.dig(:smtp, :password),
-    authentication:       'plain',
-    enable_starttls_auto: true
-  }
+  # SMTP config: uses env vars if present, falls back to test delivery
+  if ENV["SMTP_ADDRESS"].present? && ENV["SMTP_USERNAME"].present?
+    config.action_mailer.raise_delivery_errors = true
+    config.action_mailer.delivery_method = :smtp
+    config.action_mailer.smtp_settings = {
+      address:              ENV["SMTP_ADDRESS"],
+      port:                 ENV["SMTP_PORT"] || 587,
+      domain:               ENV["SMTP_DOMAIN"] || 'gmail.com',
+      user_name:            ENV["SMTP_USERNAME"] || Rails.application.credentials.dig(:smtp, :username),
+      password:             ENV["SMTP_PASSWORD"] || Rails.application.credentials.dig(:smtp, :password),
+      authentication:       ENV["SMTP_AUTHENTICATION"] || 'plain',
+      enable_starttls_auto: ENV["SMTP_ENABLE_STARTTLS_AUTO"] != 'false'
+    }
+    config.action_mailer.perform_deliveries = true
+  else
+    config.action_mailer.raise_delivery_errors = false
+    config.action_mailer.delivery_method = :test
+  end
 
   # Make template changes take effect immediately.
   config.action_mailer.perform_caching = false
