@@ -23,9 +23,6 @@ class _RegistrarEmpleadoPageState extends State<RegistrarEmpleadoPage> {
   String? _error;
   bool _obscureClave = true;
   bool _obscureConfirmar = true;
-  bool _isConsultandoReniec = false;
-  bool _dniValidadoConReniec = false;
-
   @override
   void dispose() {
     _correoCtrl.dispose();
@@ -68,8 +65,8 @@ class _RegistrarEmpleadoPageState extends State<RegistrarEmpleadoPage> {
       await ApiService.instance.registrarEmpleado(
         correo: _correoCtrl.text.trim(),
         clave: _claveCtrl.text,
-        nombre: 'PENDIENTE_RENIEC',
-        apellido: '',
+        nombre: _nombreCtrl.text.trim().isNotEmpty ? _nombreCtrl.text.trim() : 'PENDIENTE_RENIEC',
+        apellido: _apellidoCtrl.text.trim().isNotEmpty ? _apellidoCtrl.text.trim() : '',
         dni: dni,
       );
 
@@ -120,9 +117,9 @@ class _RegistrarEmpleadoPageState extends State<RegistrarEmpleadoPage> {
               ),
               const SizedBox(height: 28),
 
-              _buildField('Nombres', _nombreCtrl, enabled: false),
+              _buildField('Nombres', _nombreCtrl),
               const SizedBox(height: 16),
-              _buildField('Apellidos', _apellidoCtrl, enabled: false),
+              _buildField('Apellidos', _apellidoCtrl),
               const SizedBox(height: 16),
               _buildField(
                 'DNI',

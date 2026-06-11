@@ -148,8 +148,6 @@ module Application
           if datos_reniec.nil?
             raise Domain::Errors::ValidacionError, "No se encontraron datos en RENIEC para este DNI"
           end
-          params[:nombre] = datos_reniec[:nombres]
-          params[:apellido] = "#{datos_reniec[:apellido_paterno]} #{datos_reniec[:apellido_materno]}".strip
         end
 
         def crear_perfil!(usuario, params)
