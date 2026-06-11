@@ -163,19 +163,27 @@ class _RegistrarEmpleadoPageState extends State<RegistrarEmpleadoPage> {
                 _dniCtrl,
                 tipo: TextInputType.number,
                 maxLength: 8,
-                enabled: !_dniConsultado,
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly,
                   LengthLimitingTextInputFormatter(8),
                 ],
+                onChanged: _dniConsultado
+                    ? () => setState(() {
+                          _dniConsultado = false;
+                          _nombreCtrl.clear();
+                          _apellidoCtrl.clear();
+                          _correoCtrl.clear();
+                          _claveCtrl.clear();
+                          _confirmarCtrl.clear();
+                          _error = null;
+                        })
+                    : null,
               ),
               const SizedBox(height: 12),
               SizedBox(
                 height: 48,
                 child: ElevatedButton(
-                  onPressed: _dniConsultado || _consultandoDni
-                      ? null
-                      : _consultarDni,
+                  onPressed: _consultandoDni ? null : _consultarDni,
                   child: _consultandoDni
                       ? const SizedBox(
                           width: 22,
