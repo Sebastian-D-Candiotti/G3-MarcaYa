@@ -11,17 +11,10 @@ services:
       - key: RAILS_MASTER_KEY
         sync: false
       - key: DATABASE_URL
-        fromDatabase:
-          name: marcaya-db
-          property: connectionString
+        sync: false
       - key: RAILS_ENV
         value: production
       - key: RAILS_LOG_TO_STDOUT
         value: "true"
       - key: FCM_SERVER_KEY
         sync: false
-
-databases:
-  - name: marcaya-db
-    databaseName: marcaya
-    plan: free

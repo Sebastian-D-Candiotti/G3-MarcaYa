@@ -1,9 +1,12 @@
 #!/bin/bash -e
 
+# Force IPv4 for PostgreSQL — Supabase resolves to IPv6 and Render can't reach it.
+# Must be set before any Ruby process starts (libpq reads it during C extension init).
+export PGPREFER_IP_MODE=4
+
 # If running the rails server then create or migrate existing database
 if [ "$1" = "./bin/rails" ] && [ "$2" = "server" ]; then
-  # First try to load the schema (fresh Supabase DB may not have schema_migrations).
-  # If it fails, fall back to db:prepare (for existing databases).
+  # Try to load the schema (fresh Supabase DB), fall back to db:prepare.
   ./bin/rails db:schema:load 2>/dev/null || ./bin/rails db:migrate 2>/dev/null || ./bin/rails db:prepare
 fi
 
