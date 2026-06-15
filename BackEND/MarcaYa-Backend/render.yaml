@@ -2,7 +2,7 @@ services:
   - type: web
     name: marcaya-backend
     runtime: docker
-    repo: https://github.com/Sebastian-D-Candiotti/G3-MarcaYas
+    repo: https://github.com/Sebastian-D-Candiotti/G3-MarcaYa
     dockerfilePath: ./Dockerfile.render
     dockerContext: ./BackEND/MarcaYa-Backend
     plan: free
