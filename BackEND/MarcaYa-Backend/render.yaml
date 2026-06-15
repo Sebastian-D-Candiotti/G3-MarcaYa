@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: marcaya-backend
+    runtime: docker
+    repo: https://github.com/tu-usuario/G3-MarcaYa
+    rootDir: BackEND/MarcaYa-Backend
+    dockerfilePath: ./BackEND/MarcaYa-Backend/Dockerfile.render
+    dockerContext: ./BackEND/MarcaYa-Backend
+    plan: free
+    healthCheckPath: /up
+    envVars:
+      - key: RAILS_MASTER_KEY
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: marcaya-db
+          property: connectionString
+      - key: RAILS_ENV
+        value: production
+      - key: RAILS_LOG_TO_STDOUT
+        value: "true"
+      - key: FCM_SERVER_KEY
+        sync: false
+
+databases:
+  - name: marcaya-db
+    databaseName: marcaya
+    plan: free

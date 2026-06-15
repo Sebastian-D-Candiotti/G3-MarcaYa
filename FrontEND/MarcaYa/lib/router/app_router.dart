@@ -28,6 +28,7 @@ import '../pages/ver_solicitudes/ver_solicitudes.dart';
 import '../pages/verificar_otp/verificar_otp_page.dart';
 import '../pages/locked/locked_page.dart';
 import '../pages/confirmacion_registrar_empleado/confirmacion_registrar_empleado.dart';
+import '../pages/historial_asistencia/historial_asistencia_page.dart';
 import '../pages/perfil_publico/perfil_publico.dart';
 import '../pages/editar_perfil_empleado/editar_perfil_empleado_page.dart';
 import '../pages/editar_perfil_empresa/editar_perfil_empresa_page.dart';
@@ -288,6 +289,10 @@ final appRouter = GoRouter(
           empleadoId: auth.currentUserProfile!.employeeId ?? auth.currentUserProfile!.id.toString(),
         );
       },
+    ),
+    GoRoute(
+      path: '/empleado/historial',
+      builder: (_, __) => const HistorialAsistenciaPage(),
     ),
   ],
 );

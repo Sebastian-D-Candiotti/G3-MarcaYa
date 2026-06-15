@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "943142922730",
+    "project_id": "marcaya-b00bf",
+    "storage_bucket": "marcaya-b00bf.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:943142922730:android:d26890a7312ba6d6b1aa93",
+        "android_client_info": {
+          "package_name": "com.example.marcapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDTubdkHNRaLOhckt_IAvQ64JFNz9K79xs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

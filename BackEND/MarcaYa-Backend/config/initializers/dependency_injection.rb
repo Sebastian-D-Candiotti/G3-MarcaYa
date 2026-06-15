@@ -86,8 +86,13 @@ module DependencyContainer
         valoracion: Infrastructure::Repositories::ArValoracionRepository.new,
         parada: Infrastructure::Repositories::ArParadaRepository.new,
         empleado_parada: Infrastructure::Repositories::ArEmpleadoParadaRepository.new,
-        asistencia: Infrastructure::Repositories::ArAsistenciaRepository.new
+        asistencia: Infrastructure::Repositories::ArAsistenciaRepository.new,
+        dispositivo: Infrastructure::Repositories::ArDispositivoRepository.new
       }.freeze
+    end
+
+    def fcm_sender
+      @fcm_sender ||= Infrastructure::Services::FcmSender.new
     end
   end
 end

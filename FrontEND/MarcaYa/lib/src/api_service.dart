@@ -820,6 +820,23 @@ class ApiService {
   }
 
   // ════════════════════════════════════════════════════════════
+  // DISPOSITIVOS (Push Notifications)
+  // ════════════════════════════════════════════════════════════
+
+  /// Registra o actualiza el FCM token del dispositivo autenticado
+  Future<void> registrarDispositivo(String fcmToken, String platform) async {
+    final res = await _client.post(
+      Uri.parse('$kBaseUrl/dispositivo/registrar'),
+      headers: await _headers(),
+      body: jsonEncode({
+        'fcm_token': fcmToken,
+        'platform': platform,
+      }),
+    );
+    _parsearRespuesta(res);
+  }
+
+  // ════════════════════════════════════════════════════════════
   // REPORTES (US-0001-0009)
   // ════════════════════════════════════════════════════════════
 

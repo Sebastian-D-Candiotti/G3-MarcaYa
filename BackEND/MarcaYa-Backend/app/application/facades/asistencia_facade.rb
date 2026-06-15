@@ -13,20 +13,26 @@ module Application
       end
 
       def marcar_entrada(empleado_id:, parada_id:, latitud:, longitud:)
-        UseCases::Asistencias::MarcarEntrada.new(
+        result = UseCases::Asistencias::MarcarEntrada.new(
           asistencia_repo: @asistencia_repo,
           empleado_repo: @empleado_repo,
           parada_repo: @parada_repo,
           empleado_parada_repo: @empleado_parada_repo,
           gps_service: @gps_service
         ).ejecutar(empleado_id: empleado_id, parada_id: parada_id, latitud: latitud, longitud: longitud)
+
+        enqueue_push_notification(empleado_id, result)
+        result
       end
 
       def marcar_salida(empleado_id:, parada_id:, latitud:, longitud:)
-        UseCases::Asistencias::MarcarSalida.new(
+        result = UseCases::Asistencias::MarcarSalida.new(
           asistencia_repo: @asistencia_repo,
           gps_service: @gps_service
         ).ejecutar(empleado_id: empleado_id, parada_id: parada_id, latitud: latitud, longitud: longitud)
+
+        enqueue_push_notification(empleado_id, result)
+        result
       end
 
       def historial_personal(empleado_id:)
@@ -45,6 +51,12 @@ module Application
         UseCases::Asistencias::TiempoReal.new(
           asistencia_repo: @asistencia_repo
         ).ejecutar(parada_id: parada_id)
+      end
+
+      private
+
+      def enqueue_push_notification(empleado_id, registro)
+        SendPushNotificationJob.perform_later(empleado_id, registro.id)
       end
     end
   end

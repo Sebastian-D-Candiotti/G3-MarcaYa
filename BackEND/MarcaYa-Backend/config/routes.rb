@@ -85,6 +85,9 @@ Rails.application.routes.draw do
       get    "valoraciones/:usuario_id", to: "valoraciones#listar"
       get    "valoraciones/:usuario_id/promedio", to: "valoraciones#promedio"
 
+      # DISPOSITIVOS (FCM token registration)
+      post "dispositivo/registrar", to: "dispositivos#registrar"
+
       # ASISTENCIA
       # NOTA: se usan rutas directas (no namespace) porque el controlador
       # es Api::V1::AsistenciasController, no Api::V1::Asistencia::AsistenciasController

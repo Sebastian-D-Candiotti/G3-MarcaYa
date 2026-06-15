@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_09_000100) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_15_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -47,6 +47,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_09_000100) do
     t.string "periodo", limit: 20
     t.decimal "tarifa_hora", precision: 10, scale: 2, default: "0.0"
     t.datetime "updated_at", precision: nil, default: -> { "CURRENT_TIMESTAMP" }
+  end
+
+  create_table "devices", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "fcm_token", null: false
+    t.string "platform", limit: 20, null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["fcm_token"], name: "index_devices_on_fcm_token", unique: true
+    t.index ["user_id"], name: "index_devices_on_user_id"
   end
 
   create_table "empleado_obra", force: :cascade do |t|
@@ -264,6 +274,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_09_000100) do
   add_foreign_key "asistencias", "obras", name: "asistencias_obra_id_fkey"
   add_foreign_key "cronograma_de_pagos", "empleados", name: "cronograma_de_pagos_empleado_id_fkey"
   add_foreign_key "cronograma_de_pagos", "obras", name: "cronograma_de_pagos_obra_id_fkey"
+  add_foreign_key "devices", "usuarios", column: "user_id", on_delete: :cascade
   add_foreign_key "empleado_obra", "empleados", name: "empleado_obra_empleado_id_fkey"
   add_foreign_key "empleado_obra", "obras", name: "empleado_obra_obra_id_fkey"
   add_foreign_key "empleado_paradas", "empleados", name: "empleado_paradas_empleado_id_fkey", on_delete: :cascade
