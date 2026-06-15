@@ -1,5 +1,10 @@
 require_relative "boot"
 
+# Force IPv4 before anything touches PostgreSQL. Supabase resolves to an IPv6
+# address that Render's network cannot reach; libpq tries IPv6 first without
+# this flag and fails with "Network is unreachable".
+ENV["PGPREFER_IP_MODE"] ||= "4"
+
 require "rails/all"
 
 # Require the gems listed in Gemfile, including any gems

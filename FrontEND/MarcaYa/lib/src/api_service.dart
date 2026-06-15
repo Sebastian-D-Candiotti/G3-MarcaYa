@@ -9,12 +9,16 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 // ─── URL DEL BACKEND ─────────────────────────────────────────
+// Usar --dart-define=API_BASE_URL=https://... para producción.
 // Android emulator → 10.0.2.2 (llega al localhost del host)
 // iOS simulator   → 127.0.0.1
 // Chrome/web      → 127.0.0.1
 // Físico          → IP local de tu máquina (ej: 192.168.1.5)
-// Producción      → https://tu-dominio.com/api/v1
+// Producción      → https://g3-marcaya.onrender.com/api/v1
 String get kBaseUrl {
+  const prodUrl = String.fromEnvironment('API_BASE_URL');
+  if (prodUrl.isNotEmpty) return prodUrl;
+
   try {
     if (Platform.isAndroid) return 'http://10.0.2.2:3000/api/v1';
   } catch (_) {}
