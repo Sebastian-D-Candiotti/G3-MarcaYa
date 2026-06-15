@@ -9,7 +9,8 @@ module Application
           @gps_service = gps_service
         end
 
-        def ejecutar(empleado_id:, parada_id:, latitud:, longitud:)
+        def ejecutar(empleado_id:, parada_id:, latitud:, longitud:,
+                     fecha_hora: nil, cliente_marcacion_id: nil)
           # Buscar entrada activa
           entrada = @asistencia_repo.buscar_entrada_activa(empleado_id)
           unless entrada
@@ -28,7 +29,7 @@ module Application
           valida_gps = true
 
           # Calcular duración de jornada en minutos
-          ahora = Time.now
+          ahora = fecha_hora || Time.now
           duracion_jornada = ((ahora - entrada.fecha_hora) / 60).to_i
           duracion_jornada = [duracion_jornada, 1].max # Mínimo 1 minuto
 
@@ -43,7 +44,8 @@ module Application
             longitud_registrada: longitud,
             valida_gps: valida_gps,
             duracion_jornada: duracion_jornada,
-            observaciones: nil
+            observaciones: nil,
+            cliente_marcacion_id: cliente_marcacion_id
           )
 
           registro.validar!

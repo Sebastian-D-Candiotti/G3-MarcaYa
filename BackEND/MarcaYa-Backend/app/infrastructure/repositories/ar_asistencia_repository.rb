@@ -29,6 +29,17 @@ module Infrastructure
         ::Infrastructure::Mappers::AsistenciaMapper.to_domain(record)
       end
 
+      def find_by_cliente_marcacion_id(cliente_marcacion_id)
+        return nil if cliente_marcacion_id.to_s.strip.empty?
+
+        record = ::Infrastructure::Orm::AsistenciaRecord.find_by(
+          cliente_marcacion_id: cliente_marcacion_id
+        )
+        return nil unless record
+
+        ::Infrastructure::Mappers::AsistenciaMapper.to_domain(record)
+      end
+
       def ultimo_registro_por_empleado
         # Returns the last registro per employee — uses a subquery to get max id per empleado_id.
         max_ids = ::Infrastructure::Orm::AsistenciaRecord

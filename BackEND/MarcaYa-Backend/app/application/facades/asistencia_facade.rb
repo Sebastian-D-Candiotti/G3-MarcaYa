@@ -12,21 +12,47 @@ module Application
         @gps_service = gps_service
       end
 
-      def marcar_entrada(empleado_id:, parada_id:, latitud:, longitud:)
+      def marcar_entrada(empleado_id:, parada_id:, latitud:, longitud:,
+                          fecha_hora: nil, cliente_marcacion_id: nil)
         UseCases::Asistencias::MarcarEntrada.new(
           asistencia_repo: @asistencia_repo,
           empleado_repo: @empleado_repo,
           parada_repo: @parada_repo,
           empleado_parada_repo: @empleado_parada_repo,
           gps_service: @gps_service
-        ).ejecutar(empleado_id: empleado_id, parada_id: parada_id, latitud: latitud, longitud: longitud)
+        ).ejecutar(
+          empleado_id: empleado_id,
+          parada_id: parada_id,
+          latitud: latitud,
+          longitud: longitud,
+          fecha_hora: fecha_hora,
+          cliente_marcacion_id: cliente_marcacion_id
+        )
       end
 
-      def marcar_salida(empleado_id:, parada_id:, latitud:, longitud:)
+      def marcar_salida(empleado_id:, parada_id:, latitud:, longitud:,
+                         fecha_hora: nil, cliente_marcacion_id: nil)
         UseCases::Asistencias::MarcarSalida.new(
           asistencia_repo: @asistencia_repo,
           gps_service: @gps_service
-        ).ejecutar(empleado_id: empleado_id, parada_id: parada_id, latitud: latitud, longitud: longitud)
+        ).ejecutar(
+          empleado_id: empleado_id,
+          parada_id: parada_id,
+          latitud: latitud,
+          longitud: longitud,
+          fecha_hora: fecha_hora,
+          cliente_marcacion_id: cliente_marcacion_id
+        )
+      end
+
+      def sincronizar_lote(empleado_id:, marcaciones:)
+        UseCases::Asistencias::SincronizarMarcacionesOffline.new(
+          asistencia_repo: @asistencia_repo,
+          empleado_repo: @empleado_repo,
+          parada_repo: @parada_repo,
+          empleado_parada_repo: @empleado_parada_repo,
+          gps_service: @gps_service
+        ).ejecutar(empleado_id: empleado_id, marcaciones: marcaciones)
       end
 
       def historial_personal(empleado_id:)

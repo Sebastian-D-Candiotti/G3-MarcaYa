@@ -222,6 +222,47 @@ void main() {
       expect(result, hasLength(1));
       expect(result[0]['tipoMarcacion'], equals('entrada'));
     });
+
+    test('sincronizarMarcacionesPendientes sends POST batch to /asistencia/sincronizar',
+        () async {
+      final marcaciones = <Map<String, Object?>>[
+        {
+          'cliente_marcacion_id': 'offline-1',
+          'parada_id': 10,
+          'tipo_marcacion': 'ENTRADA',
+          'latitud': -12.119,
+          'longitud': -77.034,
+          'fecha_hora_original': '2026-06-14T13:20:00Z',
+        }
+      ];
+      final client = _MockHttpClient(
+        handler: (request) async {
+          _verifyRequest(
+            request,
+            method: 'POST',
+            path: '/asistencia/sincronizar',
+          );
+          final decoded = jsonDecode(request.body) as Map<String, dynamic>;
+          expect(decoded['marcaciones'], equals(marcaciones));
+          return http.Response(
+            jsonEncode({
+              'sincronizados': [
+                {'cliente_marcacion_id': 'offline-1', 'id': 99}
+              ],
+              'duplicados': [],
+              'fallidos': [],
+            }),
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        },
+      );
+      final api = ApiService.createForTesting(client: client);
+
+      final result = await api.sincronizarMarcacionesPendientes(marcaciones);
+
+      expect(result['sincronizados'], hasLength(1));
+    });
   });
 
   group('Paradas CRUD', () {

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_09_000100) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_14_000100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -159,6 +159,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_09_000100) do
 
   create_table "registro_asistencias", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.string "cliente_marcacion_id", limit: 80
     t.integer "duracion_jornada"
     t.bigint "empleado_id", null: false
     t.datetime "fecha_hora", null: false
@@ -173,6 +174,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_09_000100) do
     t.index ["fecha_hora"], name: "index_registro_asistencias_on_fecha_hora"
     t.index ["parada_id"], name: "index_registro_asistencias_on_parada_id"
     t.index ["tipo_marcacion"], name: "index_registro_asistencias_on_tipo_marcacion"
+    t.index ["cliente_marcacion_id"], name: "index_registro_asistencias_on_cliente_marcacion_id", unique: true, where: "(cliente_marcacion_id IS NOT NULL)"
   end
 
   create_table "solicitudes", force: :cascade do |t|

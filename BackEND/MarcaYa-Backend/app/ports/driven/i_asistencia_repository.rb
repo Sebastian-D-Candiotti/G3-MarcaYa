@@ -17,6 +17,10 @@ module Ports
         raise NotImplementedError, "#{name}##{__method__} must be implemented"
       end
 
+      def self.find_by_cliente_marcacion_id(cliente_marcacion_id)
+        raise NotImplementedError, "#{name}##{__method__} must be implemented"
+      end
+
       def self.ultimo_registro_por_empleado
         raise NotImplementedError, "#{name}##{__method__} must be implemented"
       end

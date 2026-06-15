@@ -5,11 +5,13 @@ module Domain
     class RegistroAsistencia
       attr_reader :id, :empleado_id, :parada_id, :tipo_marcacion, :fecha_hora,
                   :latitud_registrada, :longitud_registrada, :valida_gps,
-                  :duracion_jornada, :observaciones, :created_at, :updated_at
+                  :duracion_jornada, :observaciones, :cliente_marcacion_id,
+                  :created_at, :updated_at
 
       def initialize(id:, empleado_id:, parada_id:, tipo_marcacion:, fecha_hora:,
                      latitud_registrada:, longitud_registrada:, valida_gps: true,
                      duracion_jornada: nil, observaciones: nil,
+                     cliente_marcacion_id: nil,
                      created_at: nil, updated_at: nil)
         @id = id
         @empleado_id = empleado_id
@@ -21,6 +23,7 @@ module Domain
         @valida_gps = valida_gps
         @duracion_jornada = duracion_jornada
         @observaciones = observaciones
+        @cliente_marcacion_id = cliente_marcacion_id
         @created_at = created_at
         @updated_at = updated_at
       end

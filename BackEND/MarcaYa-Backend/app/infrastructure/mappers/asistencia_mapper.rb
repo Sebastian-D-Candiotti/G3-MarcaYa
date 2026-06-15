@@ -18,6 +18,7 @@ module Infrastructure
           valida_gps: record.valida_gps,
           duracion_jornada: record.duracion_jornada,
           observaciones: record.observaciones,
+          cliente_marcacion_id: record.cliente_marcacion_id,
           created_at: record.created_at,
           updated_at: record.updated_at
         )
@@ -34,7 +35,8 @@ module Infrastructure
           longitud_registrada: entity.longitud_registrada,
           valida_gps: entity.valida_gps,
           duracion_jornada: entity.duracion_jornada,
-          observaciones: entity.observaciones
+          observaciones: entity.observaciones,
+          cliente_marcacion_id: entity.cliente_marcacion_id
         }
         attrs[:id] = entity.id if entity.id
         attrs[:created_at] = entity.created_at if entity.created_at
