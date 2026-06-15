@@ -56,8 +56,22 @@ Rails.application.configure do
   # Set host to be used by links generated in mailer templates.
   config.action_mailer.default_url_options = { host: "example.com" }
 
-  # Use Resend for email delivery (API key stored in Rails credentials under resend.api_key)
-  config.action_mailer.delivery_method = :resend
+  # Use SMTP if configured, fallback to Resend
+  if ENV["SMTP_ADDRESS"].present? && ENV["SMTP_USERNAME"].present?
+    config.action_mailer.raise_delivery_errors = true
+    config.action_mailer.delivery_method = :smtp
+    config.action_mailer.smtp_settings = {
+      address:              ENV["SMTP_ADDRESS"],
+      port:                 ENV["SMTP_PORT"] || 587,
+      domain:               ENV["SMTP_DOMAIN"] || 'gmail.com',
+      user_name:            ENV["SMTP_USERNAME"],
+      password:             ENV["SMTP_PASSWORD"],
+      authentication:       ENV["SMTP_AUTHENTICATION"] || 'plain',
+      enable_starttls_auto: ENV["SMTP_ENABLE_STARTTLS_AUTO"] != 'false'
+    }
+  else
+    config.action_mailer.delivery_method = :resend
+  end
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
   # the I18n.default_locale when a translation cannot be found).
