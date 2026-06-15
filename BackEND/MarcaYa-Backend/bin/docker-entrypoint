@@ -4,9 +4,7 @@
 # Must be set before any Ruby process starts (libpq reads it during C extension init).
 export PGPREFER_IP_MODE=4
 
-# If running the rails server then create or migrate existing database
-if [ "$1" = "./bin/rails" ] && [ "$2" = "server" ]; then
-  ./bin/rails db:prepare
-fi
+# Create or migrate existing database
+./bin/rails db:prepare
 
 exec "${@}"
