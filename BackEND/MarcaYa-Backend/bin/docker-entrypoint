@@ -6,8 +6,7 @@ export PGPREFER_IP_MODE=4
 
 # If running the rails server then create or migrate existing database
 if [ "$1" = "./bin/rails" ] && [ "$2" = "server" ]; then
-  # Try to load the schema (fresh Supabase DB), fall back to db:prepare.
-  ./bin/rails db:schema:load 2>/dev/null || ./bin/rails db:migrate 2>/dev/null || ./bin/rails db:prepare
+  ./bin/rails db:prepare
 fi
 
 exec "${@}"
