@@ -2,7 +2,9 @@
 
 # If running the rails server then create or migrate existing database
 if [ "$1" = "./bin/rails" ] && [ "$2" = "server" ]; then
-  ./bin/rails db:prepare
+  # First try to load the schema (fresh Supabase DB may not have schema_migrations).
+  # If it fails, fall back to db:prepare (for existing databases).
+  ./bin/rails db:schema:load 2>/dev/null || ./bin/rails db:migrate 2>/dev/null || ./bin/rails db:prepare
 fi
 
 exec "${@}"
