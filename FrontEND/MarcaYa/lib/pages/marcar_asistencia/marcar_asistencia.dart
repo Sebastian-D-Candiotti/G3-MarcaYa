@@ -45,7 +45,8 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
   static const int minutoInicio = 0;
   static const int horaFin = 18;
   static const int minutoFin = 0;
-  static const int toleranciaMinutos = 720; // 12 horas = siempre disponible en desarrollo
+  static const int toleranciaMinutos =
+      720; // 12 horas = siempre disponible en desarrollo
 
   Position? _posicionActual;
   StreamSubscription<Position>? _positionSub;
@@ -92,13 +93,9 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
       minutoInicio,
     );
 
-    final desde = inicio.subtract(
-      const Duration(minutes: toleranciaMinutos),
-    );
+    final desde = inicio.subtract(const Duration(minutes: toleranciaMinutos));
 
-    final hasta = inicio.add(
-      const Duration(minutes: toleranciaMinutos),
-    );
+    final hasta = inicio.add(const Duration(minutes: toleranciaMinutos));
 
     return _horaActual.isAfter(desde) && _horaActual.isBefore(hasta);
   }
@@ -114,13 +111,9 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
       minutoFin,
     );
 
-    final desde = fin.subtract(
-      const Duration(minutes: toleranciaMinutos),
-    );
+    final desde = fin.subtract(const Duration(minutes: toleranciaMinutos));
 
-    final hasta = fin.add(
-      const Duration(minutes: toleranciaMinutos),
-    );
+    final hasta = fin.add(const Duration(minutes: toleranciaMinutos));
 
     return _horaActual.isAfter(desde) && _horaActual.isBefore(hasta);
   }
@@ -140,22 +133,21 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
     // Cargar paradas después del primer frame para tener contexto disponible
     WidgetsBinding.instance.addPostFrameCallback((_) => _cargarParadas());
 
-    _timer = Timer.periodic(
-      const Duration(seconds: 1),
-          (_) {
-        if (mounted) {
-          setState(() {
-            _horaActual = DateTime.now();
-          });
-        }
-      },
-    );
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) {
+        setState(() {
+          _horaActual = DateTime.now();
+        });
+      }
+    });
   }
 
   Future<void> _cargarParadas() async {
     try {
       final auth = context.read<AuthProvider>();
-      final empleadoId = int.tryParse(auth.currentUserProfile?.employeeId ?? '');
+      final empleadoId = int.tryParse(
+        auth.currentUserProfile?.employeeId ?? '',
+      );
       if (empleadoId == null) {
         setState(() {
           _cargandoParadas = false;
@@ -164,11 +156,14 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
         return;
       }
 
-      final paradas = await ApiService.instance.obtenerParadasEmpleado(empleadoId);
+      final paradas = await ApiService.instance.obtenerParadasEmpleado(
+        empleadoId,
+      );
       final filtradas = paradas
-          .where((p) =>
-              p['obraId'] == widget.obraId ||
-              p['obra_id'] == widget.obraId)
+          .where(
+            (p) =>
+                p['obraId'] == widget.obraId || p['obra_id'] == widget.obraId,
+          )
           .map((p) => p as Map<String, dynamic>)
           .toList();
 
@@ -189,7 +184,6 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
     }
   }
 
-
   @override
   void dispose() {
     _positionSub?.cancel();
@@ -199,8 +193,7 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
 
   Future<void> _iniciarGps() async {
     try {
-      final servicioActivo =
-      await Geolocator.isLocationServiceEnabled();
+      final servicioActivo = await Geolocator.isLocationServiceEnabled();
 
       if (!servicioActivo) {
         setState(() {
@@ -210,8 +203,7 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
         return;
       }
 
-      LocationPermission permiso =
-      await Geolocator.checkPermission();
+      LocationPermission permiso = await Geolocator.checkPermission();
 
       if (permiso == LocationPermission.denied) {
         permiso = await Geolocator.requestPermission();
@@ -243,18 +235,19 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
         _gpsCargando = false;
       });
 
-      _positionSub = Geolocator.getPositionStream(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          distanceFilter: 5,
-        ),
-      ).listen((position) {
-        if (mounted) {
-          setState(() {
-            _posicionActual = position;
+      _positionSub =
+          Geolocator.getPositionStream(
+            locationSettings: const LocationSettings(
+              accuracy: LocationAccuracy.high,
+              distanceFilter: 5,
+            ),
+          ).listen((position) {
+            if (mounted) {
+              setState(() {
+                _posicionActual = position;
+              });
+            }
           });
-        }
-      });
     } catch (e) {
       setState(() {
         _gpsCargando = false;
@@ -264,9 +257,12 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
   }
 
   Future<void> _confirmarMarcacion() async {
-    if (!_puedeConfirmar || _paradaId == null || _posicionActual == null) return;
+    if (!_puedeConfirmar || _paradaId == null || _posicionActual == null)
+      return;
 
     setState(() => _enviando = true);
+
+    final bool esFakeGPS = _posicionActual!.isMocked;
 
     try {
       final tipo = _tipoSeleccionado == 'entrada' ? 'entrada' : 'salida';
@@ -277,12 +273,14 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
           paradaId: _paradaId!,
           latitud: _posicionActual!.latitude,
           longitud: _posicionActual!.longitude,
+          isMocked: esFakeGPS,
         );
       } else {
         resultado = await ApiService.instance.marcarSalida(
           paradaId: _paradaId!,
           latitud: _posicionActual!.latitude,
           longitud: _posicionActual!.longitude,
+          isMocked: esFakeGPS,
         );
       }
 
@@ -294,7 +292,9 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
           content: Text(
             '$tipoTexto registrada — ${resultado['observaciones'] ?? widget.obraNombre}',
           ),
-          backgroundColor: resultado['valida_gps'] == true ? azul : Colors.orange,
+          backgroundColor: resultado['valida_gps'] == true
+              ? azul
+              : Colors.orange,
         ),
       );
 
@@ -332,39 +332,24 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
 
   @override
   Widget build(BuildContext context) {
-    final LatLng obraPoint = LatLng(
-      obraLat,
-      obraLng,
-    );
+    final LatLng obraPoint = LatLng(obraLat, obraLng);
 
     final LatLng? empleadoPoint = _posicionActual == null
         ? null
-        : LatLng(
-      _posicionActual!.latitude,
-      _posicionActual!.longitude,
-    );
+        : LatLng(_posicionActual!.latitude, _posicionActual!.longitude);
 
     final LatLng centroMapa = empleadoPoint ?? obraPoint;
 
     return Scaffold(
       backgroundColor: Colors.white,
 
-      appBar: AppBar(
-        title: Text(
-          widget.obraNombre,
-        ),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: Text(widget.obraNombre), centerTitle: true),
 
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 24,
-          vertical: 20,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             _obraCard(),
 
             const SizedBox(height: 18),
@@ -400,13 +385,11 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
             _botonConfirmar(),
 
             const SizedBox(height: 20),
-
           ],
         ),
       ),
     );
   }
-
 
   Widget _obraCard() {
     return Container(
@@ -415,23 +398,15 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
       decoration: BoxDecoration(
         color: const Color(0xFFEAF8F8),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: azul,
-          width: 1.3,
-        ),
+        border: Border.all(color: azul, width: 1.3),
       ),
       child: Row(
         children: [
-          const Icon(
-            Icons.business,
-            color: azul,
-            size: 34,
-          ),
+          const Icon(Icons.business, color: azul, size: 34),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   widget.obraNombre,
@@ -499,25 +474,15 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
   }) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 14,
-        vertical: 13,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
       decoration: BoxDecoration(
         color: color,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: azul,
-          width: 1.3,
-        ),
+        border: Border.all(color: azul, width: 1.3),
       ),
       child: Row(
         children: [
-          Icon(
-            icono,
-            color: textoColor,
-            size: 28,
-          ),
+          Icon(icono, color: textoColor, size: 28),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -544,23 +509,15 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
       height: 260,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: azul,
-          width: 1.5,
-        ),
+        border: Border.all(color: azul, width: 1.5),
       ),
       clipBehavior: Clip.antiAlias,
       child: FlutterMap(
-        options: MapOptions(
-          initialCenter: centroMapa,
-          initialZoom: 16,
-        ),
+        options: MapOptions(initialCenter: centroMapa, initialZoom: 16),
         children: [
           TileLayer(
-            urlTemplate:
-            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-            userAgentPackageName:
-            'com.example.marcapp',
+            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            userAgentPackageName: 'com.example.marcapp',
           ),
           CircleLayer(
             circles: [
@@ -580,11 +537,7 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
                 point: obraPoint,
                 width: 48,
                 height: 48,
-                child: const Icon(
-                  Icons.location_pin,
-                  color: azul,
-                  size: 44,
-                ),
+                child: const Icon(Icons.location_pin, color: azul, size: 44),
               ),
               if (empleadoPoint != null)
                 Marker(
@@ -619,10 +572,7 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
         const SizedBox(height: 10),
         Row(
           children: [
-            _datoBox(
-              titulo: 'Distancia',
-              valor: _textoDistancia(),
-            ),
+            _datoBox(titulo: 'Distancia', valor: _textoDistancia()),
             const SizedBox(width: 10),
             _datoBox(
               titulo: 'Radio permitido',
@@ -648,10 +598,7 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
         ),
         const SizedBox(height: 10),
         Table(
-          border: TableBorder.all(
-            color: azul,
-            width: 1.3,
-          ),
+          border: TableBorder.all(color: azul, width: 1.3),
           columnWidths: const {
             0: FlexColumnWidth(1.7),
             1: FlexColumnWidth(1.3),
@@ -660,9 +607,7 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
             TableRow(
               children: [
                 const _CeldaHorario('Hora actual:'),
-                _CeldaHorario(
-                  _formatearHora(_horaActual),
-                ),
+                _CeldaHorario(_formatearHora(_horaActual)),
               ],
             ),
             const TableRow(
@@ -672,10 +617,7 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
               ],
             ),
             const TableRow(
-              children: [
-                _CeldaHorario('Hora salida:'),
-                _CeldaHorario('18:00'),
-              ],
+              children: [_CeldaHorario('Hora salida:'), _CeldaHorario('18:00')],
             ),
           ],
         ),
@@ -684,13 +626,10 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
           children: [
             _estadoBox('Entrada', azul, flex: 2),
             _estadoBox(
-              _entradaDisponible
-                  ? 'Disponible'
-                  : 'No disponible',
+              _entradaDisponible ? 'Disponible' : 'No disponible',
               _entradaDisponible ? verde : gris,
               flex: 2,
-              textoColor:
-              _entradaDisponible ? azul : Colors.white,
+              textoColor: _entradaDisponible ? azul : Colors.white,
             ),
           ],
         ),
@@ -699,13 +638,10 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
           children: [
             _estadoBox('Salida', azul, flex: 2),
             _estadoBox(
-              _salidaDisponible
-                  ? 'Disponible'
-                  : 'No disponible',
+              _salidaDisponible ? 'Disponible' : 'No disponible',
               _salidaDisponible ? verde : gris,
               flex: 2,
-              textoColor:
-              _salidaDisponible ? azul : Colors.white,
+              textoColor: _salidaDisponible ? azul : Colors.white,
             ),
           ],
         ),
@@ -765,12 +701,7 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
           ),
         ),
         onPressed: disponible ? onTap : null,
-        child: Text(
-          texto,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        child: Text(texto, style: const TextStyle(fontWeight: FontWeight.bold)),
       ),
     );
   }
@@ -786,7 +717,8 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
         child: const Row(
           children: [
             SizedBox(
-              width: 18, height: 18,
+              width: 18,
+              height: 18,
               child: CircularProgressIndicator(strokeWidth: 2),
             ),
             SizedBox(width: 10),
@@ -854,8 +786,11 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
                         if (v == null) return;
                         setState(() {
                           _paradaId = v;
-                          _paradaNombre = _paradasDisponibles
-                              .firstWhere((p) => int.parse(p['id'].toString()) == v)['nombre'] ?? '';
+                          _paradaNombre =
+                              _paradasDisponibles.firstWhere(
+                                (p) => int.parse(p['id'].toString()) == v,
+                              )['nombre'] ??
+                              '';
                         });
                       },
                     ),
@@ -889,10 +824,15 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
               borderRadius: BorderRadius.circular(22),
             ),
           ),
-          onPressed: habilitado ? () { _confirmarMarcacion(); } : null,
+          onPressed: habilitado
+              ? () {
+                  _confirmarMarcacion();
+                }
+              : null,
           child: _enviando
               ? const SizedBox(
-                  width: 22, height: 22,
+                  width: 22,
+                  height: 22,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
                     color: Colors.white,
@@ -907,21 +847,12 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
     );
   }
 
-  Widget _datoBox({
-    required String titulo,
-    required String valor,
-  }) {
+  Widget _datoBox({required String titulo, required String valor}) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(
-          vertical: 12,
-          horizontal: 10,
-        ),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
         decoration: BoxDecoration(
-          border: Border.all(
-            color: azul,
-            width: 1.3,
-          ),
+          border: Border.all(color: azul, width: 1.3),
           borderRadius: BorderRadius.circular(14),
           color: Colors.white,
         ),
@@ -953,11 +884,11 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
   }
 
   static Widget _estadoBox(
-      String texto,
-      Color color, {
-        required int flex,
-        Color textoColor = Colors.white,
-      }) {
+    String texto,
+    Color color, {
+    required int flex,
+    Color textoColor = Colors.white,
+  }) {
     return Expanded(
       flex: flex,
       child: Container(
@@ -965,10 +896,7 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: color,
-          border: Border.all(
-            color: azul,
-            width: 1.3,
-          ),
+          border: Border.all(color: azul, width: 1.3),
         ),
         child: Text(
           texto,
@@ -992,10 +920,7 @@ class _CeldaHorario extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        vertical: 8,
-        horizontal: 6,
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
       child: Center(
         child: Text(
           texto,
