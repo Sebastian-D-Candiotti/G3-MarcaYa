@@ -10,9 +10,11 @@ module Infrastructure
       # column getter and returns nil, breaking our mapper.
 
       has_many :empleados, class_name: "Infrastructure::Orm::EmpleadoRecord",
-                            foreign_key: :usuario_id
+                            foreign_key: :usuario_id,
+                            dependent: :destroy
       has_many :empresas, class_name: "Infrastructure::Orm::EmpresaRecord",
-                           foreign_key: :usuario_id
+                            foreign_key: :usuario_id,
+                            dependent: :destroy
     end
   end
 end
