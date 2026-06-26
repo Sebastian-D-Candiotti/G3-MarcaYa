@@ -209,4 +209,31 @@ class PushProvider extends ChangeNotifier {
       return {'screen': payload};
     }
   }
+
+  // ════════════════════════════════════════════════════════════
+  // NOTIFICACIONES DE GEOCERCA
+  // ════════════════════════════════════════════════════════════
+
+  /// Muestra una notificación local de recordatorio de geocerca.
+  ///
+  /// El payload incluye los datos de la obra para que al hacer tap
+  /// se pueda navegar a la pantalla de marcación.
+  Future<void> showGeofenceReminder(Map<String, dynamic> obraData) async {
+    final data = <String, dynamic>{
+      'type': 'geofence_reminder',
+      'screen': 'marcar',
+      'obraId': obraData['id'],
+      'obraNombre': obraData['nombre'],
+      'latitud': obraData['latitud'],
+      'longitud': obraData['longitud'],
+      'radio': obraData['radio_metros'],
+    };
+
+    await _showLocalNotification(
+      id: DateTime.now().millisecondsSinceEpoch,
+      title: 'Recordatorio de Asistencia',
+      body: 'Estás cerca de tu parada. No olvides marcar tu entrada.',
+      payload: jsonEncode(data),
+    );
+  }
 }

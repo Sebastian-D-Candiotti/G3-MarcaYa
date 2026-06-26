@@ -21,6 +21,13 @@ class AuthProvider extends ChangeNotifier {
 
   AppUser? get currentUserProfile => _state.currentUser;
 
+  // ── Lifecycle callbacks (para GeofencingProvider) ──────────
+  /// Se invoca después de un login exitoso.
+  VoidCallback? onLoginCallback;
+
+  /// Se invoca después del logout (incluso si falla el API).
+  VoidCallback? onLogoutCallback;
+
   // ==========================================
   // LOGIN REAL CONTRA BACKEND
   // ==========================================
@@ -50,6 +57,8 @@ class AuthProvider extends ChangeNotifier {
       _state.currentUser = perfil;
 
       notifyListeners();
+
+      onLoginCallback?.call();
 
       return true;
     } catch (e) {
@@ -110,6 +119,8 @@ class AuthProvider extends ChangeNotifier {
     _userRole = null;
 
     notifyListeners();
+
+    onLogoutCallback?.call();
   }
 
   // ==========================================

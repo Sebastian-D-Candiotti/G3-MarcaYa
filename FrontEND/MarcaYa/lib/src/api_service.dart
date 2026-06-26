@@ -837,6 +837,16 @@ class ApiService {
     _parsearRespuesta(res);
   }
 
+  /// Consulta si el empleado ya marcó asistencia hoy
+  /// GET /api/v1/asistencia/estado-hoy → {marcado_hoy: bool}
+  Future<Map<String, dynamic>> obtenerEstadoHoy() async {
+    final res = await _client.get(
+      Uri.parse('$kBaseUrl/asistencia/estado-hoy'),
+      headers: await _headers(),
+    );
+    return _parsearRespuesta(res);
+  }
+
   // ════════════════════════════════════════════════════════════
   // REPORTES (US-0001-0009)
   // ════════════════════════════════════════════════════════════
