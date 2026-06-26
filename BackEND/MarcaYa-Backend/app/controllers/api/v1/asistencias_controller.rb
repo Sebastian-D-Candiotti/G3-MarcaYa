@@ -3,7 +3,7 @@
 module Api
   module V1
     class AsistenciasController < BaseController
-      before_action :require_empleado!, only: [:marcar_entrada, :marcar_salida, :historial_personal]
+      before_action :require_empleado!, only: [:marcar_entrada, :marcar_salida, :historial_personal, :estado_hoy]
       before_action :require_empresa_or_admin!, only: [:historial_empleado, :tiempo_real, :tiempo_real_parada]
 
       # POST /api/v1/asistencia/marcar-entrada
@@ -67,6 +67,21 @@ module Api
       def tiempo_real_parada
         estados = asistencia_facade.tiempo_real(parada_id: params[:parada_id])
         render json: estados
+      end
+
+      # GET /api/v1/asistencia/estado-hoy
+      def estado_hoy
+        empleado = current_user.empleados.first
+        render json: { error: "No se encontró empleado asociado" }, status: :not_found and return unless empleado
+
+        asignacion = empleado.asignaciones.first
+        render json: { error: "Empleado sin obra asignada con horario" }, status: :not_found and return unless asignacion&.obra&.hora_inicio
+
+        resultado = ::Application::UseCases::Asistencias::ObtenerEstadoHoy.new(
+          asistencia_repo: Rails.configuration.di.repos[:asistencia]
+        ).ejecutar(empleado_id: empleado.id)
+
+        render json: resultado
       end
 
       private

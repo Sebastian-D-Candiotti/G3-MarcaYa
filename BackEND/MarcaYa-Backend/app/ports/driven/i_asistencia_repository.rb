@@ -25,6 +25,10 @@ module Ports
         raise NotImplementedError, "#{name}##{__method__} must be implemented"
       end
 
+      def self.buscar_entrada_hoy(empleado_id)
+        raise NotImplementedError, "#{name}##{__method__} must be implemented"
+      end
+
       def self.guardar(registro)
         raise NotImplementedError, "#{name}##{__method__} must be implemented"
       end

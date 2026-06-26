@@ -27,6 +27,10 @@ class Ports::Driven::IAsistenciaRepositoryTest < ActiveSupport::TestCase
     assert_raises(NotImplementedError) { Ports::Driven::IAsistenciaRepository.ultimo_registro_por_parada(1) }
   end
 
+  def test_buscar_entrada_hoy_raises_not_implemented
+    assert_raises(NotImplementedError) { Ports::Driven::IAsistenciaRepository.buscar_entrada_hoy(1) }
+  end
+
   def test_guardar_raises_not_implemented
     assert_raises(NotImplementedError) { Ports::Driven::IAsistenciaRepository.guardar(nil) }
   end

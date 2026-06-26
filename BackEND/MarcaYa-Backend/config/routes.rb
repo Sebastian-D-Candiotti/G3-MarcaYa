@@ -97,6 +97,7 @@ Rails.application.routes.draw do
       get 'asistencia/historial/:empleado_id', to: 'asistencias#historial_empleado'
       get 'asistencia/tiempo-real', to: 'asistencias#tiempo_real'
       get 'asistencia/tiempo-real/:parada_id', to: 'asistencias#tiempo_real_parada'
+      get 'asistencia/estado-hoy', to: 'asistencias#estado_hoy'
 
       # REPORTES
       namespace :reportes do

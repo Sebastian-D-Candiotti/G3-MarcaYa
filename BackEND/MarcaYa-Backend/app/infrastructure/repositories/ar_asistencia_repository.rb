@@ -47,6 +47,13 @@ module Infrastructure
           .map { |record| ::Infrastructure::Mappers::AsistenciaMapper.to_domain(record) }
       end
 
+      def buscar_entrada_hoy(empleado_id)
+        ::Infrastructure::Orm::AsistenciaRecord
+          .where(empleado_id: empleado_id, tipo_marcacion: "ENTRADA")
+          .where(fecha_hora: Time.current.all_day)
+          .exists?
+      end
+
       def guardar(registro)
         attrs = ::Infrastructure::Mappers::AsistenciaMapper.to_record_attrs(registro)
 
