@@ -144,7 +144,7 @@ class _RegistrarEmpresaPageState extends State<RegistrarEmpresaPage> {
     try {
       final correo = _correoCtrl.text.trim();
 
-      await ApiService.instance.registrarEmpresa(
+      final data = await ApiService.instance.registrarEmpresa(
         correo:      correo,
         clave:       _claveCtrl.text,
         ruc:         _rucCtrl.text.trim(),
@@ -153,9 +153,13 @@ class _RegistrarEmpresaPageState extends State<RegistrarEmpresaPage> {
 
       if (!mounted) return;
 
+      final yaRegistrado = data['ya_registrado'] == true;
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Empresa registrada. Revisa tu correo para verificar la cuenta.'),
+        SnackBar(
+          content: Text(yaRegistrado
+              ? 'Ya tenés un registro pendiente. Revisá tu correo para el nuevo código.'
+              : 'Empresa registrada. Revisa tu correo para verificar la cuenta.'),
           backgroundColor: AppColors.success,
         ),
       );

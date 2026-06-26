@@ -102,7 +102,7 @@ class _RegistrarEmpleadoPageState extends State<RegistrarEmpleadoPage> {
     try {
       final correo = _correoCtrl.text.trim();
 
-      await ApiService.instance.registrarEmpleado(
+      final data = await ApiService.instance.registrarEmpleado(
         correo: correo,
         clave: _claveCtrl.text,
         nombre: _nombreCtrl.text.trim(),
@@ -112,9 +112,13 @@ class _RegistrarEmpleadoPageState extends State<RegistrarEmpleadoPage> {
 
       if (!mounted) return;
 
+      final yaRegistrado = data['ya_registrado'] == true;
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Empleado registrado. Revisa tu correo para verificar la cuenta.'),
+        SnackBar(
+          content: Text(yaRegistrado
+              ? 'Ya tenés un registro pendiente. Revisá tu correo para el nuevo código.'
+              : 'Empleado registrado. Revisa tu correo para verificar la cuenta.'),
           backgroundColor: AppColors.success,
         ),
       );

@@ -1,6 +1,6 @@
-# Load environment variables from .env file if it exists
+# Load environment variables from .env file if it exists (development/test only)
 dot_env_file = File.expand_path("../.env", __dir__)
-if File.exist?(dot_env_file)
+if File.exist?(dot_env_file) && ENV["RAILS_ENV"] != "production"
   File.readlines(dot_env_file).each do |line|
     line = line.strip
     next if line.empty? || line.start_with?("#")

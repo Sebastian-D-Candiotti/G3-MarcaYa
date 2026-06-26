@@ -36,6 +36,10 @@ module Application
           rol = params[:rol]
 
           if @usuario_repo.exists_by_correo?(correo)
+            existing = @usuario_repo.find_by_correo(correo)
+            if existing.pendiente_verificacion?
+              return reenviar_para_pendiente(existing)
+            end
             raise Domain::Errors::ValidacionError, "El correo ya está registrado"
           end
 
@@ -142,6 +146,12 @@ module Application
             raise Domain::Errors::ValidacionError, "El DNI debe tener exactamente 8 números"
           end
           if @empleado_repo.exists_by_dni?(dni)
+            empleado_existente = @empleado_repo.find_by_dni(dni)
+            usuario_dni = @usuario_repo.find_by_id!(empleado_existente.usuario_id)
+            if usuario_dni.pendiente_verificacion?
+              raise Domain::Errors::ValidacionError,
+                    "Este DNI ya tiene un registro pendiente. Usá el correo con el que te registraste originalmente."
+            end
             raise Domain::Errors::ValidacionError, "El DNI ya está registrado"
           end
           datos_reniec = @reniec_service.consultar(dni)
@@ -176,6 +186,25 @@ module Application
               )
             )
           end
+        end
+
+        def reenviar_para_pendiente(usuario_existente)
+          codigo = @verification_code_service.generate
+
+          usuario_actualizado = Domain::Entities::Usuario.new(
+            id: usuario_existente.id,
+            correo: usuario_existente.correo,
+            clave_hash: usuario_existente.clave_hash,
+            rol: usuario_existente.rol,
+            estado: usuario_existente.estado,
+            estado_verificacion: usuario_existente.estado_verificacion,
+            codigo_verificacion_digest: @verification_code_service.digest(codigo),
+            codigo_verificacion_expira_en: @verification_code_service.expires_at
+          )
+          @usuario_repo.guardar(usuario_actualizado)
+          enviar_codigo!(correo: usuario_existente.correo, codigo: codigo)
+
+          { usuario: usuario_existente, requiere_verificacion: true, ya_registrado: true }
         end
 
         def enviar_codigo!(correo:, codigo:)

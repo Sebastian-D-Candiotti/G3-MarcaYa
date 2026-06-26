@@ -32,15 +32,19 @@ class Api::V1::AuthController < Api::V1::BaseController
   def registro
     resultado = Rails.configuration.di.auth_facade.registro(params.permit!.to_h.symbolize_keys)
     usuario = resultado[:usuario]
+    ya_registrado = resultado[:ya_registrado] == true
 
     render json: {
-      mensaje: "Usuario registrado. Revisa tu correo para verificar la cuenta.",
+      mensaje: ya_registrado \
+        ? "Ya tienes un registro pendiente. Revisa tu correo para el nuevo codigo."
+        : "Usuario registrado. Revisa tu correo para verificar la cuenta.",
       id: usuario.id,
       correo: usuario.correo,
       rol: usuario.rol.to_s,
       estado_verificacion: usuario.estado_verificacion,
-      requiere_verificacion: resultado[:requiere_verificacion]
-    }, status: :created
+      requiere_verificacion: resultado[:requiere_verificacion],
+      ya_registrado: ya_registrado
+    }, status: ya_registrado ? :ok : :created
   rescue ::Domain::Errors::ValidacionError => e
     render json: { error: e.message }, status: :unprocessable_entity
   rescue ::Domain::Errors::CorreoVerificacionNoEnviadoError => e

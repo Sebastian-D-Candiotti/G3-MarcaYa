@@ -18,6 +18,13 @@ module Infrastructure
         ::Infrastructure::Mappers::EmpleadoMapper.to_domain(record)
       end
 
+      def find_by_dni(dni)
+        record = ::Infrastructure::Orm::EmpleadoRecord.find_by(dni: dni)
+        return nil unless record
+
+        ::Infrastructure::Mappers::EmpleadoMapper.to_domain(record)
+      end
+
       def exists_by_dni?(dni)
         ::Infrastructure::Orm::EmpleadoRecord.exists?(dni: dni)
       end
