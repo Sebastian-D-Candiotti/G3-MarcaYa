@@ -22,8 +22,8 @@ module Application
         @cerrar_sesion = UseCases::Auth::CerrarSesion.new
       end
 
-      def login(correo:, clave:)
-        @login_usuario.ejecutar(correo: correo, clave: clave)
+      def login(correo:, clave:, device_id: nil)
+        @login_usuario.ejecutar(correo: correo, clave: clave, device_id: device_id)
       end
 
       def registro(params)

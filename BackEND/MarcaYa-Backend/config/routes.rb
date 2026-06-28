@@ -84,6 +84,12 @@ Rails.application.routes.draw do
         get "asistencia", to: "reportes#asistencia"
       end
 
+      # CRONOGRAMA DE PAGOS
+      post 'cronograma/generar',              to: 'cronograma#generar'
+      get  'cronograma/empleado/:empleado_id', to: 'cronograma#por_empleado'
+      get  'cronograma/obra/:obra_id',         to: 'cronograma#por_obra'
+
+
     end
   end
 end

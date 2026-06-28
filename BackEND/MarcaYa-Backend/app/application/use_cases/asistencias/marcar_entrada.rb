@@ -12,7 +12,7 @@ module Application
           @gps_service = gps_service
         end
 
-        def ejecutar(empleado_id:, parada_id:, latitud:, longitud:)
+        def ejecutar(empleado_id:, parada_id:, latitud:, longitud:, is_mocked: false)
           # Validar que el empleado exista
           @empleado_repo.find_by_id!(empleado_id)
 
@@ -44,6 +44,9 @@ module Application
           valida_gps = @gps_service.dentro_de_geocerca?(coordenada, centro, parada.radio_metros)
           observaciones = valida_gps ? nil : "Fuera de zona"
 
+          observaciones_finales = is_mocked ? "Fake GPS Detectado" : observaciones
+          valida_gps_final = is_mocked ? false : valida_gps
+
           # Crear y persistir el registro
           registro = Domain::Entities::RegistroAsistencia.new(
             id: nil,
@@ -53,9 +56,9 @@ module Application
             fecha_hora: Time.now,
             latitud_registrada: latitud,
             longitud_registrada: longitud,
-            valida_gps: valida_gps,
+            valida_gps: valida_gps_final,
             duracion_jornada: nil,
-            observaciones: observaciones
+            observaciones: observaciones_finales
           )
 
           registro.validar!

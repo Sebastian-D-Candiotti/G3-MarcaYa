@@ -20,6 +20,8 @@ module Domain
     class EntradaActivaExistenteError < ValidacionError; end
     class EmpleadoNoAsignadoParadaError < ValidacionError; end
     class ParadaInactivaError < ValidacionError; end
+    class DispositivoNoAutorizadoError < StandardError; end
+    class FakeGpsDetectadoError < ValidacionError; end
   end
 end
 

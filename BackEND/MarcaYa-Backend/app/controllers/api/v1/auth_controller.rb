@@ -4,8 +4,13 @@ class Api::V1::AuthController < Api::V1::BaseController
   def login
     correo = params[:correo]
     clave  = params[:clave]
+    device_id = params[:device_id]
 
-    resultado = Rails.configuration.di.auth_facade.login(correo: correo, clave: clave)
+    resultado = Rails.configuration.di.auth_facade.login(
+      correo: correo, 
+      clave: clave,
+      device_id: device_id
+    )
 
     usuario = resultado[:usuario]
     token = resultado[:token]

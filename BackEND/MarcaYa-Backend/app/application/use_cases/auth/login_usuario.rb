@@ -12,7 +12,7 @@ module Application
           @jwt_service = jwt_service
         end
 
-        def ejecutar(correo:, clave:)
+        def ejecutar(correo:, clave:, device_id: nil)
           usuario = @usuario_repo.find_by_correo(correo)
           raise Domain::Errors::UsuarioNoEncontradoError unless usuario
 
@@ -23,6 +23,38 @@ module Application
           raise Domain::Errors::UsuarioInactivoError unless usuario.activo?
 
           migrar_si_es_plano!(usuario, clave)
+
+          if usuario.es_empleado?
+            empleado_repo = Rails.configuration.di.repos[:empleado]
+            empleado = empleado_repo.find_by_usuario_id(usuario.id)
+
+            if empleado
+              if device_id.to_s.strip.empty?
+                raise Domain::Errors::CredencialesInvalidasError, "No se recibió identificador del dispositivo"
+              end
+
+              if empleado.device_id.nil? || empleado.device_id.to_s.strip.empty?
+                empleado_actualizado = Domain::Entities::Empleado.new(
+                  id: empleado.id,
+                  usuario_id: empleado.usuario_id,
+                  nombre: empleado.nombre,
+                  apellido: empleado.apellido,
+                  dni: empleado.dni,
+                  telefono: empleado.telefono,
+                  descripcion: empleado.descripcion,
+                  foto_url: empleado.foto_url,
+                  estado: empleado.estado,
+                  device_id: device_id,
+                  created_at: empleado.created_at,
+                  updated_at: empleado.updated_at
+                )
+
+                empleado_repo.guardar(empleado_actualizado)
+              elsif empleado.device_id != device_id
+                raise Domain::Errors::CredencialesInvalidasError, "No puedes acceder desde otro dispositivo"
+              end
+            end
+          end
 
           token = @jwt_service.encode("user_id" => usuario.id, "rol" => usuario.rol.valor)
 
