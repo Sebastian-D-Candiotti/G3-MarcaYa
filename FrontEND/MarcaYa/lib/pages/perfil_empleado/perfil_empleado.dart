@@ -13,106 +13,103 @@ class PerfilEmpleadoPage extends StatelessWidget {
     final empleado = auth.currentUserProfile; // usuario logueado
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mi Perfil'),
-      ),
+      appBar: AppBar(title: const Text('Mi Perfil')),
 
       body: empleado == null
           ? const Center(
-        child: Text(
-          'No se encontró el perfil',
-          style: TextStyle(fontSize: 18),
-        ),
-      )
+              child: Text(
+                'No se encontró el perfil',
+                style: TextStyle(fontSize: 18),
+              ),
+            )
           : SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // FOTO
-            CircleAvatar(
-              radius: 50,
-              backgroundImage: empleado.fotoUrl != null &&
-                  empleado.fotoUrl!.isNotEmpty
-                  ? NetworkImage(empleado.fotoUrl!)
-                  : null,
-              child: empleado.fotoUrl == null ||
-                  empleado.fotoUrl!.isEmpty
-                  ? Text(
-                (empleado.nombre ?? '').isNotEmpty
-                    ? empleado.nombre![0].toUpperCase()
-                    : '?',
-                style: const TextStyle(fontSize: 30),
-              )
-                  : null,
-            ),
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // FOTO
+                  CircleAvatar(
+                    radius: 50,
+                    backgroundImage:
+                        empleado.fotoUrl != null && empleado.fotoUrl!.isNotEmpty
+                        ? NetworkImage(empleado.fotoUrl!)
+                        : null,
+                    child: empleado.fotoUrl == null || empleado.fotoUrl!.isEmpty
+                        ? Text(
+                            (empleado.nombre ?? '').isNotEmpty
+                                ? empleado.nombre![0].toUpperCase()
+                                : '?',
+                            style: const TextStyle(fontSize: 30),
+                          )
+                        : null,
+                  ),
 
-            const SizedBox(height: 20),
+                  const SizedBox(height: 20),
 
-            // NOMBRE COMPLETO
-            Text(
-              '${empleado.nombre ?? ''} ${empleado.apellido ?? ''}',
-              style: const TextStyle(
-                  fontSize: 24, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
+                  // NOMBRE COMPLETO
+                  Text(
+                    '${empleado.nombre ?? ''} ${empleado.apellido ?? ''}',
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
 
-            const SizedBox(height: 12),
+                  const SizedBox(height: 12),
 
-            // DESCRIPCIÓN
-            if (empleado.descripcion != null &&
-                empleado.descripcion!.isNotEmpty)
-              Text(
-                empleado.descripcion!,
-                style: const TextStyle(fontSize: 16),
-                textAlign: TextAlign.center,
-              ),
+                  // DESCRIPCIÓN
+                  if (empleado.descripcion != null &&
+                      empleado.descripcion!.isNotEmpty)
+                    Text(
+                      empleado.descripcion!,
+                      style: const TextStyle(fontSize: 16),
+                      textAlign: TextAlign.center,
+                    ),
 
-            const SizedBox(height: 20),
+                  const SizedBox(height: 20),
 
-            // CORREO
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.email),
-                title: const Text('Correo'),
-                subtitle: Text(empleado.correo),
-              ),
-            ),
+                  // CORREO
+                  Card(
+                    child: ListTile(
+                      leading: const Icon(Icons.email),
+                      title: const Text('Correo'),
+                      subtitle: Text(empleado.correo),
+                    ),
+                  ),
 
-            const SizedBox(height: 12),
+                  const SizedBox(height: 12),
 
-            // TELÉFONO
-            if (empleado.telefono != null &&
-                empleado.telefono!.isNotEmpty)
-              Card(
-                child: ListTile(
-                  leading: const Icon(Icons.phone),
-                  title: const Text('Teléfono'),
-                  subtitle: Text(empleado.telefono!),
-                ),
-              ),
+                  // TELÉFONO
+                  if (empleado.telefono != null &&
+                      empleado.telefono!.isNotEmpty)
+                    Card(
+                      child: ListTile(
+                        leading: const Icon(Icons.phone),
+                        title: const Text('Teléfono'),
+                        subtitle: Text(empleado.telefono!),
+                      ),
+                    ),
 
-            const SizedBox(height: 12),
+                  const SizedBox(height: 12),
 
-            // ROL
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.badge),
-                title: const Text('Rol'),
-                subtitle: Text(
-                  auth.userRole ?? 'empleado',
-                ),
-              ),
-            ),
+                  // ROL
+                  Card(
+                    child: ListTile(
+                      leading: const Icon(Icons.badge),
+                      title: const Text('Rol'),
+                      subtitle: Text(auth.userRole ?? 'empleado'),
+                    ),
+                  ),
 
-            ElevatedButton.icon(
-              onPressed: () => context.push('/empleado/perfil/editar'),
-              icon: const Icon(Icons.edit),
-              label: const Text('Editar Perfil'),
-            ),
-            const SizedBox(height: 12),
+                  ElevatedButton.icon(
+                    onPressed: () => context.push('/empleado/perfil/editar'),
+                    icon: const Icon(Icons.edit),
+                    label: const Text('Editar Perfil'),
+                  ),
+                  const SizedBox(height: 12),
 
-            ElevatedButton.icon(
+                  /*ElevatedButton.icon(
               onPressed: () async {
 
                 await auth.logout();
@@ -130,10 +127,10 @@ class PerfilEmpleadoPage extends StatelessWidget {
 
               icon: const Icon(Icons.logout),
               label: const Text('Cerrar Sesión'),
+            ),*/
+                ],
+              ),
             ),
-          ],
-        ),
-      ),
 
       bottomNavigationBar: const BottomNavbar(
         userRole: 'empleado',

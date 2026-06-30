@@ -31,11 +31,12 @@ class AuthProvider extends ChangeNotifier {
   // ==========================================
   // LOGIN REAL CONTRA BACKEND
   // ==========================================
-  Future<bool> login(String email, String password) async {
+  Future<bool> login(String email, String password, {String? deviceId}) async {
     try {
       final result = await ApiService.instance.login(
         email,
         password,
+        deviceId: deviceId,
       );
       print(result.perfil);
       _userRole = result.rol;
@@ -44,9 +45,7 @@ class AuthProvider extends ChangeNotifier {
       print(result.perfil);
       print(perfil.nombre);
       print(perfil.correo);
-      final idx = _state.users.indexWhere(
-            (u) => u.id == perfil.id,
-      );
+      final idx = _state.users.indexWhere((u) => u.id == perfil.id);
 
       if (idx != -1) {
         _state.users[idx] = perfil;
@@ -131,9 +130,7 @@ class AuthProvider extends ChangeNotifier {
       final data = await ApiService.instance.obtenerMiPerfil();
       final perfil = AppUser.fromJson(data);
 
-      final idx = _state.users.indexWhere(
-            (u) => u.id == perfil.id,
-      );
+      final idx = _state.users.indexWhere((u) => u.id == perfil.id);
 
       if (idx != -1) {
         _state.users[idx] = perfil;
@@ -169,9 +166,7 @@ class AuthProvider extends ChangeNotifier {
 
       final perfil = AppUser.fromJson(data);
 
-      final idx = _state.users.indexWhere(
-            (u) => u.id == perfil.id,
-      );
+      final idx = _state.users.indexWhere((u) => u.id == perfil.id);
 
       if (idx != -1) {
         _state.users[idx] = perfil;
@@ -186,5 +181,4 @@ class AuthProvider extends ChangeNotifier {
       debugPrint('updateProfile error: $e');
     }
   }
-
 }

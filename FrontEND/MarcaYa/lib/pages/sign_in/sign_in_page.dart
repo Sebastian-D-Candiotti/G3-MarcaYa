@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../theme/app_theme.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'dart:io';
 
 class SignInPage extends StatefulWidget {
   const SignInPage({super.key});
@@ -45,19 +47,23 @@ class _SignInPageState extends State<SignInPage> {
     try {
       final auth = context.read<AuthProvider>();
 
-      final ok = await auth.login(
-        correo,
-        clave,
-      );
+      final deviceInfo = DeviceInfoPlugin();
+      String deviceId = '';
+
+      if (Platform.isAndroid) {
+        final androidInfo = await deviceInfo.androidInfo;
+        deviceId = androidInfo.id;
+      } else if (Platform.isIOS) {
+        final iosInfo = await deviceInfo.iosInfo;
+        deviceId = iosInfo.identifierForVendor ?? '';
+      }
+
+      final ok = await auth.login(correo, clave, deviceId: deviceId);
 
       if (!mounted) return;
 
       if (ok) {
-        context.go(
-          auth.userRole == 'empleado'
-              ? '/empleado'
-              : '/empresa',
-        );
+        context.go(auth.userRole == 'empleado' ? '/empleado' : '/empresa');
       } else {
         setState(() {
           _error = 'Correo o contraseña incorrectos';
@@ -188,21 +194,21 @@ class _SignInPageState extends State<SignInPage> {
                   onPressed: _isLoading ? null : _handleLogin,
                   child: _isLoading
                       ? const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2.5,
-                    ),
-                  )
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2.5,
+                          ),
+                        )
                       : const Text(
-                    'INICIAR SESIÓN',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
+                          'INICIAR SESIÓN',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
                 ),
               ),
 
@@ -212,9 +218,7 @@ class _SignInPageState extends State<SignInPage> {
                 onPressed: () => context.push('/reset-password'),
                 child: const Text(
                   '¿Ha olvidado su contraseña?',
-                  style: TextStyle(
-                    decoration: TextDecoration.underline,
-                  ),
+                  style: TextStyle(decoration: TextDecoration.underline),
                 ),
               ),
 
@@ -224,9 +228,7 @@ class _SignInPageState extends State<SignInPage> {
                 onPressed: () => context.push('/register'),
                 child: const Text(
                   '¿Aún no es miembro? Regístrese',
-                  style: TextStyle(
-                    decoration: TextDecoration.underline,
-                  ),
+                  style: TextStyle(decoration: TextDecoration.underline),
                 ),
               ),
 

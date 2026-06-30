@@ -86,11 +86,19 @@ class ApiService {
   // ════════════════════════════════════════════════════════════
 
   /// Login → retorna el rol del usuario ('empresa' | 'empleado')
-  Future<LoginResult> login(String correo, String clave) async {
+  Future<LoginResult> login(
+    String correo,
+    String clave, {
+    String? deviceId,
+  }) async {
     final res = await _client.post(
       Uri.parse('$kBaseUrl/auth/login'),
       headers: await _headers(auth: false),
-      body: jsonEncode({'correo': correo, 'clave': clave}),
+      body: jsonEncode({
+        'correo': correo,
+        'clave': clave,
+        if (deviceId != null) 'device_id': deviceId,
+      }),
     );
 
     final data = _parsearRespuesta(res);
@@ -459,6 +467,7 @@ class ApiService {
     required int paradaId,
     required double latitud,
     required double longitud,
+    required bool isMocked,
   }) async {
     final res = await _client.post(
       Uri.parse('$kBaseUrl/asistencia/marcar-entrada'),
@@ -467,6 +476,8 @@ class ApiService {
         'parada_id': paradaId,
         'latitud': latitud,
         'longitud': longitud,
+        'is_mocked':
+            isMocked, // banderín para identificar si el punto fue simulado
       }),
     );
     return _parsearRespuesta(res);
@@ -477,6 +488,7 @@ class ApiService {
     required int paradaId,
     required double latitud,
     required double longitud,
+    required bool isMocked,
   }) async {
     final res = await _client.post(
       Uri.parse('$kBaseUrl/asistencia/marcar-salida'),
@@ -485,6 +497,8 @@ class ApiService {
         'parada_id': paradaId,
         'latitud': latitud,
         'longitud': longitud,
+        'is_mocked':
+            isMocked, // banderín para identificar si el punto fue simulado
       }),
     );
     return _parsearRespuesta(res);
