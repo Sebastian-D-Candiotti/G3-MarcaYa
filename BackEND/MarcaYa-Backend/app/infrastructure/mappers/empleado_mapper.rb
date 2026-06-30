@@ -16,7 +16,8 @@ module Infrastructure
           descripcion: record.descripcion,
           foto_url: record.foto_url,
           created_at: record.created_at,
-          updated_at: record.updated_at
+          updated_at: record.updated_at,
+          device_id: record.device_id
         )
       end
 
@@ -30,7 +31,8 @@ module Infrastructure
           estado: entity.estado,
           telefono: entity.telefono,
           descripcion: entity.descripcion,
-          foto_url: entity.foto_url
+          foto_url: entity.foto_url,
+          device_id: entity.device_id
         }
         attrs[:id] = entity.id if entity.id
         attrs[:created_at] = entity.created_at if entity.created_at

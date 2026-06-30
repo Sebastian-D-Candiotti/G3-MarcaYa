@@ -28,6 +28,8 @@ module Domain
     class CodigoInvalidoError < StandardError; end
     class CodigoExpiradoError < StandardError; end
     class TokenRecuperacionInvalidoError < StandardError; end
+    class DispositivoNoAutorizadoError < StandardError; end
+    class FakeGpsDetectadoError < ValidacionError; end
   end
 end
 

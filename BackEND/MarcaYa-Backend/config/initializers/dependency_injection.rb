@@ -75,6 +75,14 @@ module DependencyContainer
       )
     end
 
+    def cronograma_facade
+      @cronograma_facade ||= Application::Facades::CronogramaFacade.new(
+        asistencia_repo: repos[:asistencia],
+        cronograma_repo: repos[:cronograma]
+      )
+    end
+
+
     def repos
       @repos ||= {
         usuario: Infrastructure::Repositories::ArUsuarioRepository.new,
@@ -87,7 +95,8 @@ module DependencyContainer
         parada: Infrastructure::Repositories::ArParadaRepository.new,
         empleado_parada: Infrastructure::Repositories::ArEmpleadoParadaRepository.new,
         asistencia: Infrastructure::Repositories::ArAsistenciaRepository.new,
-        dispositivo: Infrastructure::Repositories::ArDispositivoRepository.new
+        dispositivo: Infrastructure::Repositories::ArDispositivoRepository.new,
+        cronograma: Infrastructure::Repositories::ArCronogramaPagoRepository.new
       }.freeze
     end
 

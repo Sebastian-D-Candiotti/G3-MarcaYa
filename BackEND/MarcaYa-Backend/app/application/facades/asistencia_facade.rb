@@ -12,24 +12,24 @@ module Application
         @gps_service = gps_service
       end
 
-      def marcar_entrada(empleado_id:, parada_id:, latitud:, longitud:)
+      def marcar_entrada(empleado_id:, parada_id:, latitud:, longitud:, is_mocked: false)
         result = UseCases::Asistencias::MarcarEntrada.new(
           asistencia_repo: @asistencia_repo,
           empleado_repo: @empleado_repo,
           parada_repo: @parada_repo,
           empleado_parada_repo: @empleado_parada_repo,
           gps_service: @gps_service
-        ).ejecutar(empleado_id: empleado_id, parada_id: parada_id, latitud: latitud, longitud: longitud)
+        ).ejecutar(empleado_id: empleado_id, parada_id: parada_id, latitud: latitud, longitud: longitud, is_mocked: is_mocked)
 
         enqueue_push_notification(empleado_id, result)
         result
       end
 
-      def marcar_salida(empleado_id:, parada_id:, latitud:, longitud:)
+      def marcar_salida(empleado_id:, parada_id:, latitud:, longitud:, is_mocked: false)
         result = UseCases::Asistencias::MarcarSalida.new(
           asistencia_repo: @asistencia_repo,
           gps_service: @gps_service
-        ).ejecutar(empleado_id: empleado_id, parada_id: parada_id, latitud: latitud, longitud: longitud)
+        ).ejecutar(empleado_id: empleado_id, parada_id: parada_id, latitud: latitud, longitud: longitud, is_mocked: is_mocked)
 
         enqueue_push_notification(empleado_id, result)
         result

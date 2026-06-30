@@ -15,7 +15,8 @@ module Api
           empleado_id: empleado.id,
           parada_id: params[:parada_id],
           latitud: params[:latitud].to_f,
-          longitud: params[:longitud].to_f
+          longitud: params[:longitud].to_f,
+          is_mocked: ActiveModel::Type::Boolean.new.cast(params[:is_mocked])
         )
         render json: Serializer::AsistenciaSerializer.as_json(resultado), status: :created
       rescue ::Domain::Errors::ValidacionError => e
@@ -33,7 +34,8 @@ module Api
           empleado_id: empleado.id,
           parada_id: params[:parada_id],
           latitud: params[:latitud].to_f,
-          longitud: params[:longitud].to_f
+          longitud: params[:longitud].to_f,
+          is_mocked: ActiveModel::Type::Boolean.new.cast(params[:is_mocked])
         )
         render json: Serializer::AsistenciaSerializer.as_json(resultado), status: :created
       rescue ::Domain::Errors::ValidacionError => e

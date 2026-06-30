@@ -9,7 +9,7 @@ module Application
           @gps_service = gps_service
         end
 
-        def ejecutar(empleado_id:, parada_id:, latitud:, longitud:)
+        def ejecutar(empleado_id:, parada_id:, latitud:, longitud:, is_mocked: false)
           # Buscar entrada activa
           entrada = @asistencia_repo.buscar_entrada_activa(empleado_id)
           unless entrada
@@ -25,7 +25,8 @@ module Application
             longitud: entrada.longitud_registrada
           )
           # Obtener radio de la parada del registro de entrada
-          valida_gps = true
+          valida_gps = is_mocked ? false : true
+          observaciones_finales = is_mocked ? "Fake GPS Detectado" : nil
 
           # Calcular duración de jornada en minutos
           ahora = Time.now
@@ -43,7 +44,7 @@ module Application
             longitud_registrada: longitud,
             valida_gps: valida_gps,
             duracion_jornada: duracion_jornada,
-            observaciones: nil
+            observaciones: observaciones_finales
           )
 
           registro.validar!

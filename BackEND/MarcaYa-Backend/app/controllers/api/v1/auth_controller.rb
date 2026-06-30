@@ -9,7 +9,8 @@ class Api::V1::AuthController < Api::V1::BaseController
   def login
     resultado = Rails.configuration.di.auth_facade.login(
       correo: params[:correo],
-      clave: params[:clave]
+      clave: params[:clave],
+      device_id: params[:device_id]
     )
 
     usuario = resultado[:usuario]
