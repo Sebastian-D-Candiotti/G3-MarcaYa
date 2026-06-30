@@ -60,6 +60,7 @@ class AsistenciaOfflineProvider extends ChangeNotifier {
     required double latitud,
     required double longitud,
     required DateTime marcadaEn,
+    bool isMocked = false,
   }) async {
     final pendiente = MarcacionPendiente.nueva(
       paradaId: paradaId,
@@ -67,6 +68,7 @@ class AsistenciaOfflineProvider extends ChangeNotifier {
       latitud: latitud,
       longitud: longitud,
       marcadaEn: marcadaEn,
+      isMocked: isMocked,
     );
 
     if (!_isOnline) {
@@ -80,12 +82,14 @@ class AsistenciaOfflineProvider extends ChangeNotifier {
           paradaId: paradaId,
           latitud: latitud,
           longitud: longitud,
+          isMocked: isMocked,
         );
       } else {
         await _apiService.marcarSalida(
           paradaId: paradaId,
           latitud: latitud,
           longitud: longitud,
+          isMocked: isMocked,
         );
       }
       await sincronizarPendientes();

@@ -276,6 +276,7 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
             latitud: _posicionActual!.latitude,
             longitud: _posicionActual!.longitude,
             marcadaEn: DateTime.now(),
+            isMocked: esFakeGPS,
           );
 
       if (!mounted) return;

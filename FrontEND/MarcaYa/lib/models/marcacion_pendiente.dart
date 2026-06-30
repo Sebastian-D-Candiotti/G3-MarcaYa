@@ -9,6 +9,7 @@ class MarcacionPendiente {
     required this.latitud,
     required this.longitud,
     required this.marcadaEn,
+    this.isMocked = false,
     this.estado = estadoPendiente,
     this.intentos = 0,
     this.ultimoError,
@@ -22,6 +23,7 @@ class MarcacionPendiente {
   final double latitud;
   final double longitud;
   final DateTime marcadaEn;
+  final bool isMocked;
   final String estado;
   final int intentos;
   final String? ultimoError;
@@ -33,6 +35,7 @@ class MarcacionPendiente {
     required double latitud,
     required double longitud,
     required DateTime marcadaEn,
+    bool isMocked = false,
   }) {
     final normalizado = tipoMarcacion.toUpperCase();
     final timestamp = marcadaEn.toUtc().microsecondsSinceEpoch;
@@ -43,6 +46,7 @@ class MarcacionPendiente {
       latitud: latitud,
       longitud: longitud,
       marcadaEn: marcadaEn,
+      isMocked: isMocked,
     );
   }
 
@@ -55,6 +59,7 @@ class MarcacionPendiente {
       latitud: (map['latitud'] as num).toDouble(),
       longitud: (map['longitud'] as num).toDouble(),
       marcadaEn: DateTime.parse(map['marcada_en'] as String),
+      isMocked: map['is_mocked'] == 1 || map['is_mocked'] == true,
       estado: map['estado'] as String,
       intentos: map['intentos'] as int? ?? 0,
       ultimoError: map['ultimo_error'] as String?,
@@ -71,6 +76,7 @@ class MarcacionPendiente {
       'latitud': latitud,
       'longitud': longitud,
       'marcada_en': marcadaEn.toUtc().toIso8601String(),
+      'is_mocked': isMocked ? 1 : 0,
       'estado': estado,
       'intentos': intentos,
       'ultimo_error': ultimoError,
@@ -86,6 +92,7 @@ class MarcacionPendiente {
       'latitud': latitud,
       'longitud': longitud,
       'fecha_hora_original': marcadaEn.toUtc().toIso8601String(),
+      'is_mocked': isMocked,
     };
   }
 }

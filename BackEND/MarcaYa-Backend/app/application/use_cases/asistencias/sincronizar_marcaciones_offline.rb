@@ -64,6 +64,9 @@ module Application
                                       :marcada_en,
                                       :marcadaEn
                                     ))
+          is_mocked = ActiveModel::Type::Boolean.new.cast(
+            valor(marcacion, :is_mocked, :isMocked)
+          )
 
           case tipo
           when "ENTRADA"
@@ -73,7 +76,8 @@ module Application
               latitud: latitud,
               longitud: longitud,
               fecha_hora: fecha_hora,
-              cliente_marcacion_id: cliente_id
+              cliente_marcacion_id: cliente_id,
+              is_mocked: is_mocked
             )
           when "SALIDA"
             marcar_salida.ejecutar(
@@ -82,7 +86,8 @@ module Application
               latitud: latitud,
               longitud: longitud,
               fecha_hora: fecha_hora,
-              cliente_marcacion_id: cliente_id
+              cliente_marcacion_id: cliente_id,
+              is_mocked: is_mocked
             )
           else
             raise Domain::Errors::ValidacionError, "tipo_marcacion debe ser ENTRADA o SALIDA"
