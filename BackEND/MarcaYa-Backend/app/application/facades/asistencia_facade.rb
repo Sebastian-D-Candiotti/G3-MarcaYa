@@ -12,27 +12,56 @@ module Application
         @gps_service = gps_service
       end
 
-      def marcar_entrada(empleado_id:, parada_id:, latitud:, longitud:, is_mocked: false)
+      def marcar_entrada(empleado_id:, parada_id:, latitud:, longitud:,
+                          is_mocked: false, fecha_hora: nil, cliente_marcacion_id: nil)
         result = UseCases::Asistencias::MarcarEntrada.new(
           asistencia_repo: @asistencia_repo,
           empleado_repo: @empleado_repo,
           parada_repo: @parada_repo,
           empleado_parada_repo: @empleado_parada_repo,
           gps_service: @gps_service
-        ).ejecutar(empleado_id: empleado_id, parada_id: parada_id, latitud: latitud, longitud: longitud, is_mocked: is_mocked)
+        ).ejecutar(
+          empleado_id: empleado_id,
+          parada_id: parada_id,
+          latitud: latitud,
+          longitud: longitud,
+          is_mocked: is_mocked,
+          fecha_hora: fecha_hora,
+          cliente_marcacion_id: cliente_marcacion_id
+        )
 
         enqueue_push_notification(empleado_id, result)
         result
       end
 
-      def marcar_salida(empleado_id:, parada_id:, latitud:, longitud:, is_mocked: false)
+      def marcar_salida(empleado_id:, parada_id:, latitud:, longitud:,
+                         is_mocked: false, fecha_hora: nil, cliente_marcacion_id: nil)
         result = UseCases::Asistencias::MarcarSalida.new(
           asistencia_repo: @asistencia_repo,
           gps_service: @gps_service
-        ).ejecutar(empleado_id: empleado_id, parada_id: parada_id, latitud: latitud, longitud: longitud, is_mocked: is_mocked)
+        ).ejecutar(
+          empleado_id: empleado_id,
+          parada_id: parada_id,
+          latitud: latitud,
+          longitud: longitud,
+          is_mocked: is_mocked,
+          fecha_hora: fecha_hora,
+          cliente_marcacion_id: cliente_marcacion_id
+        )
 
         enqueue_push_notification(empleado_id, result)
         result
+      end
+
+      def sincronizar_lote(empleado_id:, marcaciones:)
+        UseCases::Asistencias::SincronizarMarcacionesOffline.new(
+          asistencia_repo: @asistencia_repo,
+          empleado_repo: @empleado_repo,
+          parada_repo: @parada_repo,
+          empleado_parada_repo: @empleado_parada_repo,
+          gps_service: @gps_service
+        ).ejecutar(empleado_id: empleado_id, marcaciones: marcaciones)
+      end
       end
 
       def historial_personal(empleado_id:)

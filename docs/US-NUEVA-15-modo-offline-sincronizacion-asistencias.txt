@@ -1,0 +1,453 @@
+US-NUEVA-15: Modo Offline y Sincronizacion Automatica de Asistencias
+Proyecto: MarcaYA
+Responsable: Busti
+Fecha: 2026-06-14
+
+1. Objetivo de la historia
+
+Implementar un flujo de marcacion de asistencia tolerante a perdida de conexion.
+Cuando la app Flutter no tenga internet, debe guardar localmente la marcacion
+con su hora real y estado PENDIENTE_SINCRONIZACION. Al recuperar conexion, la
+app debe sincronizar las marcaciones pendientes en lote contra el backend Rails.
+El backend debe guardar la hora original de la marcacion fisica, no la hora en
+la que se ejecuto la sincronizacion.
+
+
+2. Flujo actual identificado antes de implementar
+
+Frontend:
+- Pantalla principal de marcacion:
+  FrontEND/MarcaYa/lib/pages/marcar_asistencia/marcar_asistencia.dart
+- La pantalla obtiene GPS con geolocator.
+- La pantalla permite seleccionar entrada o salida segun rango y horario.
+- La pantalla obtiene las paradas asignadas con:
+  ApiService.obtenerParadasEmpleado(empleadoId)
+- Antes de esta historia, la pantalla llamaba directamente a:
+  ApiService.marcarEntrada(...)
+  ApiService.marcarSalida(...)
+
+Backend:
+- Endpoint de entrada existente:
+  POST /api/v1/asistencia/marcar-entrada
+- Endpoint de salida existente:
+  POST /api/v1/asistencia/marcar-salida
+- Controlador:
+  BackEND/MarcaYa-Backend/app/controllers/api/v1/asistencias_controller.rb
+- Fachada:
+  BackEND/MarcaYa-Backend/app/application/facades/asistencia_facade.rb
+- Casos de uso:
+  BackEND/MarcaYa-Backend/app/application/use_cases/asistencias/marcar_entrada.rb
+  BackEND/MarcaYa-Backend/app/application/use_cases/asistencias/marcar_salida.rb
+- Entidad:
+  BackEND/MarcaYa-Backend/app/domain/entities/registro_asistencia.rb
+- Tabla usada:
+  registro_asistencias
+
+
+3. Arquitectura implementada
+
+Frontend Flutter:
+- Se agrego deteccion de conectividad con connectivity_plus.
+- Se agrego almacenamiento local con SQLite usando sqflite.
+- Se agrego un modelo local para marcaciones pendientes.
+- Se agrego un repositorio local para leer, guardar, actualizar y eliminar la
+  cola offline.
+- Se agrego un provider global para:
+  - detectar conexion;
+  - guardar marcaciones offline;
+  - sincronizar automaticamente al recuperar conexion;
+  - exponer contador de pendientes y mensajes de error;
+  - limpiar la cola local solo cuando el backend confirma exito o duplicado.
+
+Backend Rails:
+- Se agrego un endpoint de sincronizacion en lote.
+- Se agrego un caso de uso especifico para sincronizar marcaciones offline.
+- Se extendieron los casos de uso existentes de entrada y salida para aceptar
+  fecha_hora opcional y cliente_marcacion_id.
+- Se agrego idempotencia mediante cliente_marcacion_id.
+- Se agrego una migracion para guardar cliente_marcacion_id en
+  registro_asistencias.
+
+
+4. Archivos creados
+
+Backend:
+- BackEND/MarcaYa-Backend/db/migrate/20260614000100_add_cliente_marcacion_id_to_registro_asistencias.rb
+- BackEND/MarcaYa-Backend/app/application/use_cases/asistencias/sincronizar_marcaciones_offline.rb
+- BackEND/MarcaYa-Backend/test/application/use_cases/asistencias/sincronizar_marcaciones_offline_test.rb
+
+Frontend:
+- FrontEND/MarcaYa/lib/models/marcacion_pendiente.dart
+- FrontEND/MarcaYa/lib/repositories/marcacion_pendiente_repository.dart
+- FrontEND/MarcaYa/lib/services/connectivity_service.dart
+- FrontEND/MarcaYa/lib/providers/asistencia_offline_provider.dart
+
+Documentacion:
+- docs/US-NUEVA-15-modo-offline-sincronizacion-asistencias.txt
+
+
+5. Archivos modificados
+
+Backend:
+- BackEND/MarcaYa-Backend/app/application/facades/asistencia_facade.rb
+- BackEND/MarcaYa-Backend/app/application/use_cases/asistencias/marcar_entrada.rb
+- BackEND/MarcaYa-Backend/app/application/use_cases/asistencias/marcar_salida.rb
+- BackEND/MarcaYa-Backend/app/controllers/api/v1/asistencias_controller.rb
+- BackEND/MarcaYa-Backend/app/domain/entities/registro_asistencia.rb
+- BackEND/MarcaYa-Backend/app/infrastructure/mappers/asistencia_mapper.rb
+- BackEND/MarcaYa-Backend/app/infrastructure/repositories/ar_asistencia_repository.rb
+- BackEND/MarcaYa-Backend/app/ports/driven/i_asistencia_repository.rb
+- BackEND/MarcaYa-Backend/app/serializers/asistencia_serializer.rb
+- BackEND/MarcaYa-Backend/config/routes.rb
+- BackEND/MarcaYa-Backend/db/schema.rb
+
+Frontend:
+- FrontEND/MarcaYa/pubspec.yaml
+- FrontEND/MarcaYa/lib/main.dart
+- FrontEND/MarcaYa/lib/pages/marcar_asistencia/marcar_asistencia.dart
+- FrontEND/MarcaYa/lib/pages/sign_in/sign_in_page.dart
+- FrontEND/MarcaYa/lib/src/api_service.dart
+- FrontEND/MarcaYa/test/api_service_test.dart
+
+
+6. Dependencias agregadas en Flutter
+
+Archivo:
+FrontEND/MarcaYa/pubspec.yaml
+
+Dependencias:
+- connectivity_plus: deteccion de cambios de conectividad.
+- sqflite: almacenamiento local SQLite.
+- path: construccion segura de la ruta de la base local.
+
+Importante:
+Despues de estos cambios se debe ejecutar:
+
+cd FrontEND/MarcaYa
+flutter pub get
+
+Esto regenerara pubspec.lock con las nuevas dependencias.
+
+
+7. Cambios en base de datos
+
+Migracion:
+BackEND/MarcaYa-Backend/db/migrate/20260614000100_add_cliente_marcacion_id_to_registro_asistencias.rb
+
+Agrega:
+- columna cliente_marcacion_id en registro_asistencias;
+- indice unico parcial sobre cliente_marcacion_id cuando no es null.
+
+Proposito:
+Evitar duplicados cuando la misma marcacion offline se reintenta durante una
+sincronizacion posterior.
+
+Comando:
+
+cd BackEND/MarcaYa-Backend
+bundle exec rails db:migrate
+
+
+8. Endpoint nuevo
+
+POST /api/v1/asistencia/sincronizar
+
+Autenticacion:
+- Requiere usuario autenticado.
+- Requiere rol empleado.
+- Usa el empleado asociado al usuario autenticado.
+
+Payload esperado:
+
+{
+  "marcaciones": [
+    {
+      "cliente_marcacion_id": "offline-123456-10-ENTRADA",
+      "parada_id": 10,
+      "tipo_marcacion": "ENTRADA",
+      "latitud": -12.119,
+      "longitud": -77.034,
+      "fecha_hora_original": "2026-06-14T13:20:00Z"
+    }
+  ]
+}
+
+Respuesta:
+
+{
+  "sincronizados": [],
+  "duplicados": [],
+  "fallidos": []
+}
+
+Codigos HTTP:
+- 200: todas las marcaciones fueron sincronizadas o ya eran duplicadas.
+- 207: hubo sincronizacion parcial con fallidos.
+- 422: error general de validacion.
+- 404: usuario empleado no asociado.
+
+
+9. Modelo local de marcacion pendiente
+
+Archivo:
+FrontEND/MarcaYa/lib/models/marcacion_pendiente.dart
+
+Campos principales:
+- clienteMarcacionId
+- paradaId
+- tipoMarcacion
+- latitud
+- longitud
+- marcadaEn
+- estado
+- intentos
+- ultimoError
+- creadaEn
+
+Estado usado:
+PENDIENTE_SINCRONIZACION
+
+La hora real se guarda en marcadaEn y se envia al backend como:
+fecha_hora_original
+
+
+10. Repositorio local SQLite
+
+Archivo:
+FrontEND/MarcaYa/lib/repositories/marcacion_pendiente_repository.dart
+
+Base local:
+marcaya_offline.db
+
+Tabla:
+marcaciones_pendientes
+
+Responsabilidades:
+- guardar marcaciones pendientes;
+- listar marcaciones pendientes;
+- contar pendientes;
+- eliminar por cliente_marcacion_id cuando backend confirma exito o duplicado;
+- registrar errores de sincronizacion e incrementar intentos.
+
+
+11. Provider de sincronizacion
+
+Archivo:
+FrontEND/MarcaYa/lib/providers/asistencia_offline_provider.dart
+
+Responsabilidades:
+- inicializar estado de conectividad;
+- escuchar cambios de red;
+- guardar offline cuando no hay conexion;
+- intentar enviar online cuando hay conexion;
+- sincronizar automaticamente al recuperar conexion;
+- exponer:
+  - isOnline
+  - isSyncing
+  - pendingCount
+  - lastError
+
+El provider se registra globalmente en:
+FrontEND/MarcaYa/lib/main.dart
+
+
+12. Integracion con la pantalla de marcacion
+
+Archivo:
+FrontEND/MarcaYa/lib/pages/marcar_asistencia/marcar_asistencia.dart
+
+Cambios:
+- La pantalla ya no llama directamente a ApiService.marcarEntrada o
+  ApiService.marcarSalida para confirmar la marcacion.
+- Ahora llama a AsistenciaOfflineProvider.registrarMarcacion.
+- Si hay conexion, intenta enviar al backend.
+- Si no hay conexion o falla la red, guarda en SQLite.
+- Muestra snackbar:
+  "Entrada guardada pendiente de sincronizacion"
+  o
+  "Salida guardada pendiente de sincronizacion"
+- Muestra banner visual cuando:
+  - no hay conexion;
+  - hay marcaciones pendientes;
+  - esta sincronizando;
+  - hubo error de sincronizacion.
+
+
+13. Preservacion de la hora original
+
+Antes:
+- marcar_entrada.rb y marcar_salida.rb usaban Time.now en el backend.
+
+Ahora:
+- Los casos de uso aceptan fecha_hora opcional.
+- El endpoint de sincronizacion manda fecha_hora_original al caso de uso.
+- El registro se guarda con esa hora original en registro_asistencias.fecha_hora.
+
+Esto cumple el criterio:
+"guardar la hora original en que se efectuo la marcacion fisica, no la hora de
+sincronizacion".
+
+
+14. Manejo de duplicados
+
+Cada marcacion offline genera un cliente_marcacion_id.
+
+Ejemplo:
+offline-1780000000000000-10-ENTRADA
+
+El backend revisa si ya existe un registro con ese identificador:
+- si existe, no crea otro registro;
+- lo devuelve dentro de duplicados;
+- Flutter elimina esa marcacion local porque ya fue procesada anteriormente.
+
+
+15. Pruebas agregadas
+
+Backend:
+- BackEND/MarcaYa-Backend/test/application/use_cases/asistencias/sincronizar_marcaciones_offline_test.rb
+
+Cubre:
+- sincronizacion exitosa guardando hora original;
+- respuesta duplicada por cliente_marcacion_id existente;
+- respuesta fallida con datos incompletos.
+
+Frontend:
+- FrontEND/MarcaYa/test/api_service_test.dart
+
+Cubre:
+- envio correcto del lote a POST /asistencia/sincronizar.
+
+
+16. Verificaciones realizadas
+
+Se ejecuto:
+
+git diff --check
+
+Resultado:
+- Sin errores de whitespace.
+- Solo aparecieron avisos normales de CRLF en Windows.
+
+No se pudo ejecutar:
+- bundle exec rails test
+- flutter pub get
+- flutter analyze
+- flutter test
+
+Motivo:
+En esta maquina no estan disponibles bundle ni flutter en el PATH.
+
+
+17. Pasos manuales de prueba
+
+Backend:
+1. cd BackEND/MarcaYa-Backend
+2. bundle install
+3. bundle exec rails db:migrate
+4. bundle exec rails test
+5. Levantar servidor Rails.
+
+Frontend:
+1. cd FrontEND/MarcaYa
+2. flutter pub get
+3. flutter analyze
+4. flutter test
+5. Levantar la app.
+
+Prueba funcional:
+1. Iniciar sesion como empleado.
+2. Ir a la pantalla de marcacion.
+3. Desactivar internet.
+4. Confirmar entrada o salida.
+5. Ver snackbar de marcacion pendiente.
+6. Ver banner de sin conexion o pendientes.
+7. Activar internet.
+8. Ver que la sincronizacion se dispare automaticamente.
+9. Confirmar en base de datos que fecha_hora sea la hora real de marcadaEn.
+10. Reintentar el mismo lote y confirmar que backend lo devuelva como duplicado.
+
+
+18. Riesgos tecnicos y soluciones
+
+Riesgo:
+connectivity_plus indica red disponible, pero el backend no responde.
+
+Solucion:
+Si falla la sincronizacion, la marcacion permanece en SQLite y se reintenta mas
+adelante.
+
+Riesgo:
+Marcaciones duplicadas por reintento del mismo lote.
+
+Solucion:
+cliente_marcacion_id tiene indice unico y el caso de uso detecta duplicados.
+
+Riesgo:
+La app se cierra antes de sincronizar.
+
+Solucion:
+La cola SQLite persiste en disco y se vuelve a leer al iniciar la app.
+
+Riesgo:
+El usuario inicia la app online pero sin token cargado.
+
+Solucion:
+Ademas de sincronizar al recuperar conexion, se dispara sincronizacion despues
+del login.
+
+Riesgo:
+Backend guarda hora de sincronizacion.
+
+Solucion:
+El endpoint de lote usa fecha_hora_original y los casos de uso aceptan fecha_hora
+explicita.
+
+Riesgo:
+Datos incompletos o invalidos.
+
+Solucion:
+El backend responde esa marcacion dentro de fallidos y Flutter no la elimina de
+la cola local.
+
+
+19. Informe tecnico para Sebastian
+
+## 1. Arquitectura Utilizada
+
+Se implemento la sincronizacion offline respetando la separacion por capas.
+En Flutter se crearon un modelo local, un repositorio SQLite, un servicio de
+conectividad y un provider global. La pantalla de marcacion consume el provider
+sin acoplarse a SQLite ni a la deteccion de red. En Rails se agrego un caso de
+uso de sincronizacion en lote conectado desde AsistenciaFacade y expuesto por
+AsistenciasController. La entidad RegistroAsistencia, mapper, repositorio y
+serializer se extendieron para soportar cliente_marcacion_id.
+
+## 2. Conceptos Implementados
+
+La app detecta conectividad con connectivity_plus. Si no hay conexion, guarda la
+marcacion en SQLite con estado PENDIENTE_SINCRONIZACION, coordenadas, tipo,
+parada y hora real. Al recuperar conexion, AsistenciaOfflineProvider envia el
+lote al backend. El backend valida cada marcacion, evita duplicados por
+cliente_marcacion_id y guarda fecha_hora_original como fecha_hora real. Flutter
+limpia la base local solo para registros sincronizados o duplicados confirmados.
+
+## 3. Fallos Comunes y Solucion
+
+Perdida de conexion durante sincronizacion:
+La cola local no se elimina y se reintenta automaticamente.
+
+Marcaciones duplicadas:
+Se usa cliente_marcacion_id con indice unico y respuesta duplicados.
+
+Error al limpiar almacenamiento local:
+Solo se limpia despues de respuesta positiva; si falla, queda pendiente.
+
+Backend guarda hora de sincronizacion:
+Se evita usando fecha_hora_original enviada por Flutter.
+
+Conflictos por datos incompletos:
+El backend devuelve el item en fallidos y Flutter conserva la marcacion.
+
+Fallos de permisos o ubicacion:
+No se modifico la logica GPS existente; si no hay ubicacion, la pantalla no
+permite confirmar.

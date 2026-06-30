@@ -3,7 +3,10 @@
 module Api
   module V1
     class AsistenciasController < BaseController
-      before_action :require_empleado!, only: [:marcar_entrada, :marcar_salida, :historial_personal, :estado_hoy]
+      before_action :require_empleado!, only: [
+        :marcar_entrada, :marcar_salida, :historial_personal,
+        :estado_hoy, :sincronizar
+      ]
       before_action :require_empresa_or_admin!, only: [:historial_empleado, :tiempo_real, :tiempo_real_parada]
 
       # POST /api/v1/asistencia/marcar-entrada
@@ -42,6 +45,22 @@ module Api
         render json: { error: e.message }, status: :unprocessable_entity
       rescue ::Domain::Errors::AsistenciaNoEncontradaError => e
         render json: { error: e.message }, status: :not_found
+      end
+
+      # POST /api/v1/asistencia/sincronizar
+      def sincronizar
+        empleado = current_user.empleados.first
+        render json: { error: "No se encontro empleado asociado" }, status: :not_found and return unless empleado
+
+        resultado = asistencia_facade.sincronizar_lote(
+          empleado_id: empleado.id,
+          marcaciones: params[:marcaciones] || []
+        )
+
+        status = resultado[:fallidos].empty? ? :ok : 207
+        render json: resultado, status: status
+      rescue ::Domain::Errors::ValidacionError => e
+        render json: { error: e.message }, status: :unprocessable_entity
       end
 
       # GET /api/v1/asistencia/historial

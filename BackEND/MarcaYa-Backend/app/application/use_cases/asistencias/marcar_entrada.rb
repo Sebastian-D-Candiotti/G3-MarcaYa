@@ -12,7 +12,8 @@ module Application
           @gps_service = gps_service
         end
 
-        def ejecutar(empleado_id:, parada_id:, latitud:, longitud:, is_mocked: false)
+        def ejecutar(empleado_id:, parada_id:, latitud:, longitud:,
+                     is_mocked: false, fecha_hora: nil, cliente_marcacion_id: nil)
           # Validar que el empleado exista
           @empleado_repo.find_by_id!(empleado_id)
 
@@ -43,6 +44,7 @@ module Application
           centro = Domain::ValueObjects::CoordenadaGps.new(latitud: parada.latitud, longitud: parada.longitud)
           valida_gps = @gps_service.dentro_de_geocerca?(coordenada, centro, parada.radio_metros)
           observaciones = valida_gps ? nil : "Fuera de zona"
+          fecha_registro = fecha_hora || Time.now
 
           observaciones_finales = is_mocked ? "Fake GPS Detectado" : observaciones
           valida_gps_final = is_mocked ? false : valida_gps
@@ -53,12 +55,13 @@ module Application
             empleado_id: empleado_id,
             parada_id: parada_id,
             tipo_marcacion: Domain::ValueObjects::TipoMarcacion::ENTRADA,
-            fecha_hora: Time.now,
+            fecha_hora: fecha_registro,
             latitud_registrada: latitud,
             longitud_registrada: longitud,
             valida_gps: valida_gps_final,
             duracion_jornada: nil,
-            observaciones: observaciones_finales
+            observaciones: observaciones_finales,
+            cliente_marcacion_id: cliente_marcacion_id
           )
 
           registro.validar!

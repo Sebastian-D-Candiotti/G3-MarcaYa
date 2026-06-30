@@ -513,6 +513,17 @@ class ApiService {
     return jsonDecode(res.body) as List<dynamic>;
   }
 
+  Future<Map<String, dynamic>> sincronizarMarcacionesPendientes(
+    List<Map<String, Object?>> marcaciones,
+  ) async {
+    final res = await _client.post(
+      Uri.parse('$kBaseUrl/asistencia/sincronizar'),
+      headers: await _headers(),
+      body: jsonEncode({'marcaciones': marcaciones}),
+    );
+    return _parsearRespuesta(res);
+  }
+
   /// Asistencia en tiempo real para una parada específica
   Future<List<dynamic>> obtenerAsistenciaTiempoReal(int paradaId) async {
     final res = await _client.get(

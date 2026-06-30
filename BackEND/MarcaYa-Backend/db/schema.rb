@@ -218,6 +218,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_16_161459) do
 
   create_table "registro_asistencias", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.string "cliente_marcacion_id", limit: 80
     t.integer "duracion_jornada"
     t.bigint "empleado_id", null: false
     t.datetime "fecha_hora", null: false
@@ -232,6 +233,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_16_161459) do
     t.index ["fecha_hora"], name: "index_registro_asistencias_on_fecha_hora"
     t.index ["parada_id"], name: "index_registro_asistencias_on_parada_id"
     t.index ["tipo_marcacion"], name: "index_registro_asistencias_on_tipo_marcacion"
+    t.index ["cliente_marcacion_id"], name: "index_registro_asistencias_on_cliente_marcacion_id", unique: true, where: "(cliente_marcacion_id IS NOT NULL)"
   end
 
   create_table "solicitudes", force: :cascade do |t|

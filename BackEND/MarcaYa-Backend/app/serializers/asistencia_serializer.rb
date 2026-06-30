@@ -13,6 +13,7 @@ module Serializer
         fechaHora: registro.fecha_hora&.iso8601,
         latitudRegistrada: registro.latitud_registrada,
         longitudRegistrada: registro.longitud_registrada,
+        clienteMarcacionId: registro.cliente_marcacion_id,
         validaGps: registro.valida_gps,
         duracionJornada: registro.duracion_jornada,
         observaciones: registro.observaciones,

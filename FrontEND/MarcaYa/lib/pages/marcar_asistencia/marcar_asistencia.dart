@@ -4,6 +4,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
+import '../../providers/asistencia_offline_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../src/api_service.dart';
 
@@ -267,34 +268,29 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
     try {
       final tipo = _tipoSeleccionado == 'entrada' ? 'entrada' : 'salida';
 
-      Map<String, dynamic> resultado;
-      if (tipo == 'entrada') {
-        resultado = await ApiService.instance.marcarEntrada(
-          paradaId: _paradaId!,
-          latitud: _posicionActual!.latitude,
-          longitud: _posicionActual!.longitude,
-          isMocked: esFakeGPS,
-        );
-      } else {
-        resultado = await ApiService.instance.marcarSalida(
-          paradaId: _paradaId!,
-          latitud: _posicionActual!.latitude,
-          longitud: _posicionActual!.longitude,
-          isMocked: esFakeGPS,
-        );
-      }
+      final resultado = await context
+          .read<AsistenciaOfflineProvider>()
+          .registrarMarcacion(
+            paradaId: _paradaId!,
+            tipoMarcacion: tipo,
+            latitud: _posicionActual!.latitude,
+            longitud: _posicionActual!.longitude,
+            marcadaEn: DateTime.now(),
+          );
 
       if (!mounted) return;
 
       final tipoTexto = tipo == 'entrada' ? 'Entrada' : 'Salida';
+      final quedoPendiente =
+          resultado == MarcacionRegistroEstado.pendienteSincronizacion;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '$tipoTexto registrada — ${resultado['observaciones'] ?? widget.obraNombre}',
+            quedoPendiente
+                ? '$tipoTexto guardada pendiente de sincronizacion'
+                : '$tipoTexto registrada',
           ),
-          backgroundColor: resultado['valida_gps'] == true
-              ? azul
-              : Colors.orange,
+          backgroundColor: quedoPendiente ? Colors.orange : azul,
         ),
       );
 
@@ -362,6 +358,10 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
 
             const SizedBox(height: 18),
 
+            _offlineSyncBanner(),
+
+            const SizedBox(height: 18),
+
             _mapaCard(
               centroMapa: centroMapa,
               obraPoint: obraPoint,
@@ -426,6 +426,52 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
                   ),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _offlineSyncBanner() {
+    final offline = context.watch<AsistenciaOfflineProvider>();
+    final visible = !offline.isOnline ||
+        offline.pendingCount > 0 ||
+        offline.isSyncing ||
+        offline.lastError != null;
+
+    if (!visible) return const SizedBox.shrink();
+
+    final color = offline.isOnline ? Colors.orange : rojo;
+    final icon = offline.isOnline ? Icons.sync : Icons.cloud_off;
+    final texto = !offline.isOnline
+        ? 'Sin conexion. Las marcaciones se guardaran localmente.'
+        : offline.isSyncing
+            ? 'Sincronizando marcaciones pendientes...'
+            : offline.pendingCount > 0
+                ? '${offline.pendingCount} marcacion(es) pendiente(s) de sincronizacion'
+                : offline.lastError!;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.10),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color, width: 1.2),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 22),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              texto,
+              style: TextStyle(
+                color: color,
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],

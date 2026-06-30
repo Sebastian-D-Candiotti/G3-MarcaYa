@@ -93,6 +93,7 @@ Rails.application.routes.draw do
       # es Api::V1::AsistenciasController, no Api::V1::Asistencia::AsistenciasController
       post 'asistencia/marcar-entrada', to: 'asistencias#marcar_entrada'
       post 'asistencia/marcar-salida', to: 'asistencias#marcar_salida'
+      post 'asistencia/sincronizar', to: 'asistencias#sincronizar'
       get 'asistencia/historial', to: 'asistencias#historial_personal'
       get 'asistencia/historial/:empleado_id', to: 'asistencias#historial_empleado'
       get 'asistencia/tiempo-real', to: 'asistencias#tiempo_real'
