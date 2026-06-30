@@ -155,19 +155,23 @@ class _RegistrarEmpresaPageState extends State<RegistrarEmpresaPage> {
 
       final yaRegistrado = data['ya_registrado'] == true;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(yaRegistrado
-              ? 'Ya tenés un registro pendiente. Revisá tu correo para el nuevo código.'
-              : 'Empresa registrada. Revisa tu correo para verificar la cuenta.'),
-          backgroundColor: AppColors.success,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(yaRegistrado
+                ? 'Ya tenés un registro pendiente. Revisá tu correo para el nuevo código.'
+                : 'Empresa registrada. Revisa tu correo para verificar la cuenta.'),
+            backgroundColor: AppColors.success,
+          ),
+        );
 
-      context.go('/register/verify', extra: {
-        'correo': correo,
-        'rol': 'empresa',
-      });
+        setState(() {
+          _codigoEnviado = true;
+          _correoEnmascarado = (data['correo_enmascarado'] as String?) ??
+              _selectedSunatEmpresa?['correo_enmascarado'] as String?;
+          _codigoDebug = data['codigo_debug'] as String?;
+        });
+      }
     } on ApiException catch (e) {
       setState(() => _error = e.mensaje);
     } catch (_) {
