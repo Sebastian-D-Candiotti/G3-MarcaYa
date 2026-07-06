@@ -100,6 +100,11 @@ Rails.application.routes.draw do
       get 'asistencia/tiempo-real/:parada_id', to: 'asistencias#tiempo_real_parada'
       get 'asistencia/estado-hoy', to: 'asistencias#estado_hoy'
 
+      # ALERTAS DE AUSENCIA
+      get  'alertas/ausencias',              to: 'alertas#index'
+      put  'alertas/ausencias/:id/resolver',   to: 'alertas#resolver', as: :alerta_resolver
+      put  'alertas/ausencias/:id/desestimar', to: 'alertas#desestimar', as: :alerta_desestimar
+
       # REPORTES
       namespace :reportes do
         get "asistencia", to: "reportes#asistencia"

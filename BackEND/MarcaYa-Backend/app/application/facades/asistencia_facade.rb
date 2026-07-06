@@ -62,7 +62,6 @@ module Application
           gps_service: @gps_service
         ).ejecutar(empleado_id: empleado_id, marcaciones: marcaciones)
       end
-      end
 
       def historial_personal(empleado_id:)
         UseCases::Asistencias::HistorialPersonal.new(

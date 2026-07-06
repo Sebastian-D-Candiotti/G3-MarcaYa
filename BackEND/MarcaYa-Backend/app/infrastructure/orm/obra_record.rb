@@ -10,7 +10,9 @@ module Infrastructure
       has_many :solicitudes, class_name: "Infrastructure::Orm::SolicitudRecord",
                               foreign_key: :obra_id
       has_many :paradas, class_name: "Infrastructure::Orm::ParadaRecord",
-                          foreign_key: :obra_id, dependent: :destroy
+                           foreign_key: :obra_id, dependent: :destroy
+      has_many :asignaciones, class_name: "Infrastructure::Orm::AsignacionRecord",
+                               foreign_key: :obra_id
     end
   end
 end

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'src/api_service.dart';
 import 'src/app_state.dart';
+import 'providers/alertas_ausencia_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/asistencia_offline_provider.dart';
 import 'providers/geofencing_provider.dart';
@@ -64,6 +65,9 @@ void main() async {
         ),
         ChangeNotifierProvider(
           create: (_) => AsistenciaOfflineProvider()..initialize(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => AlertasAusenciaProvider(),
         ),
       ],
       child: const MarcaYA(),

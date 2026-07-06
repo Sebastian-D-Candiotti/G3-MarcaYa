@@ -896,6 +896,49 @@ class ApiService {
     final res = await _client.get(uri, headers: await _headers());
     return jsonDecode(res.body) as List<dynamic>;
   }
+
+  // ════════════════════════════════════════════════════════════
+  // ALERTAS DE AUSENCIA
+  // ════════════════════════════════════════════════════════════
+
+  /// Obtiene todas las alertas de ausencia de la empresa autenticada
+  Future<List<dynamic>> obtenerAlertasAusencia() async {
+    final res = await _client.get(
+      Uri.parse('$kBaseUrl/alertas/ausencias'),
+      headers: await _headers(),
+    );
+
+    if (res.statusCode >= 400) {
+      final body = jsonDecode(res.body);
+      throw ApiException(
+        body is Map
+            ? (body['error'] ?? 'Error al obtener alertas de ausencia')
+            : 'Error al obtener alertas de ausencia',
+        res.statusCode,
+      );
+    }
+
+    return jsonDecode(res.body) as List<dynamic>;
+  }
+
+  /// Resuelve una alerta de ausencia por ID
+  /// PUT /api/v1/alertas/ausencias/:id/resolver → 204 No Content
+  Future<void> resolverAlerta(int alertaId) async {
+    final res = await _client.put(
+      Uri.parse('$kBaseUrl/alertas/ausencias/$alertaId/resolver'),
+      headers: await _headers(),
+    );
+
+    if (res.statusCode >= 400) {
+      final body = jsonDecode(res.body);
+      throw ApiException(
+        body is Map
+            ? (body['error'] ?? 'Error al resolver alerta')
+            : 'Error al resolver alerta',
+        res.statusCode,
+      );
+    }
+  }
 }
 
 // ── Modelos de resultado ────────────────────────────────────

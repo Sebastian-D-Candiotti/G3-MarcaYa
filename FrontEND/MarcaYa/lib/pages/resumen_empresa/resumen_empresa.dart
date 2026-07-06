@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../components/bottom_navbar.dart';
+import '../../providers/alertas_ausencia_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../src/api_service.dart';
 import '../../theme/app_theme.dart';
@@ -74,6 +75,9 @@ class _ResumenEmpresaPageState extends State<ResumenEmpresaPage> {
       }
 
       if (mounted) {
+        // ── 6. Cargar alertas de ausencia ────────────────────
+        context.read<AlertasAusenciaProvider>().loadAlertas();
+
         setState(() {
           _asistenciasTotales = hoyCount;
           _paradasActivas = activas;
@@ -172,7 +176,12 @@ class _ResumenEmpresaPageState extends State<ResumenEmpresaPage> {
                     anchoCompleto: true,
                   ),
 
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 24),
+
+                  // ── Alertas de Ausencia ──────────────────────
+                  _buildAlertasSection(context),
+
+                  const SizedBox(height: 24),
 
                   const Text(
                     'Acciones Rápidas',
@@ -342,5 +351,126 @@ class _ResumenEmpresaPageState extends State<ResumenEmpresaPage> {
         ),
       ),
     );
+  }
+
+  /// Construye la sección de alertas de ausencia
+  Widget _buildAlertasSection(BuildContext context) {
+    final alertasProv = context.watch<AlertasAusenciaProvider>();
+    final pendientes = alertasProv.alertasPendientes;
+
+    if (pendientes.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 4),
+        child: Row(
+          children: [
+            Icon(Icons.check_circle, size: 16, color: AppColors.success),
+            const SizedBox(width: 6),
+            const Text(
+              'Sin alertas de ausencia',
+              style: TextStyle(
+                color: AppColors.success,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: AppColors.error, width: 1.5),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.warning_amber_rounded,
+                    color: AppColors.error, size: 20),
+                const SizedBox(width: 8),
+                const Text(
+                  'Alertas de Ausencia',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.error,
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.error,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${pendientes.length}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            ...pendientes.map((alerta) => ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading:
+                      const Icon(Icons.warning, color: AppColors.error),
+                  title: Text(
+                    'Empleado: ${alerta['empleadoNombre']} ${alerta['empleadoApellido'] ?? ''}',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w500, fontSize: 14),
+                  ),
+                  subtitle: Text(
+                    'Obra: ${alerta['obraNombre'] ?? ''}',
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.close,
+                        color: AppColors.textSecondary),
+                    tooltip: 'Resolver alerta',
+                    onPressed: () =>
+                        _resolverAlerta(context, alerta['id'] as int),
+                  ),
+                )),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Resuelve una alerta y muestra un mensaje de feedback
+  Future<void> _resolverAlerta(BuildContext context, int alertaId) async {
+    try {
+      await context
+          .read<AlertasAusenciaProvider>()
+          .resolverAlerta(alertaId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Alerta resuelta correctamente'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al resolver alerta: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 }

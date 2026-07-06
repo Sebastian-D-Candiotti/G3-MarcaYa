@@ -39,6 +39,11 @@ module Ports
       def self.eliminar(obra)
         raise NotImplementedError, "#{name}##{__method__} must be implemented"
       end
+
+      # @return [Array<Hash>] Array of { obra: Domain::Entities::Obra, asignaciones: Array<Domain::Entities::Asignacion> }
+      def self.listar_activas_con_asignaciones
+        raise NotImplementedError, "#{name}##{__method__} must be implemented"
+      end
     end
   end
 end

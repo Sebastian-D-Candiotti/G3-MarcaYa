@@ -1,2 +1,16 @@
 # Fixture para asignaciones
 # Dejar vacío para que Rails purgue la tabla en las pruebas
+
+activa:
+  empleado_id: <%= ActiveRecord::FixtureSet.identify(:activo, :empleados) %>
+  obra_id: <%= ActiveRecord::FixtureSet.identify(:activa, :obras) %>
+  estado: activo
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>
+
+inactiva:
+  empleado_id: <%= ActiveRecord::FixtureSet.identify(:activo, :empleados) %>
+  obra_id: <%= ActiveRecord::FixtureSet.identify(:obra_b, :obras) %>
+  estado: inactivo
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>

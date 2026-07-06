@@ -22,6 +22,11 @@ module Domain
         super
       end
     end
+    class AlertaAusenciaNoEncontradaError < StandardError
+      def initialize(mensaje = "Alerta de ausencia no encontrada")
+        super
+      end
+    end
     class EntradaActivaExistenteError < ValidacionError; end
     class EmpleadoNoAsignadoParadaError < ValidacionError; end
     class ParadaInactivaError < ValidacionError; end

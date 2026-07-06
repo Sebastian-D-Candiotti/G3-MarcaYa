@@ -82,6 +82,13 @@ module DependencyContainer
       )
     end
 
+    def alerta_ausencia_facade
+      @alerta_ausencia_facade ||= Application::Facades::AlertaAusenciaFacade.new(
+        alerta_repo: repos[:alerta_ausencia],
+        obra_repo: repos[:obra],
+        asistencia_repo: repos[:asistencia]
+      )
+    end
 
     def repos
       @repos ||= {
@@ -96,7 +103,8 @@ module DependencyContainer
         empleado_parada: Infrastructure::Repositories::ArEmpleadoParadaRepository.new,
         asistencia: Infrastructure::Repositories::ArAsistenciaRepository.new,
         dispositivo: Infrastructure::Repositories::ArDispositivoRepository.new,
-        cronograma: Infrastructure::Repositories::ArCronogramaPagoRepository.new
+        cronograma: Infrastructure::Repositories::ArCronogramaPagoRepository.new,
+        alerta_ausencia: Infrastructure::Repositories::ArAlertaAusenciaRepository.new
       }.freeze
     end
 

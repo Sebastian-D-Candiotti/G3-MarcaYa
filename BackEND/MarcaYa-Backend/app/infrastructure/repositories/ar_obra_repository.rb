@@ -42,6 +42,20 @@ module Infrastructure
         ::Infrastructure::Orm::ObraRecord.destroy(obra.id)
         true
       end
+
+      def listar_activas_con_asignaciones
+        ::Infrastructure::Orm::ObraRecord
+          .where(estado: "activa")
+          .includes(:asignaciones)
+          .map do |record|
+            {
+              obra: ::Infrastructure::Mappers::ObraMapper.to_domain(record),
+              asignaciones: record.asignaciones
+                .select { |a| a.estado == "activo" }
+                .map { |a| ::Infrastructure::Mappers::AsignacionMapper.to_domain(a) }
+            }
+          end
+      end
     end
   end
 end
