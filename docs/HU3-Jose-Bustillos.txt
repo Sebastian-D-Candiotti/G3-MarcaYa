@@ -1,0 +1,91 @@
+HU3 - Jose Bustillos
+
+Resumen
+Se agrego el flujo backend completo para crear, listar, revisar, aprobar, rechazar y descargar archivos protegidos de justificaciones de tardanzas e inasistencias. La aprobacion usa transaccion, bloqueo de fila, cambia la asistencia a JUSTIFICADO, conserva el estado anterior y recalcula cronogramas existentes sin crear duplicados.
+
+Archivos creados
+- app/models/asistencia.rb
+- app/models/cronograma_de_pago.rb
+- app/models/justificacion.rb
+- app/controllers/api/v1/justificaciones_controller.rb
+- app/use_cases/use_cases.rb
+- app/use_cases/justificaciones/*.rb
+- db/migrate/20260706000100_create_active_storage_tables.rb
+- db/migrate/20260706000200_add_estado_to_asistencias.rb
+- db/migrate/20260706000300_create_justificaciones.rb
+- test/support/justificaciones_test_data.rb
+- test/models/justificacion_test.rb
+- test/use_cases/justificaciones/aprobar_justificacion_test.rb
+- test/use_cases/justificaciones/rechazar_justificacion_test.rb
+- test/controllers/api/v1/justificaciones_controller_test.rb
+
+Archivos modificados
+- app/controllers/application_controller.rb
+- app/models/usuario.rb
+- app/models/empleado.rb
+- app/models/empresa.rb
+- app/models/obra.rb
+- config/routes.rb
+- db/schema.rb
+- test/test_helper.rb
+- test/fixtures/usuarios.yml
+
+Migraciones y tablas
+- Active Storage: active_storage_blobs, active_storage_attachments, active_storage_variant_records.
+- asistencias: agrega estado y estado_anterior_justificacion.
+- justificaciones: empleado_id, asistencia_id, empresa_id, tipo, motivo, estado, fecha_incidencia, fecha_presentacion, usuario_revisor_id, fecha_revision, comentario_revision y timestamps.
+- Indice unico parcial para evitar multiples justificaciones activas sobre la misma incidencia.
+
+Endpoints implementados
+- POST /api/v1/justificaciones
+- GET /api/v1/justificaciones
+- GET /api/v1/justificaciones/:id
+- PATCH /api/v1/justificaciones/:id/aprobar
+- PATCH /api/v1/justificaciones/:id/rechazar
+- GET /api/v1/justificaciones/:id/archivo
+
+Reglas de autorizacion
+- El empleado solo puede justificar asistencias propias.
+- Revisores autorizados: empresa, admin, rrhh, recursos_humanos.
+- La empresa revisora debe coincidir con la empresa de la obra.
+- Una justificacion aprobada o rechazada no puede revisarse nuevamente.
+- La descarga del archivo pasa por autorizacion y no expone rutas fisicas.
+
+Validaciones de archivos
+- Formatos permitidos: PDF, JPG, JPEG y PNG.
+- Valida MIME real, extension, tamano maximo configurable con JUSTIFICACION_ARCHIVO_MAX_MB y archivo no vacio.
+- No almacena binarios en columnas; usa Active Storage.
+
+Validacion pendiente
+No se pudieron ejecutar migraciones, pruebas, RuboCop ni Flutter en el entorno local porque:
+- ruby no existe en PATH.
+- bundle no existe en PATH.
+- flutter no existe en PATH.
+- Docker esta instalado, pero el daemon no esta corriendo.
+
+Comandos pendientes cuando el entorno este listo
+cd E:\Proyectos\MarcaYa\backend
+bundle exec rails db:migrate
+bundle exec rails test
+bundle exec rubocop
+
+Decision pendiente
+No existe una regla financiera explicita para pagar horas teoricas por tardanza o inasistencia justificada. Se implemento recalculo idempotente de cronogramas existentes usando las horas registradas actuales, sin inventar una formula nueva.
+
+## 1. Arquitectura Utilizada
+Se agregaron entidades Rails Justificacion, Asistencia y CronogramaDePago; migraciones para Active Storage, estado de asistencia y tabla justificaciones; casos de uso en app/use_cases/justificaciones; controlador REST versionado; rutas protegidas; y pruebas automatizadas. No se crearon pantallas Flutter, providers ni servicios porque no era necesario para cerrar el backend y el frontend revisado inicialmente no seguia Provider/GoRouter.
+
+## 2. Conceptos Implementados
+El empleado presenta una justificacion con PDF o imagen. Un revisor autorizado consulta pendientes, aprueba o rechaza. Al aprobar, una transaccion bloquea la justificacion, registra revisor, fecha y comentario, guarda el estado anterior de la asistencia, cambia la asistencia a JUSTIFICADO y recalcula cronogramas existentes. Al rechazar, no se alteran horas ni pagos. La descarga del archivo pasa por autorizacion.
+
+## 3. Fallos Comunes y Solucion
+Formato invalido: se rechaza por MIME y extension.
+Archivo demasiado grande: se rechaza segun JUSTIFICACION_ARCHIVO_MAX_MB.
+Active Storage sin configurar: ejecutar migraciones y revisar config/storage.yml.
+Asistencia inexistente: responde 404.
+Incidencia perteneciente a otro empleado: responde 403.
+Usuario sin permiso para aprobar: responde 403.
+Justificacion previamente revisada: responde 409.
+Error en el recalculo del cronograma: rollback transaccional y respuesta 422.
+Doble aprobacion por concurrencia: bloqueo de fila y estado PENDIENTE obligatorio.
+Migraciones pendientes: ejecutar bundle exec rails db:migrate.
