@@ -237,6 +237,15 @@ class _ResumenEmpresaPageState extends State<ResumenEmpresaPage> {
                         },
                       ),
 
+                      _actionCard(
+                        titulo: 'Informes',
+                        icono: Icons.picture_as_pdf,
+                        color: AppColors.primary,
+                        onTap: () {
+                          context.push('/empresa/informes');
+                        },
+                      ),
+
                     ],
                   ),
 

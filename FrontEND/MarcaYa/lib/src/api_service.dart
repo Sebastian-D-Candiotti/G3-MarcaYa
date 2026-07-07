@@ -3,6 +3,7 @@
 
 import 'dart:convert';
 import 'dart:io' show Platform;
+import 'dart:typed_data';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -895,6 +896,101 @@ class ApiService {
     ).replace(queryParameters: params.isNotEmpty ? params : null);
     final res = await _client.get(uri, headers: await _headers());
     return jsonDecode(res.body) as List<dynamic>;
+  }
+
+  Future<Map<String, dynamic>> generarVistaPreviaInforme({
+    required String tipoPeriodo,
+    required String fechaInicio,
+    required String fechaFin,
+    int? empresaId,
+  }) async {
+    final body = <String, dynamic>{
+      'tipo_periodo': tipoPeriodo,
+      'fecha_inicio': fechaInicio,
+      'fecha_fin': fechaFin,
+      if (empresaId != null) 'empresa_id': empresaId,
+    };
+
+    final res = await _client.post(
+      Uri.parse('$kBaseUrl/informes/asistencia/generar'),
+      headers: await _headers(),
+      body: jsonEncode(body),
+    );
+    return _parsearRespuesta(res);
+  }
+
+  Future<Map<String, dynamic>> cerrarMesInforme({
+    required int anio,
+    required int mes,
+    int? empresaId,
+  }) async {
+    final body = <String, dynamic>{
+      'anio': anio,
+      'mes': mes,
+      if (empresaId != null) 'empresa_id': empresaId,
+    };
+
+    final res = await _client.post(
+      Uri.parse('$kBaseUrl/informes/asistencia/cerrar-mes'),
+      headers: await _headers(),
+      body: jsonEncode(body),
+    );
+    return _parsearRespuesta(res);
+  }
+
+  Future<Map<String, dynamic>> listarInformesAsistencia({
+    String? tipoPeriodo,
+    String? estado,
+    int? anio,
+    int? mes,
+    int? page,
+    int? perPage,
+    int? empresaId,
+  }) async {
+    final params = <String, String>{};
+    if (tipoPeriodo != null) params['tipo_periodo'] = tipoPeriodo;
+    if (estado != null) params['estado'] = estado;
+    if (anio != null) params['anio'] = anio.toString();
+    if (mes != null) params['mes'] = mes.toString();
+    if (page != null) params['page'] = page.toString();
+    if (perPage != null) params['per_page'] = perPage.toString();
+    if (empresaId != null) params['empresa_id'] = empresaId.toString();
+
+    final uri = Uri.parse(
+      '$kBaseUrl/informes/asistencia',
+    ).replace(queryParameters: params.isNotEmpty ? params : null);
+    final res = await _client.get(uri, headers: await _headers());
+    return _parsearRespuesta(res);
+  }
+
+  Future<Map<String, dynamic>> obtenerInformeAsistencia(int id) async {
+    final res = await _client.get(
+      Uri.parse('$kBaseUrl/informes/asistencia/$id'),
+      headers: await _headers(),
+    );
+    return _parsearRespuesta(res);
+  }
+
+  Future<Uint8List> descargarInformeAsistenciaPdf(int id) async {
+    final headers = await _headers();
+    headers['Accept'] = 'application/pdf';
+
+    final res = await _client.get(
+      Uri.parse('$kBaseUrl/informes/asistencia/$id/pdf'),
+      headers: headers,
+    );
+
+    if (res.statusCode >= 400) {
+      final body = jsonDecode(res.body);
+      throw ApiException(
+        body is Map
+            ? (body['error'] ?? 'Error al descargar PDF').toString()
+            : 'Error al descargar PDF',
+        res.statusCode,
+      );
+    }
+
+    return res.bodyBytes;
   }
 
   // ════════════════════════════════════════════════════════════

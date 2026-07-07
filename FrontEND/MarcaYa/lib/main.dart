@@ -7,6 +7,7 @@ import 'providers/alertas_ausencia_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/asistencia_offline_provider.dart';
 import 'providers/geofencing_provider.dart';
+import 'providers/informes_asistencia_provider.dart';
 import 'providers/push_provider.dart';
 import 'providers/verificacion_cuenta_provider.dart';
 import 'router/app_router.dart';
@@ -68,6 +69,9 @@ void main() async {
         ),
         ChangeNotifierProvider(
           create: (_) => AlertasAusenciaProvider(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => InformesAsistenciaProvider(),
         ),
       ],
       child: const MarcaYA(),
