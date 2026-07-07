@@ -16,6 +16,9 @@ module Infrastructure
       has_many :valoraciones, class_name: "Infrastructure::Orm::ValoracionRecord",
                                 foreign_key: :empresa_id,
                                 dependent: :destroy
+      has_many :informe_asistencias, class_name: "Infrastructure::Orm::InformeAsistenciaRecord",
+                                      foreign_key: :empresa_id,
+                                      dependent: :restrict_with_error
     end
   end
 end

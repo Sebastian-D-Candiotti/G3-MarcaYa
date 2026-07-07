@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_05_205818) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_07_000100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -109,6 +109,33 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_05_205818) do
     t.bigint "usuario_id", null: false
 
     t.unique_constraint ["ruc"], name: "empresas_ruc_key"
+  end
+
+  create_table "informe_asistencias", force: :cascade do |t|
+    t.string "checksum", limit: 64, null: false
+    t.datetime "created_at", null: false
+    t.bigint "empresa_id", null: false
+    t.string "estado", limit: 20, default: "BORRADOR", null: false
+    t.datetime "fecha_cierre"
+    t.date "fecha_fin", null: false
+    t.datetime "fecha_generacion", null: false
+    t.date "fecha_inicio", null: false
+    t.bigint "generado_por_id", null: false
+    t.jsonb "snapshot", default: {}, null: false
+    t.string "tipo_periodo", limit: 20, null: false
+    t.datetime "updated_at", null: false
+    t.integer "version", default: 1, null: false
+
+    t.check_constraint "estado::text = ANY (ARRAY['BORRADOR'::character varying, 'CERRADO'::character varying]::text[])", name: "informe_asistencias_estado_check"
+    t.check_constraint "fecha_fin >= fecha_inicio", name: "informe_asistencias_rango_fechas_check"
+    t.check_constraint "tipo_periodo::text = ANY (ARRAY['DIARIO'::character varying, 'SEMANAL'::character varying, 'MENSUAL'::character varying]::text[])", name: "informe_asistencias_tipo_periodo_check"
+    t.index ["empresa_id", "tipo_periodo", "fecha_inicio", "fecha_fin"], name: "idx_informe_asistencias_cerrado_unico", unique: true, where: "((estado)::text = 'CERRADO'::text)"
+    t.index ["empresa_id"], name: "index_informe_asistencias_on_empresa_id"
+    t.index ["estado"], name: "index_informe_asistencias_on_estado"
+    t.index ["fecha_fin"], name: "index_informe_asistencias_on_fecha_fin"
+    t.index ["fecha_inicio"], name: "index_informe_asistencias_on_fecha_inicio"
+    t.index ["generado_por_id"], name: "index_informe_asistencias_on_generado_por_id"
+    t.index ["tipo_periodo"], name: "index_informe_asistencias_on_tipo_periodo"
   end
 
   create_table "metodo_pago", force: :cascade do |t|
@@ -272,6 +299,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_05_205818) do
   add_foreign_key "empleado_obra", "obras", name: "empleado_obra_obra_id_fkey"
   add_foreign_key "empleado_paradas", "empleados", name: "empleado_paradas_empleado_id_fkey", on_delete: :cascade
   add_foreign_key "empleado_paradas", "paradas", name: "empleado_paradas_parada_id_fkey", on_delete: :cascade
+  add_foreign_key "informe_asistencias", "empresas"
+  add_foreign_key "informe_asistencias", "usuarios", column: "generado_por_id"
   add_foreign_key "metodo_pago", "empleados", name: "metodo_pago_empleado_id_fkey"
   add_foreign_key "obras", "empresas", name: "obras_empresa_id_fkey"
   add_foreign_key "paradas", "obras", name: "paradas_obra_id_fkey", on_delete: :cascade

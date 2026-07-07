@@ -15,6 +15,9 @@ module Infrastructure
       has_many :empresas, class_name: "Infrastructure::Orm::EmpresaRecord",
                             foreign_key: :usuario_id,
                             dependent: :destroy
+      has_many :informe_asistencias_generados, class_name: "Infrastructure::Orm::InformeAsistenciaRecord",
+                                                foreign_key: :generado_por_id,
+                                                dependent: :restrict_with_error
     end
   end
 end

@@ -110,6 +110,13 @@ Rails.application.routes.draw do
         get "asistencia", to: "reportes#asistencia"
       end
 
+      # INFORMES HISTORICOS DE ASISTENCIA
+      get  "informes/asistencia",              to: "informes_asistencia#index"
+      post "informes/asistencia/generar",      to: "informes_asistencia#generar"
+      post "informes/asistencia/cerrar-mes",   to: "informes_asistencia#cerrar_mes"
+      get  "informes/asistencia/:id",          to: "informes_asistencia#show"
+      get  "informes/asistencia/:id/pdf",      to: "informes_asistencia#pdf"
+
       # CRONOGRAMA DE PAGOS
       post 'cronograma/generar',              to: 'cronograma#generar'
       get  'cronograma/empleado/:empleado_id', to: 'cronograma#por_empleado'
