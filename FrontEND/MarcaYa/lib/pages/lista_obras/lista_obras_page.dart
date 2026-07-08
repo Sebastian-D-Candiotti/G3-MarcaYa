@@ -66,22 +66,61 @@ class _ListaObrasPageState extends State<ListaObrasPage> {
                   itemBuilder: (context, index) {
                     final obra = _obras[index];
                     return Card(
-                      child: ListTile(
-                        title: Text(obra['nombre'] ?? ''),
-                        subtitle: Column(
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            // Nombre de la obra
+                            Text(
+                              obra['nombre'] ?? '',
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            
+                            // Información adicional
                             if (obra['codigoObra'] != null)
-                              Text('Código: ${obra['codigoObra']}'),
+                              Text(
+                                'Código: ${obra['codigoObra']}',
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
                             if (obra['estado'] != null)
-                              Text('Estado: ${obra['estado']}'),
+                              Text(
+                                'Estado: ${obra['estado']}',
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            const SizedBox(height: 12),
+                            
+                            // Botones de acción
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: ElevatedButton.icon(
+                                    icon: const Icon(Icons.show_chart),
+                                    label: const Text('Detalles'),
+                                    onPressed: () => context.push(
+                                      '/empresa/obras/${obra['id']}/detalles',
+                                      extra: {'obraNombre': obra['nombre']},
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: ElevatedButton.icon(
+                                    icon: const Icon(Icons.location_on),
+                                    label: const Text('Paradas'),
+                                    onPressed: () => context.push(
+                                      '/empresa/obras/${obra['id']}/paradas',
+                                      extra: {'obraNombre': obra['nombre']},
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ],
-                        ),
-                        isThreeLine: true,
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => context.push(
-                          '/empresa/obras/${obra['id']}/paradas',
-                          extra: {'obraNombre': obra['nombre']},
                         ),
                       ),
                     );

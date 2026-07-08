@@ -29,6 +29,7 @@ import '../pages/confirmacion_registrar_empleado/confirmacion_registrar_empleado
 import '../pages/perfil_publico/perfil_publico.dart';
 import '../pages/editar_perfil_empleado/editar_perfil_empleado_page.dart';
 import '../pages/editar_perfil_empresa/editar_perfil_empresa_page.dart';
+import '../pages/detalles_obra/detalles_obra_page.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/',
@@ -176,6 +177,17 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/empresa/obras/agregar',
       builder: (_, __) => const AgregarObraPage(),
+    ),
+    GoRoute(
+      path: '/empresa/obras/:obraId/detalles',
+      builder: (context, state) {
+        final obraId = int.parse(state.pathParameters['obraId']!);
+        final extra = state.extra as Map<String, dynamic>?;
+        return DetallesObraPage(
+          obraId: obraId,
+          obraNombre: extra?['obraNombre'] as String? ?? 'Obra',
+        );
+      },
     ),
     GoRoute(
       path: '/empresa/obras/:obraId/paradas',

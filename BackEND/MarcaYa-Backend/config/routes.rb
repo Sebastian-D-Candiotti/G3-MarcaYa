@@ -89,6 +89,10 @@ Rails.application.routes.draw do
       get  'cronograma/empleado/:empleado_id', to: 'cronograma#por_empleado'
       get  'cronograma/obra/:obra_id',         to: 'cronograma#por_obra'
 
+      # ESTADÍSTICAS
+      get 'estadisticas/obra/:obra_id',      to: 'estadisticas#por_obra'
+      get 'estadisticas/personal/:empleado_id', to: 'estadisticas#por_empleado'
+      get 'estadisticas/resumen',            to: 'estadisticas#resumen'
 
     end
   end
