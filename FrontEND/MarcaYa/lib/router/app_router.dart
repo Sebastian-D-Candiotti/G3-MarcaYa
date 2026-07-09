@@ -33,6 +33,7 @@ import '../pages/informes_asistencia/informes_asistencia_page.dart';
 import '../pages/perfil_publico/perfil_publico.dart';
 import '../pages/editar_perfil_empleado/editar_perfil_empleado_page.dart';
 import '../pages/editar_perfil_empresa/editar_perfil_empresa_page.dart';
+import '../pages/detalles_obra/detalles_obra_page.dart';
 import '../src/app_state.dart';
 
 final appRouter = GoRouter(
@@ -47,12 +48,10 @@ final appRouter = GoRouter(
     if (loggedIn) {
       final user = auth.currentUserProfile;
       if (user != null && user.rol == UserRole.empresa) {
-        if (!user.otpVerificado) {
-          if (location != '/verificar-otp') return '/verificar-otp';
-        } else if (user.estado == 'PENDIENTE') {
+        if (user.estado == 'PENDIENTE') {
           if (location != '/locked') return '/locked';
         } else {
-          if (location == '/verificar-otp' || location == '/locked') return '/empresa';
+          if (location == '/locked') return '/empresa';
         }
       }
     }
@@ -218,6 +217,18 @@ final appRouter = GoRouter(
         final obraId = int.parse(state.pathParameters['obraId']!);
         final extra = state.extra as Map<String, dynamic>?;
         return ParadasPorObraPage(
+          obraId: obraId,
+          obraNombre: extra?['obraNombre'] as String?,
+        );
+      },
+    ),
+
+    GoRoute(
+      path: '/empresa/obras/:obraId/detalles',
+      builder: (context, state) {
+        final obraId = int.parse(state.pathParameters['obraId']!);
+        final extra = state.extra as Map<String, dynamic>?;
+        return DetallesObraPage(
           obraId: obraId,
           obraNombre: extra?['obraNombre'] as String?,
         );

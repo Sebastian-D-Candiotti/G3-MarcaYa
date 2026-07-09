@@ -8,6 +8,7 @@ import 'providers/auth_provider.dart';
 import 'providers/asistencia_offline_provider.dart';
 import 'providers/geofencing_provider.dart';
 import 'providers/informes_asistencia_provider.dart';
+import 'providers/dashboard_provider.dart';
 import 'providers/push_provider.dart';
 import 'providers/verificacion_cuenta_provider.dart';
 import 'router/app_router.dart';
@@ -72,6 +73,9 @@ void main() async {
         ),
         ChangeNotifierProvider(
           create: (_) => InformesAsistenciaProvider(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => DashboardProvider(),
         ),
       ],
       child: const MarcaYA(),

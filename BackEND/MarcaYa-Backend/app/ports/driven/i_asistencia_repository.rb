@@ -36,6 +36,14 @@ module Ports
       def self.guardar(registro)
         raise NotImplementedError, "#{name}##{__method__} must be implemented"
       end
+
+      def self.por_paradas_y_periodo(parada_ids, inicio, fin)
+        raise NotImplementedError, "#{name}##{__method__} must be implemented"
+      end
+
+      def self.por_paradas_y_periodo_y_tipo(parada_ids, inicio, fin, tipo)
+        raise NotImplementedError, "#{name}##{__method__} must be implemented"
+      end
     end
   end
 end

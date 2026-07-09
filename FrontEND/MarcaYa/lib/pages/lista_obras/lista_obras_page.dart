@@ -66,22 +66,59 @@ class _ListaObrasPageState extends State<ListaObrasPage> {
                   itemBuilder: (context, index) {
                     final obra = _obras[index];
                     return Card(
-                      child: ListTile(
-                        title: Text(obra['nombre'] ?? ''),
-                        subtitle: Column(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            Text(
+                              obra['nombre'] ?? '',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
                             if (obra['codigoObra'] != null)
-                              Text('Código: ${obra['codigoObra']}'),
+                              Text(
+                                'Código: ${obra['codigoObra']}',
+                                style: const TextStyle(
+                                  color: Color(0xFF6B7280),
+                                  fontSize: 13,
+                                ),
+                              ),
                             if (obra['estado'] != null)
-                              Text('Estado: ${obra['estado']}'),
+                              Text(
+                                'Estado: ${obra['estado']}',
+                                style: const TextStyle(
+                                  color: Color(0xFF6B7280),
+                                  fontSize: 13,
+                                ),
+                              ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                TextButton(
+                                  onPressed: () => context.push(
+                                    '/empresa/obras/${obra['id']}/detalles',
+                                    extra: {'obraNombre': obra['nombre']},
+                                  ),
+                                  child: const Text('Detalles'),
+                                ),
+                                const SizedBox(width: 8),
+                                TextButton(
+                                  onPressed: () => context.push(
+                                    '/empresa/obras/${obra['id']}/paradas',
+                                    extra: {'obraNombre': obra['nombre']},
+                                  ),
+                                  child: const Text('Paradas'),
+                                ),
+                              ],
+                            ),
                           ],
-                        ),
-                        isThreeLine: true,
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => context.push(
-                          '/empresa/obras/${obra['id']}/paradas',
-                          extra: {'obraNombre': obra['nombre']},
                         ),
                       ),
                     );

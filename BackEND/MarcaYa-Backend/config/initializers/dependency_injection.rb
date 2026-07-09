@@ -82,6 +82,16 @@ module DependencyContainer
       )
     end
 
+    def estadisticas_facade
+      @estadisticas_facade ||= Application::Facades::EstadisticasFacade.new(
+        obra_repo: repos[:obra],
+        parada_repo: repos[:parada],
+        asistencia_repo: repos[:asistencia],
+        empleado_repo: repos[:empleado],
+        empleado_parada_repo: repos[:empleado_parada]
+      )
+    end
+
     def alerta_ausencia_facade
       @alerta_ausencia_facade ||= Application::Facades::AlertaAusenciaFacade.new(
         alerta_repo: repos[:alerta_ausencia],

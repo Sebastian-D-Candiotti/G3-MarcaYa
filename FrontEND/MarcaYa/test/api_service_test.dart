@@ -763,6 +763,121 @@ void main() {
     });
   });
 
+  group('Estadísticas de Obra', () {
+    test(
+      'obtenerEstadisticasObra sends GET to /estadisticas/obra/1 with periodo query',
+      () async {
+        final client = _MockHttpClient(
+          handler: (request) async {
+            expect(request.method, equals('GET'));
+            expect(
+              request.url.path,
+              endsWith('/estadisticas/obra/1'),
+            );
+            expect(
+              request.url.queryParameters['periodo'],
+              equals('2026-07'),
+            );
+            return http.Response(
+              jsonEncode({
+                'obra_id': 1,
+                'obra_nombre': 'Obra Central',
+                'periodo': '2026-07',
+                'horas_promedio': 7.5,
+                'horas_totales': 150.0,
+                'puntualidad_porcentaje': 85.0,
+                'dias_trabajados': 22,
+                'tardanzas_total': 5,
+                'faltas_total': 2,
+                'fake_gps_intentos': 1,
+                'empleados_activos': 20,
+                'empleados_con_irregularidades': 3,
+                'datos_por_empleado': [],
+              }),
+              200,
+              headers: {'content-type': 'application/json'},
+            );
+          },
+        );
+        final api = ApiService.createForTesting(client: client);
+
+        final result = await api.obtenerEstadisticasObra(
+          1,
+          periodo: '2026-07',
+        );
+
+        expect(result['obra_id'], equals(1));
+        expect(result['horas_totales'], equals(150.0));
+        expect(result['datos_por_empleado'], isA<List>());
+      },
+    );
+
+    test(
+      'obtenerEstadisticasObra sends GET without periodo when null',
+      () async {
+        final client = _MockHttpClient(
+          handler: (request) async {
+            expect(request.method, equals('GET'));
+            expect(
+              request.url.toString(),
+              contains('/estadisticas/obra/5'),
+            );
+            expect(
+              request.url.queryParameters.containsKey('periodo'),
+              isFalse,
+            );
+            return http.Response(
+              jsonEncode({
+                'obra_id': 5,
+                'obra_nombre': 'Obra B',
+                'periodo': '',
+                'horas_promedio': 0.0,
+                'horas_totales': 0.0,
+                'puntualidad_porcentaje': 0.0,
+                'dias_trabajados': 0,
+                'tardanzas_total': 0,
+                'faltas_total': 0,
+                'fake_gps_intentos': 0,
+                'empleados_activos': 0,
+                'empleados_con_irregularidades': 0,
+                'datos_por_empleado': [],
+              }),
+              200,
+              headers: {'content-type': 'application/json'},
+            );
+          },
+        );
+        final api = ApiService.createForTesting(client: client);
+
+        final result = await api.obtenerEstadisticasObra(5);
+
+        expect(result['obra_id'], equals(5));
+      },
+    );
+
+    test(
+      'obtenerEstadisticasObra throws ApiException on 404',
+      () async {
+        final client = _mockResponse(
+          404,
+          {'error': 'Obra no encontrada'},
+        );
+        final api = ApiService.createForTesting(client: client);
+
+        expect(
+          () => api.obtenerEstadisticasObra(999, periodo: '2026-07'),
+          throwsA(
+            isA<ApiException>().having(
+              (e) => e.statusCode,
+              'statusCode',
+              404,
+            ),
+          ),
+        );
+      },
+    );
+  });
+
   group('Legacy clean-up', () {
     test('obtenerPagos is removed', () {
       // Using dart:reflect would be heavy; we just verify that

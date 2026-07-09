@@ -65,6 +65,18 @@ module Infrastructure
           .exists?
       end
 
+      def por_paradas_y_periodo(parada_ids, inicio, fin)
+        ::Infrastructure::Orm::AsistenciaRecord
+          .where(parada_id: parada_ids, fecha_hora: inicio..fin)
+          .map { |record| ::Infrastructure::Mappers::AsistenciaMapper.to_domain(record) }
+      end
+
+      def por_paradas_y_periodo_y_tipo(parada_ids, inicio, fin, tipo)
+        ::Infrastructure::Orm::AsistenciaRecord
+          .where(parada_id: parada_ids, fecha_hora: inicio..fin, tipo_marcacion: tipo)
+          .map { |record| ::Infrastructure::Mappers::AsistenciaMapper.to_domain(record) }
+      end
+
       def guardar(registro)
         attrs = ::Infrastructure::Mappers::AsistenciaMapper.to_record_attrs(registro)
 

@@ -994,6 +994,22 @@ class ApiService {
   }
 
   // ════════════════════════════════════════════════════════════
+  // ESTADÍSTICAS DE OBRA
+  // ════════════════════════════════════════════════════════════
+
+  /// Obtiene las estadísticas de asistencia de una obra para un periodo dado.
+  /// GET /api/v1/estadisticas/obra/:obra_id?periodo=YYYY-MM
+  Future<Map<String, dynamic>> obtenerEstadisticasObra(
+    int obraId, {
+    String? periodo,
+  }) async {
+    var url = '$kBaseUrl/estadisticas/obra/$obraId';
+    if (periodo != null) url = '$url?periodo=$periodo';
+    final res = await _client.get(Uri.parse(url), headers: await _headers());
+    return _parsearRespuesta(res);
+  }
+
+  // ════════════════════════════════════════════════════════════
   // ALERTAS DE AUSENCIA
   // ════════════════════════════════════════════════════════════
 

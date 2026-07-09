@@ -24,6 +24,13 @@ module Infrastructure
         end
       end
 
+      def empleado_ids_por_paradas(parada_ids)
+        ::Infrastructure::Orm::EmpleadoParadaRecord
+          .where(parada_id: parada_ids)
+          .distinct
+          .pluck(:empleado_id)
+      end
+
       def guardar(empleado_parada)
         attrs = ::Infrastructure::Mappers::EmpleadoParadaMapper.to_record_attrs(empleado_parada)
 

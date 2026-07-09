@@ -20,6 +20,10 @@ module Ports
       def self.guardar(empleado_parada)
         raise NotImplementedError, "#{name}##{__method__} must be implemented"
       end
+
+      def self.empleado_ids_por_paradas(parada_ids)
+        raise NotImplementedError, "#{name}##{__method__} must be implemented"
+      end
     end
   end
 end

@@ -1,0 +1,134 @@
+# openspec/config.yaml — MarcaYA SDD Configuration
+schema: spec-driven
+
+context: |
+  Monorepo: BackEND/MarcaYa-Backend/ (Rails 8.1.3 API) + FrontEND/MarcaYa/ (Flutter)
+  Ruby 4.0.4, PostgreSQL, Puma, JWT auth (bcrypt + custom JWT service)
+  Architecture: Hexagonal (Ports & Adapters)
+    domain/{entities,services,value_objects,errors}
+    application/{use_cases,facades}
+    infrastructure/{repositories,services,mappers,orm}
+    ports/{driven,driving}
+    controllers/api/v1, serializers, models (AR persistence)
+  Flutter: Dart SDK ^3.11.4, Provider, GoRouter, http, flutter_secure_storage
+    lib/{components,core,data,domain,models,pages,providers,repositories,router,services,theme,utils}
+  Firebase Cloud Messaging for push notifications
+  Solid Queue for background jobs
+  Seed data: empresa, empleados, obras, paradas, asignaciones, registros_asistencia
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+    - Consider impact on all hexagonal layers (domain, ports, infrastructure, application, controllers)
+    - Consider both backend and frontend when change spans the stack
+  specs:
+    - Use Given/When/Then for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+    - Place backend specs under openspec/specs/{domain}/spec.md
+    - Place frontend specs under openspec/specs/{frontend-domain}/spec.md when pure FE
+  design:
+    - Include sequence diagrams for complex flows
+    - Document architecture decisions with rationale
+    - Maintain hexagonal layer boundaries in all designs
+  tasks:
+    - Group by phase, use hierarchical numbering
+    - Keep tasks completable in one session
+    - Map tasks to hexagonal layers (domain -> ports -> infrastructure -> application -> controllers)
+    - Separate backend and frontend tasks clearly when cross-stack
+  apply:
+    - Follow existing code patterns and hexagonal architecture
+    - Place entities in app/domain/entities/, value objects in app/domain/value_objects/
+    - Place driven ports in app/ports/driven/, driving ports in app/ports/driving/
+    - Place AR repositories in app/infrastructure/repositories/, services in app/infrastructure/services/
+    - Place use cases in app/application/use_cases/, facades in app/application/facades/
+    - Place API controllers in app/controllers/api/v1/
+    - Place serializers in app/serializers/
+    - Use Domain::Errors for custom error classes
+    - Use ActiveRecord::Base subclasses in app/models/ for persistence only
+    tdd: true
+    test_command: "cd BackEND/MarcaYa-Backend && bundle exec rails test"
+    flutter_test_command: "cd FrontEND/MarcaYa && flutter test"
+  verify:
+    test_command: "cd BackEND/MarcaYa-Backend && bundle exec rails test"
+    flutter_test_command: "cd FrontEND/MarcaYa && flutter test"
+    build_command: "cd BackEND/MarcaYa-Backend && bundle exec rails db:prepare RAILS_ENV=test"
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas
+
+testing:
+  strict_tdd: true
+  backend:
+    runner:
+      command: "cd BackEND/MarcaYa-Backend && bundle exec rails test"
+      framework: Minitest
+      test_files: 104
+    layers:
+      unit:
+        available: true
+        tools: "test/domain/entities/, test/domain/services/, test/domain/value_objects/, test/domain/errors/"
+      application:
+        available: true
+        tools: "test/application/use_cases/**/, test/application/facades/"
+      controller:
+        available: true
+        tools: "test/controllers/api/**/"
+      infrastructure:
+        available: true
+        tools: "test/infrastructure/repositories/, test/infrastructure/services/, test/infrastructure/mappers/, test/infrastructure/orm/"
+      model:
+        available: true
+        tools: "test/models/"
+      port:
+        available: true
+        tools: "test/ports/driven/, test/ports/driving/"
+      integration:
+        available: false
+        tools: "test/integration/ (empty)"
+      job:
+        available: true
+        tools: "test/jobs/"
+      migration:
+        available: true
+        tools: "test/migrations/"
+    coverage:
+      available: false
+      command: "—"
+    quality:
+      linter:
+        available: true
+        command: "cd BackEND/MarcaYa-Backend && bundle exec rubocop"
+      security_scan:
+        available: true
+        command: "cd BackEND/MarcaYa-Backend && bundle exec brakeman"
+      dependency_audit:
+        available: true
+        command: "cd BackEND/MarcaYa-Backend && bundle exec bundler-audit"
+      ci_pipeline:
+        available: true
+        command: "cd BackEND/MarcaYa-Backend && bin/ci"
+  frontend:
+    runner:
+      command: "cd FrontEND/MarcaYa && flutter test"
+      framework: flutter_test
+      test_files: 3
+    layers:
+      unit:
+        available: false
+        tools: "—"
+      widget:
+        available: false
+        tools: "—"
+      integration:
+        available: false
+        tools: "—"
+    coverage:
+      available: false
+      command: "—"
+    quality:
+      linter:
+        available: true
+        command: "cd FrontEND/MarcaYa && flutter analyze"
+      formatter:
+        available: true
+        command: "cd FrontEND/MarcaYa && dart format ."

@@ -34,6 +34,12 @@ module Infrastructure
         ::Infrastructure::Orm::EmpleadoRecord.all.map { |r| ::Infrastructure::Mappers::EmpleadoMapper.to_domain(r) }
       end
 
+      def por_ids_y_estado(empleado_ids, estado)
+        ::Infrastructure::Orm::EmpleadoRecord
+          .where(id: empleado_ids, estado: estado)
+          .map { |r| ::Infrastructure::Mappers::EmpleadoMapper.to_domain(r) }
+      end
+
       def guardar(empleado)
         attrs = ::Infrastructure::Mappers::EmpleadoMapper.to_record_attrs(empleado)
 

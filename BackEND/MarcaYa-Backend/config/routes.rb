@@ -122,6 +122,8 @@ Rails.application.routes.draw do
       get  'cronograma/empleado/:empleado_id', to: 'cronograma#por_empleado'
       get  'cronograma/obra/:obra_id',         to: 'cronograma#por_obra'
 
+      # ESTADISTICAS
+      get 'estadisticas/obra/:obra_id', to: 'estadisticas#por_obra'
 
     end
   end

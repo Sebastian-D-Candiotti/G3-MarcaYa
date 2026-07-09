@@ -28,6 +28,13 @@ module Ports
       def self.guardar(empleado)
         raise NotImplementedError, "#{name}##{__method__} must be implemented"
       end
+
+      # @param empleado_ids [Array<Integer>]
+      # @param estado [String] "activo" or "inactivo"
+      # @return [Array<Domain::Entities::Empleado>]
+      def self.por_ids_y_estado(empleado_ids, estado)
+        raise NotImplementedError, "#{name}##{__method__} must be implemented"
+      end
     end
   end
 end
