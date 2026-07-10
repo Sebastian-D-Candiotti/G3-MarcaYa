@@ -228,6 +228,16 @@ class _ResumenEmpresaPageState extends State<ResumenEmpresaPage> {
                         },
                       ),
 
+                      // Integración de Pagos: panel de nómina
+                      _actionCard(
+                        titulo: 'Nómina',
+                        icono: Icons.payments_rounded,
+                        color: const Color(0xFF0B4F7A),
+                        onTap: () {
+                          context.push('/empresa/nomina');
+                        },
+                      ),
+
                     ],
                   ),
 

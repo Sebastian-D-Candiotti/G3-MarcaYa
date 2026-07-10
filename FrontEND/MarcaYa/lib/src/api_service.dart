@@ -770,6 +770,64 @@ class ApiService {
     final res = await _client.get(uri, headers: await _headers());
     return jsonDecode(res.body) as List<dynamic>;
   }
+
+  // ════════════════════════════════════════════════════════════
+  // CRONOGRAMA DE PAGOS (Integración de Pagos)
+  // ════════════════════════════════════════════════════════════
+
+  /// Empleado: obtener su cronograma de pagos
+  Future<List<dynamic>> obtenerCronogramaEmpleado() async {
+    final res = await _client.get(
+      Uri.parse('$kBaseUrl/cronograma'),
+      headers: await _headers(),
+    );
+    return jsonDecode(res.body) as List<dynamic>;
+  }
+
+  /// Empresa: obtener cronograma de todos los empleados
+  Future<List<dynamic>> obtenerCronogramaEmpresa() async {
+    final res = await _client.get(
+      Uri.parse('$kBaseUrl/cronograma/empresa'),
+      headers: await _headers(),
+    );
+    return jsonDecode(res.body) as List<dynamic>;
+  }
+
+  /// Empresa: generar cronograma para un período
+  Future<Map<String, dynamic>> generarCronograma({
+    required String periodoInicio,
+    required String periodoFin,
+    double tarifaHora = 15.0,
+  }) async {
+    final res = await _client.post(
+      Uri.parse('$kBaseUrl/cronograma/generar'),
+      headers: await _headers(),
+      body: jsonEncode({
+        'periodo_inicio': periodoInicio,
+        'periodo_fin': periodoFin,
+        'tarifa_hora': tarifaHora,
+      }),
+    );
+    return _parsearRespuesta(res);
+  }
+
+  /// Ver detalle de un cronograma específico
+  Future<Map<String, dynamic>> obtenerCronogramaDetalle(int id) async {
+    final res = await _client.get(
+      Uri.parse('$kBaseUrl/cronograma/$id'),
+      headers: await _headers(),
+    );
+    return _parsearRespuesta(res);
+  }
+
+  /// Empresa: sincronizar con sistema contable (simulado)
+  Future<Map<String, dynamic>> sincronizarCronograma() async {
+    final res = await _client.post(
+      Uri.parse('$kBaseUrl/cronograma/sincronizar'),
+      headers: await _headers(),
+    );
+    return _parsearRespuesta(res);
+  }
 }
 
 // ── Modelos de resultado ────────────────────────────────────

@@ -31,6 +31,8 @@ import '../pages/confirmacion_registrar_empleado/confirmacion_registrar_empleado
 import '../pages/perfil_publico/perfil_publico.dart';
 import '../pages/editar_perfil_empleado/editar_perfil_empleado_page.dart';
 import '../pages/editar_perfil_empresa/editar_perfil_empresa_page.dart';
+import '../pages/historial_cobros/historial_cobros_page.dart';
+import '../pages/nomina_empresa/nomina_empresa_page.dart';
 import '../src/app_state.dart';
 
 final appRouter = GoRouter(
@@ -143,6 +145,12 @@ final appRouter = GoRouter(
       builder: (_, __) => const HistorialAsistenciasPage(),
     ),
 
+    // Integración de Pagos: historial de cobros del empleado
+    GoRoute(
+      path: '/empleado/historial-cobros',
+      builder: (_, __) => const HistorialCobrosPage(),
+    ),
+
     GoRoute(
       path: '/empleado/marcar_asistencia',
       builder: (context, state) {
@@ -185,6 +193,12 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/empresa/perfil/editar',
       builder: (_, __) => const EditarPerfilEmpresaPage(),
+    ),
+
+    // Integración de Pagos: panel de nómina de la empresa
+    GoRoute(
+      path: '/empresa/nomina',
+      builder: (_, __) => const NominaEmpresaPage(),
     ),
 
     // RUTAS INTERNAS DE EMPRESA

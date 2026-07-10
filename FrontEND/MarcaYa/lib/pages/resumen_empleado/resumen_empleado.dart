@@ -164,6 +164,24 @@ class _ResumenEmpleadoPageState extends State<ResumenEmpleadoPage> {
               ),
             ),
 
+            const SizedBox(height: 10),
+
+            // Integración de Pagos: historial de cobros del empleado
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  context.push('/empleado/historial-cobros');
+                },
+                icon: const Icon(Icons.account_balance_wallet_rounded),
+                label: const Text('Historial de cobros'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0B4F7A),
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ),
+
             const SizedBox(height: 30),
 
             const Text(
