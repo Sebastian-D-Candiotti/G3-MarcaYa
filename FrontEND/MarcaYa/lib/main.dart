@@ -4,8 +4,16 @@ import 'src/app_state.dart';
 import 'providers/auth_provider.dart';
 import 'router/app_router.dart';
 import 'theme/app_theme.dart';
+import 'services/auto_marking_service.dart';
+import 'services/notification_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Inicializar servicios de segundo plano (US-NUEVA-08 y US-NUEVA-09)
+  await AutoMarkingService.initialize();
+  await NotificationService.instance.initialize(appRouter);
+
   runApp(
     ChangeNotifierProvider(
       create: (_) => AuthProvider(MarcaYAState()),

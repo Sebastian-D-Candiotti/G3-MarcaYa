@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../pages/resumen_empleado/historial_solicitudes_page.dart';
+import '../pages/historial_asistencias/historial_asistencias_page.dart';
 import '../providers/auth_provider.dart';
 import '../pages/sign_in/sign_in_page.dart';
 import '../pages/registrar_usuario/registrar_usuario.dart';
@@ -134,6 +135,12 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/empleado/perfil/editar',
       builder: (_, __) => const EditarPerfilEmpleadoPage(),
+    ),
+
+    // US-NUEVA-09 CA-3: Destino del tap en notificación push
+    GoRoute(
+      path: '/empleado/historial-asistencias',
+      builder: (_, __) => const HistorialAsistenciasPage(),
     ),
 
     GoRoute(

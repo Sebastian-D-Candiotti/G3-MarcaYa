@@ -6,6 +6,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../src/api_service.dart';
+import '../../services/notification_service.dart';
 
 class MarcarAsistenciaPage extends StatefulWidget {
   final int obraId;
@@ -296,6 +297,14 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
           ),
           backgroundColor: resultado['valida_gps'] == true ? azul : Colors.orange,
         ),
+      );
+
+      // US-NUEVA-09: Notificación local de confirmación de marcado
+      NotificationService.instance.showMarkingNotification(
+        tipo: tipoTexto,
+        hora: DateTime.now(),
+        validaGps: resultado['valida_gps'] == true,
+        obraNombre: widget.obraNombre,
       );
 
       setState(() {
