@@ -828,6 +828,27 @@ class ApiService {
     );
     return _parsearRespuesta(res);
   }
+
+  // ════════════════════════════════════════════════════════════
+  // INFORME IA (US-NUEVA-06)
+  // ════════════════════════════════════════════════════════════
+
+  /// Genera un informe ejecutivo con IA basado en datos de asistencia
+  Future<Map<String, dynamic>> generarInformeIA({
+    String? fechaInicio,
+    String? fechaFin,
+  }) async {
+    final body = <String, dynamic>{};
+    if (fechaInicio != null) body['fecha_inicio'] = fechaInicio;
+    if (fechaFin != null) body['fecha_fin'] = fechaFin;
+
+    final res = await _client.post(
+      Uri.parse('$kBaseUrl/reportes/informe-ia'),
+      headers: await _headers(),
+      body: jsonEncode(body),
+    );
+    return _parsearRespuesta(res);
+  }
 }
 
 // ── Modelos de resultado ────────────────────────────────────

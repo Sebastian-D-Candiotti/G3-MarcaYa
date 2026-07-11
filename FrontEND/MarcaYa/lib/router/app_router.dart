@@ -33,6 +33,7 @@ import '../pages/editar_perfil_empleado/editar_perfil_empleado_page.dart';
 import '../pages/editar_perfil_empresa/editar_perfil_empresa_page.dart';
 import '../pages/historial_cobros/historial_cobros_page.dart';
 import '../pages/nomina_empresa/nomina_empresa_page.dart';
+import '../pages/informe_ia/informe_ia_page.dart';
 import '../src/app_state.dart';
 
 final appRouter = GoRouter(
@@ -199,6 +200,12 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/empresa/nomina',
       builder: (_, __) => const NominaEmpresaPage(),
+    ),
+
+    // US-NUEVA-06: Informe ejecutivo con IA
+    GoRoute(
+      path: '/empresa/informe-ia',
+      builder: (_, __) => const InformeIAPage(),
     ),
 
     // RUTAS INTERNAS DE EMPRESA

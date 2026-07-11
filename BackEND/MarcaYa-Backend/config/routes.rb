@@ -90,6 +90,7 @@ Rails.application.routes.draw do
       # REPORTES
       namespace :reportes do
         get "asistencia", to: "reportes#asistencia"
+        post "informe-ia", to: "reportes#informe_ia"  # US-NUEVA-06: Informe ejecutivo con IA
       end
 
       # CRONOGRAMA DE PAGOS

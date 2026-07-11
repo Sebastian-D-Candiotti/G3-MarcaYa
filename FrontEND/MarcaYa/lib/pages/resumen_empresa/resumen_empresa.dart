@@ -238,6 +238,16 @@ class _ResumenEmpresaPageState extends State<ResumenEmpresaPage> {
                         },
                       ),
 
+                      // US-NUEVA-06: Informe ejecutivo con IA
+                      _actionCard(
+                        titulo: 'Informe IA',
+                        icono: Icons.auto_awesome,
+                        color: const Color(0xFF7C3AED),
+                        onTap: () {
+                          context.push('/empresa/informe-ia');
+                        },
+                      ),
+
                     ],
                   ),
 
