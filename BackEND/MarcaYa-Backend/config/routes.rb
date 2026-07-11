@@ -43,6 +43,9 @@ Rails.application.routes.draw do
       patch "usuarios/:id/desactivar", to: "usuarios#desactivar"
       put   "usuarios/:id/aprobar",    to: "usuarios#aprobar"
 
+      # US-NUEVA-13: Activación de empresa vía enlace en correo electrónico
+      get   "usuarios/:id/activar-cuenta", to: "usuarios#activar_cuenta"
+
       resources :usuarios, only: [:index]
 
       # SOLICITUDES

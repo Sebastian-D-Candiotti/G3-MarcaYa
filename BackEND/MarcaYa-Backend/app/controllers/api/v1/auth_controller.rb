@@ -74,7 +74,20 @@ class Api::V1::AuthController < Api::V1::BaseController
     )
     empresa_repo.guardar(empresa_actualizada)
 
-    render json: { mensaje: "Código OTP verificado correctamente" }
+    # ── US-NUEVA-13: Enviar correo de activación automáticamente ──
+    begin
+      usuario = Rails.configuration.di.repos[:usuario].find_by_id!(empresa.usuario_id)
+      UsuarioMailer.correo_activacion_empresa(
+        usuario.id,
+        usuario.correo,
+        empresa.nombre_empresa,
+        empresa.ruc
+      ).deliver_now
+    rescue StandardError => e
+      Rails.logger.error("Error al enviar correo de activación: #{e.message}")
+    end
+
+    render json: { mensaje: "Código OTP verificado correctamente. Se ha enviado un correo de activación a tu cuenta." }
   end
 
   private

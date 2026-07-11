@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
 import '../../theme/app_theme.dart';
-import '../../src/api_service.dart';
 
 
 class LockedPage extends StatefulWidget {
@@ -26,7 +25,7 @@ class _LockedPageState extends State<LockedPage> {
       if (user != null && user.estado == 'activo') {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('¡Tu cuenta ha sido aprobada!'),
+            content: Text('¡Tu cuenta ha sido activada!'),
             backgroundColor: AppColors.success,
           ),
         );
@@ -34,7 +33,7 @@ class _LockedPageState extends State<LockedPage> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Tu solicitud sigue en revisión por SUNAT.'),
+            content: Text('Tu cuenta aún no ha sido activada. Revisa tu correo.'),
             backgroundColor: Colors.blueGrey,
           ),
         );
@@ -48,6 +47,7 @@ class _LockedPageState extends State<LockedPage> {
     final user = auth.currentUserProfile;
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F7FA),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
@@ -56,93 +56,196 @@ class _LockedPageState extends State<LockedPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Spacer(),
-              const Icon(
-                Icons.lock_clock_rounded,
-                size: 100,
-                color: Colors.amber,
+
+              // ── Ícono de correo ──────────────────────────────
+              Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF0B4F7A), Color(0xFF38A3A5)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF0B4F7A).withValues(alpha: 0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.mark_email_unread_rounded,
+                  size: 48,
+                  color: Colors.white,
+                ),
               ),
               const SizedBox(height: 32),
+
+              // ── Título ────────────────────────────────────────
               const Text(
-                'Solicitud en Revisión',
+                'Revisa tu correo electrónico',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 26,
+                  fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 16),
+
+              // ── Descripción ───────────────────────────────────
               const Text(
-                'Tu solicitud de registro ha sido recibida de forma segura. El equipo de operaciones de MarcaYa validará la documentación legal con SUNAT en un plazo de 24 horas. Te notificaremos al correo cuando tu cuenta cambie a estado APROBADO.',
+                'Hemos enviado un correo de activación a tu cuenta. '
+                'Haz clic en el botón "Activar mi cuenta" dentro del '
+                'correo para completar el registro de tu empresa.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 15,
                   color: AppColors.textSecondary,
                   height: 1.5,
                 ),
               ),
-              if (user != null) ...[
-                const SizedBox(height: 24),
-                Text(
-                  'Empresa: ${user.nombreEmpresa ?? ""}',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+
+              const SizedBox(height: 8),
+
+              // ── Nota de validez ──────────────────────────────
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF7ED),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
+                  ),
                 ),
-                Text(
-                  'RUC: ${user.ruc ?? ""}',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.grey, fontSize: 13),
-                ),
-              ],
-              const Spacer(),
-              ElevatedButton.icon(
-                onPressed: _checking ? null : () async {
-                  setState(() => _checking = true);
-                  try {
-                    final userId = int.parse(user!.id);
-                    await ApiService.instance.aprobarEmpresa(userId);
-                    await auth.fetchProfile();
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Cuenta aprobada simulando SUNAT.'), backgroundColor: AppColors.success),
-                      );
-                      context.go('/empresa');
-                    }
-                  } catch (e) {
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Error al aprobar: $e'), backgroundColor: AppColors.error),
-                      );
-                    }
-                  } finally {
-                    if (mounted) setState(() => _checking = false);
-                  }
-                },
-                icon: const Icon(Icons.check_circle_outline, color: Colors.white),
-                label: const Text('Simular Aprobación SUNAT'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.success,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: const Row(
+                  children: [
+                    Icon(Icons.timer_outlined,
+                        color: Color(0xFFF59E0B), size: 20),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'El enlace de activación es válido por 24 horas.',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF92400E),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 12),
+
+              // ── Datos de la empresa ──────────────────────────
+              if (user != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.business_rounded,
+                              size: 18, color: Color(0xFF0B4F7A)),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              user.nombreEmpresa ?? '',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 15,
+                                color: Color(0xFF1F2937),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (user.ruc != null && user.ruc!.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            const Icon(Icons.badge_outlined,
+                                size: 18, color: Color(0xFF6B7280)),
+                            const SizedBox(width: 8),
+                            Text(
+                              'RUC: ${user.ruc}',
+                              style: const TextStyle(
+                                color: Color(0xFF6B7280),
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(Icons.email_outlined,
+                              size: 18, color: Color(0xFF6B7280)),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              user.correo,
+                              style: const TextStyle(
+                                color: Color(0xFF6B7280),
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
+              const Spacer(),
+
+              // ── Botón verificar estado ────────────────────────
               ElevatedButton.icon(
                 onPressed: _checking ? null : _checkStatus,
                 icon: _checking
                     ? const SizedBox(
                         width: 20,
                         height: 20,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2),
                       )
-                    : const Icon(Icons.refresh),
-                label: const Text('Verificar Estado Actual'),
+                    : const Icon(Icons.refresh_rounded),
+                label: Text(
+                  _checking
+                      ? 'Verificando...'
+                      : 'Ya activé mi cuenta — Verificar Estado',
+                ),
                 style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0B4F7A),
+                  foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
               ),
+
               const SizedBox(height: 12),
+
+              // ── Botón cerrar sesión ────────────────────────────
               OutlinedButton.icon(
                 onPressed: () async {
                   await auth.logout();
@@ -154,8 +257,10 @@ class _LockedPageState extends State<LockedPage> {
                 label: const Text('Cerrar Sesión'),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  side: const BorderSide(color: AppColors.primary, width: 2),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  side: const BorderSide(
+                      color: AppColors.primary, width: 2),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
               ),
             ],
