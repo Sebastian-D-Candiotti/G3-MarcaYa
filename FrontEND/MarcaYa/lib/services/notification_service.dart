@@ -184,7 +184,7 @@ class NotificationService {
       ),
     );
 
-    const details = NotificationDetails(android: androidDetails);
+    final details = NotificationDetails(android: androidDetails);
 
     await plugin.show(
       DateTime.now().millisecondsSinceEpoch ~/ 1000,
