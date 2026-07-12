@@ -146,6 +146,42 @@ class _ResumenEmpleadoPageState extends State<ResumenEmpleadoPage> {
               ),
             ),
 
+            const SizedBox(height: 10),
+
+            // Acceso directo al historial de marcaciones (US-NUEVA-09 CA-3)
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  context.push('/empleado/historial-asistencias');
+                },
+                icon: const Icon(Icons.fingerprint),
+                label: const Text('Ver historial de marcaciones'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF38A3A5),
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            // Integración de Pagos: historial de cobros del empleado
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  context.push('/empleado/historial-cobros');
+                },
+                icon: const Icon(Icons.account_balance_wallet_rounded),
+                label: const Text('Historial de cobros'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0B4F7A),
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ),
+
             const SizedBox(height: 30),
 
             const Text(

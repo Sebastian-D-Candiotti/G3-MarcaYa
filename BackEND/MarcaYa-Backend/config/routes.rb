@@ -51,6 +51,9 @@ Rails.application.routes.draw do
       patch "usuarios/:id/desactivar", to: "usuarios#desactivar"
       put   "usuarios/:id/aprobar",    to: "usuarios#aprobar"
 
+      # US-NUEVA-13: Activación de empresa vía enlace en correo electrónico
+      get   "usuarios/:id/activar-cuenta", to: "usuarios#activar_cuenta"
+
       resources :usuarios, only: [:index]
 
       # SOLICITUDES
@@ -108,6 +111,7 @@ Rails.application.routes.draw do
       # REPORTES
       namespace :reportes do
         get "asistencia", to: "reportes#asistencia"
+        post "informe-ia", to: "reportes#informe_ia"  # US-NUEVA-06: Informe ejecutivo con IA
       end
 
       # INFORMES HISTORICOS DE ASISTENCIA
@@ -118,9 +122,11 @@ Rails.application.routes.draw do
       get  "informes/asistencia/:id/pdf",      to: "informes_asistencia#pdf"
 
       # CRONOGRAMA DE PAGOS
-      post 'cronograma/generar',              to: 'cronograma#generar'
-      get  'cronograma/empleado/:empleado_id', to: 'cronograma#por_empleado'
-      get  'cronograma/obra/:obra_id',         to: 'cronograma#por_obra'
+      get  'cronograma',              to: 'cronograma#index'
+      get  'cronograma/empresa',      to: 'cronograma#index_empresa'
+      post 'cronograma/generar',      to: 'cronograma#generar'
+      post 'cronograma/sincronizar',  to: 'cronograma#sincronizar'
+      get  'cronograma/:id',          to: 'cronograma#show'
 
       # ESTADISTICAS
       get 'estadisticas/obra/:obra_id', to: 'estadisticas#por_obra'

@@ -1051,6 +1051,85 @@ class ApiService {
       );
     }
   }
+
+  // ════════════════════════════════════════════════════════════
+  // CRONOGRAMA DE PAGOS (Integración de Pagos)
+  // ════════════════════════════════════════════════════════════
+
+  /// Empleado: obtener su cronograma de pagos
+  Future<List<dynamic>> obtenerCronogramaEmpleado() async {
+    final res = await _client.get(
+      Uri.parse('$kBaseUrl/cronograma'),
+      headers: await _headers(),
+    );
+    return jsonDecode(res.body) as List<dynamic>;
+  }
+
+  /// Empresa: obtener cronograma de todos los empleados
+  Future<List<dynamic>> obtenerCronogramaEmpresa() async {
+    final res = await _client.get(
+      Uri.parse('$kBaseUrl/cronograma/empresa'),
+      headers: await _headers(),
+    );
+    return jsonDecode(res.body) as List<dynamic>;
+  }
+
+  /// Empresa: generar cronograma para un período
+  Future<Map<String, dynamic>> generarCronograma({
+    required String periodoInicio,
+    required String periodoFin,
+    double tarifaHora = 15.0,
+  }) async {
+    final res = await _client.post(
+      Uri.parse('$kBaseUrl/cronograma/generar'),
+      headers: await _headers(),
+      body: jsonEncode({
+        'periodo_inicio': periodoInicio,
+        'periodo_fin': periodoFin,
+        'tarifa_hora': tarifaHora,
+      }),
+    );
+    return _parsearRespuesta(res);
+  }
+
+  /// Ver detalle de un cronograma específico
+  Future<Map<String, dynamic>> obtenerCronogramaDetalle(int id) async {
+    final res = await _client.get(
+      Uri.parse('$kBaseUrl/cronograma/$id'),
+      headers: await _headers(),
+    );
+    return _parsearRespuesta(res);
+  }
+
+  /// Empresa: sincronizar con sistema contable (simulado)
+  Future<Map<String, dynamic>> sincronizarCronograma() async {
+    final res = await _client.post(
+      Uri.parse('$kBaseUrl/cronograma/sincronizar'),
+      headers: await _headers(),
+    );
+    return _parsearRespuesta(res);
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // INFORME IA (US-NUEVA-06)
+  // ════════════════════════════════════════════════════════════
+
+  /// Genera un informe ejecutivo con IA basado en datos de asistencia
+  Future<Map<String, dynamic>> generarInformeIA({
+    String? fechaInicio,
+    String? fechaFin,
+  }) async {
+    final body = <String, dynamic>{};
+    if (fechaInicio != null) body['fecha_inicio'] = fechaInicio;
+    if (fechaFin != null) body['fecha_fin'] = fechaFin;
+
+    final res = await _client.post(
+      Uri.parse('$kBaseUrl/reportes/informe-ia'),
+      headers: await _headers(),
+      body: jsonEncode(body),
+    );
+    return _parsearRespuesta(res);
+  }
 }
 
 // ── Modelos de resultado ────────────────────────────────────

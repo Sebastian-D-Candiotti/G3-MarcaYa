@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../pages/resumen_empleado/historial_solicitudes_page.dart';
+import '../pages/historial_asistencias/historial_asistencias_page.dart';
 import '../providers/auth_provider.dart';
 import '../pages/sign_in/sign_in_page.dart';
 import '../pages/registrar_usuario/registrar_usuario.dart';
@@ -34,6 +35,9 @@ import '../pages/perfil_publico/perfil_publico.dart';
 import '../pages/editar_perfil_empleado/editar_perfil_empleado_page.dart';
 import '../pages/editar_perfil_empresa/editar_perfil_empresa_page.dart';
 import '../pages/detalles_obra/detalles_obra_page.dart';
+import '../pages/historial_cobros/historial_cobros_page.dart';
+import '../pages/nomina_empresa/nomina_empresa_page.dart';
+import '../pages/informe_ia/informe_ia_page.dart';
 import '../src/app_state.dart';
 
 final appRouter = GoRouter(
@@ -153,6 +157,18 @@ final appRouter = GoRouter(
       builder: (_, __) => const EditarPerfilEmpleadoPage(),
     ),
 
+    // US-NUEVA-09 CA-3: Destino del tap en notificación push
+    GoRoute(
+      path: '/empleado/historial-asistencias',
+      builder: (_, __) => const HistorialAsistenciasPage(),
+    ),
+
+    // Integración de Pagos: historial de cobros del empleado
+    GoRoute(
+      path: '/empleado/historial-cobros',
+      builder: (_, __) => const HistorialCobrosPage(),
+    ),
+
     GoRoute(
       path: '/empleado/marcar_asistencia',
       builder: (context, state) {
@@ -195,6 +211,18 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/empresa/perfil/editar',
       builder: (_, __) => const EditarPerfilEmpresaPage(),
+    ),
+
+    // Integración de Pagos: panel de nómina de la empresa
+    GoRoute(
+      path: '/empresa/nomina',
+      builder: (_, __) => const NominaEmpresaPage(),
+    ),
+
+    // US-NUEVA-06: Informe ejecutivo con IA
+    GoRoute(
+      path: '/empresa/informe-ia',
+      builder: (_, __) => const InformeIAPage(),
     ),
 
     // RUTAS INTERNAS DE EMPRESA

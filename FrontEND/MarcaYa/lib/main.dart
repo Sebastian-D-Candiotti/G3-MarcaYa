@@ -13,9 +13,16 @@ import 'providers/push_provider.dart';
 import 'providers/verificacion_cuenta_provider.dart';
 import 'router/app_router.dart';
 import 'theme/app_theme.dart';
+import 'services/auto_marking_service.dart';
+import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Inicializar servicios de segundo plano (US-NUEVA-08 y US-NUEVA-09)
+  await AutoMarkingService.initialize();
+  await NotificationService.instance.initialize(appRouter);
+
   await Firebase.initializeApp();
 
   final pushProvider = PushProvider();
@@ -39,6 +46,7 @@ void main() async {
 
   // Inicializar push de forma asíncrona sin bloquear el render inicial
   pushProvider.initialize();
+
 
   runApp(
     MultiProvider(
