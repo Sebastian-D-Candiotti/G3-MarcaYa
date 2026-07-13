@@ -38,20 +38,23 @@ module Application
         end
 
         def empleado_repo
+          entity = empleado
           r = Object.new
-          r.define_singleton_method(:find_by_id!) { |_id| empleado }
+          r.define_singleton_method(:find_by_id!) { |_id| entity }
           r
         end
 
         def parada_repo
+          entity = parada
           r = Object.new
-          r.define_singleton_method(:find_by_id!) { |_id| parada }
+          r.define_singleton_method(:find_by_id!) { |_id| entity }
           r
         end
 
         def empleado_parada_repo
+          entity = asignacion
           r = Object.new
-          r.define_singleton_method(:buscar_asignacion) { |_eid, _pid| asignacion }
+          r.define_singleton_method(:buscar_asignacion) { |_eid, _pid| entity }
           r
         end
 
@@ -139,6 +142,62 @@ module Application
 
           assert_equal 1, result[:fallidos].length
           assert_match(/invalid value|can't convert|obligatoria|formato/i, result[:fallidos].first[:error])
+        end
+
+        def test_procesa_lote_parcial_sin_descartar_registros_validos
+          saved = []
+          asistencia_repo = Object.new
+          asistencia_repo.define_singleton_method(:find_by_cliente_marcacion_id) { |_id| nil }
+          asistencia_repo.define_singleton_method(:buscar_entrada_activa) { |_eid| nil }
+          asistencia_repo.define_singleton_method(:guardar) { |record| saved << record; record }
+
+          result = build_use_case(asistencia_repo).ejecutar(
+            empleado_id: 1,
+            marcaciones: [
+              {
+                cliente_marcacion_id: "valid",
+                parada_id: 10,
+                tipo_marcacion: "ENTRADA",
+                latitud: -12.119,
+                longitud: -77.034,
+                fecha_hora_original: "2026-07-12T08:00:00Z"
+              },
+              {
+                cliente_marcacion_id: "invalid",
+                parada_id: 10,
+                tipo_marcacion: "DESCONOCIDA",
+                latitud: -12.119,
+                longitud: -77.034,
+                fecha_hora_original: "2026-07-12T09:00:00Z"
+              }
+            ]
+          )
+
+          assert_equal 1, saved.length
+          assert_equal ["valid"], result[:sincronizados].map { |item| item[:cliente_marcacion_id] }
+          assert_equal ["invalid"], result[:fallidos].map { |item| item[:cliente_marcacion_id] }
+        end
+
+        def test_rechaza_timestamp_no_iso8601
+          asistencia_repo = Object.new
+          asistencia_repo.define_singleton_method(:find_by_cliente_marcacion_id) { |_id| nil }
+
+          result = build_use_case(asistencia_repo).ejecutar(
+            empleado_id: 1,
+            marcaciones: [
+              {
+                cliente_marcacion_id: "invalid-date",
+                parada_id: 10,
+                tipo_marcacion: "ENTRADA",
+                latitud: -12.119,
+                longitud: -77.034,
+                fecha_hora_original: "12/07/2026 08:00"
+              }
+            ]
+          )
+
+          assert_equal 1, result[:fallidos].length
+          assert_match(/ISO8601/, result[:fallidos].first[:error])
         end
       end
     end

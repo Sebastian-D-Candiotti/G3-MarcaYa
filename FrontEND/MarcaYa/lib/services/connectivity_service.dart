@@ -1,17 +1,27 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 
 class ConnectivityService {
-  ConnectivityService({Connectivity? connectivity})
-      : _connectivity = connectivity ?? Connectivity();
+  ConnectivityService({
+    Connectivity? connectivity,
+    Stream<List<ConnectivityResult>>? changes,
+    Future<List<ConnectivityResult>> Function()? checker,
+  })  : _connectivity = connectivity ?? Connectivity(),
+        _changes = changes,
+        _checker = checker;
 
   final Connectivity _connectivity;
+  final Stream<List<ConnectivityResult>>? _changes;
+  final Future<List<ConnectivityResult>> Function()? _checker;
 
   Stream<bool> get onConnectionChanged {
-    return _connectivity.onConnectivityChanged.map(_hasConnection).distinct();
+    return (_changes ?? _connectivity.onConnectivityChanged)
+        .map(_hasConnection)
+        .distinct();
   }
 
   Future<bool> hasConnection() async {
-    return _hasConnection(await _connectivity.checkConnectivity());
+    final results = await (_checker?.call() ?? _connectivity.checkConnectivity());
+    return _hasConnection(results);
   }
 
   bool _hasConnection(List<ConnectivityResult> results) {
