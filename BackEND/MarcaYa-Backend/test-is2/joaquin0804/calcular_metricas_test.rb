@@ -2,7 +2,7 @@
 
 # frozen_string_literal: true
 
-require "test_helper"
+require_relative "../test_helper"
 
 class CalcularMetricasTest < Minitest::Test
   def self.test(name, &block)

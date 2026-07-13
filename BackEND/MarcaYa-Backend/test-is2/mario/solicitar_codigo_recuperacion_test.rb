@@ -11,7 +11,7 @@
 #
 # Complejidad ciclomática V(G) = 2 (1 decisión: if usuario)
 
-require_relative "test_helper"
+require_relative "../test_helper"
 
 module TestIs2
   module SolicitarCodigoRecuperacionTests
