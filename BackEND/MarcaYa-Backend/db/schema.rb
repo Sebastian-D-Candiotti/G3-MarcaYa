@@ -64,6 +64,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_07_000100) do
     t.datetime "updated_at", precision: nil, default: -> { "CURRENT_TIMESTAMP" }
   end
 
+  create_table "devices", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "fcm_token", null: false
+    t.string "platform", limit: 20, null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["fcm_token"], name: "index_devices_on_fcm_token", unique: true
+    t.index ["user_id"], name: "index_devices_on_user_id"
+  end
+
   create_table "empleado_obra", force: :cascade do |t|
     t.datetime "created_at", precision: nil, default: -> { "CURRENT_TIMESTAMP" }
     t.bigint "empleado_id", null: false
@@ -87,6 +97,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_07_000100) do
     t.string "apellido", limit: 100, null: false
     t.datetime "created_at", precision: nil, default: -> { "CURRENT_TIMESTAMP" }
     t.text "descripcion"
+    t.string "device_id"
     t.string "dni"
     t.string "estado", limit: 20, default: "activo"
     t.string "foto_url", limit: 500
@@ -103,6 +114,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_07_000100) do
     t.string "estado", limit: 20, default: "activo"
     t.string "foto_url", limit: 500
     t.string "nombre_empresa", limit: 200, null: false
+    t.boolean "otp_verificado", default: false, null: false
     t.string "ruc", limit: 20, null: false
     t.string "telefono", limit: 30
     t.datetime "updated_at", precision: nil, default: -> { "CURRENT_TIMESTAMP" }
@@ -125,10 +137,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_07_000100) do
     t.string "tipo_periodo", limit: 20, null: false
     t.datetime "updated_at", null: false
     t.integer "version", default: 1, null: false
-
-    t.check_constraint "estado::text = ANY (ARRAY['BORRADOR'::character varying, 'CERRADO'::character varying]::text[])", name: "informe_asistencias_estado_check"
-    t.check_constraint "fecha_fin >= fecha_inicio", name: "informe_asistencias_rango_fechas_check"
-    t.check_constraint "tipo_periodo::text = ANY (ARRAY['DIARIO'::character varying, 'SEMANAL'::character varying, 'MENSUAL'::character varying]::text[])", name: "informe_asistencias_tipo_periodo_check"
     t.index ["empresa_id", "tipo_periodo", "fecha_inicio", "fecha_fin"], name: "idx_informe_asistencias_cerrado_unico", unique: true, where: "((estado)::text = 'CERRADO'::text)"
     t.index ["empresa_id"], name: "index_informe_asistencias_on_empresa_id"
     t.index ["estado"], name: "index_informe_asistencias_on_estado"
@@ -136,6 +144,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_07_000100) do
     t.index ["fecha_inicio"], name: "index_informe_asistencias_on_fecha_inicio"
     t.index ["generado_por_id"], name: "index_informe_asistencias_on_generado_por_id"
     t.index ["tipo_periodo"], name: "index_informe_asistencias_on_tipo_periodo"
+    t.check_constraint "estado::text = ANY (ARRAY['BORRADOR'::character varying::text, 'CERRADO'::character varying::text])", name: "informe_asistencias_estado_check"
+    t.check_constraint "fecha_fin >= fecha_inicio", name: "informe_asistencias_rango_fechas_check"
+    t.check_constraint "tipo_periodo::text = ANY (ARRAY['DIARIO'::character varying::text, 'SEMANAL'::character varying::text, 'MENSUAL'::character varying::text])", name: "informe_asistencias_tipo_periodo_check"
   end
 
   create_table "metodo_pago", force: :cascade do |t|
@@ -259,12 +270,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_07_000100) do
     t.string "clave_hash", limit: 255, null: false
     t.datetime "codigo_expira", precision: nil
     t.string "codigo_recuperacion", limit: 10
+    t.string "codigo_verificacion_digest", limit: 255
+    t.datetime "codigo_verificacion_expira_en"
     t.string "correo", limit: 255, null: false
     t.datetime "created_at", precision: nil, default: -> { "CURRENT_TIMESTAMP" }
     t.boolean "estado", default: true
+    t.string "estado_verificacion", limit: 30, default: "ACTIVO", null: false
     t.string "rol", limit: 20, null: false
     t.datetime "updated_at", precision: nil, default: -> { "CURRENT_TIMESTAMP" }
-
+    t.datetime "verificado_en"
+    t.index ["estado_verificacion"], name: "index_usuarios_on_estado_verificacion"
     t.unique_constraint ["correo"], name: "usuarios_correo_key"
   end
 
@@ -295,6 +310,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_07_000100) do
   add_foreign_key "asistencias", "obras", name: "asistencias_obra_id_fkey"
   add_foreign_key "cronograma_de_pagos", "empleados", name: "cronograma_de_pagos_empleado_id_fkey"
   add_foreign_key "cronograma_de_pagos", "obras", name: "cronograma_de_pagos_obra_id_fkey"
+  add_foreign_key "devices", "usuarios", column: "user_id", on_delete: :cascade
   add_foreign_key "empleado_obra", "empleados", name: "empleado_obra_empleado_id_fkey"
   add_foreign_key "empleado_obra", "obras", name: "empleado_obra_obra_id_fkey"
   add_foreign_key "empleado_paradas", "empleados", name: "empleado_paradas_empleado_id_fkey", on_delete: :cascade

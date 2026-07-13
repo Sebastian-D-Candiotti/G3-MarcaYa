@@ -1,10 +1,12 @@
-import 'dart:typed_data';
-
 import 'package:flutter/foundation.dart';
 import '../models/informe_asistencia.dart';
 import '../src/api_service.dart';
 
 class InformesAsistenciaProvider extends ChangeNotifier {
+  InformesAsistenciaProvider({ApiService? apiService})
+      : _apiService = apiService ?? ApiService.instance;
+
+  final ApiService _apiService;
   List<InformeAsistencia> _historial = [];
   Map<String, dynamic>? _vistaPrevia;
   bool _cargando = false;
@@ -26,7 +28,7 @@ class InformesAsistenciaProvider extends ChangeNotifier {
     int? mes,
   }) async {
     await _run(() async {
-      final data = await ApiService.instance.listarInformesAsistencia(
+      final data = await _apiService.listarInformesAsistencia(
         tipoPeriodo: tipoPeriodo,
         estado: estado,
         anio: anio,
@@ -48,7 +50,7 @@ class InformesAsistenciaProvider extends ChangeNotifier {
     required String fechaFin,
   }) async {
     await _run(() async {
-      _vistaPrevia = await ApiService.instance.generarVistaPreviaInforme(
+      _vistaPrevia = await _apiService.generarVistaPreviaInforme(
         tipoPeriodo: tipoPeriodo,
         fechaInicio: fechaInicio,
         fechaFin: fechaFin,
@@ -62,7 +64,7 @@ class InformesAsistenciaProvider extends ChangeNotifier {
   }) async {
     InformeAsistencia? informe;
     await _run(() async {
-      final data = await ApiService.instance.cerrarMesInforme(
+      final data = await _apiService.cerrarMesInforme(
         anio: anio,
         mes: mes,
       );
@@ -77,7 +79,7 @@ class InformesAsistenciaProvider extends ChangeNotifier {
   Future<Uint8List?> descargarPdf(InformeAsistencia informe) async {
     Uint8List? bytes;
     await _run(() async {
-      bytes = await ApiService.instance.descargarInformeAsistenciaPdf(informe.id);
+      bytes = await _apiService.descargarInformeAsistenciaPdf(informe.id);
       _ultimoPdf = bytes;
       _ultimoPdfNombre = _nombrePdf(informe);
     });

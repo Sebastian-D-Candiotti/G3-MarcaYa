@@ -30,7 +30,7 @@ class Api::V1::InformesAsistenciaControllerTest < ActionDispatch::IntegrationTes
     assert_equal "DIARIO", body.dig("periodo", "tipo")
     assert_equal 2, body.dig("resumen", "total_marcaciones")
     assert_equal 1, body.dig("resumen", "tardanzas")
-    assert_equal 1, body.dig("resumen", "inasistencias")
+    assert_equal 0, body.dig("resumen", "inasistencias")
     assert_equal 8.0, body.dig("resumen", "horas_trabajadas")
   end
 
@@ -98,6 +98,68 @@ class Api::V1::InformesAsistenciaControllerTest < ActionDispatch::IntegrationTes
     get "/api/v1/informes/asistencia"
 
     assert_response :forbidden
+  end
+
+  test "weekly preview accepts seven inclusive days and rejects eight" do
+    authenticate_as :empresa_activa
+
+    post "/api/v1/informes/asistencia/generar",
+         params: {
+           tipo_periodo: "SEMANAL",
+           fecha_inicio: "2026-05-04",
+           fecha_fin: "2026-05-10"
+         },
+         as: :json
+    assert_response :ok
+    assert_equal "SEMANAL", response.parsed_body.dig("periodo", "tipo")
+
+    post "/api/v1/informes/asistencia/generar",
+         params: {
+           tipo_periodo: "SEMANAL",
+           fecha_inicio: "2026-05-04",
+           fecha_fin: "2026-05-11"
+         },
+         as: :json
+    assert_response :unprocessable_entity
+  end
+
+  test "monthly preview requires exact calendar boundaries" do
+    authenticate_as :empresa_activa
+
+    post "/api/v1/informes/asistencia/generar",
+         params: {
+           tipo_periodo: "MENSUAL",
+           fecha_inicio: "2026-05-02",
+           fecha_fin: "2026-05-31"
+         },
+         as: :json
+
+    assert_response :unprocessable_entity
+    assert_match(/primer dia/, response.parsed_body.fetch("error"))
+  end
+
+  test "period without records returns zero summary" do
+    authenticate_as :empresa_activa
+
+    post "/api/v1/informes/asistencia/generar",
+         params: {
+           tipo_periodo: "DIARIO",
+           fecha_inicio: "2030-01-01",
+           fecha_fin: "2030-01-01"
+         },
+         as: :json
+
+    assert_response :ok
+    assert_equal 0, response.parsed_body.dig("resumen", "total_marcaciones")
+    assert_equal 0.0, response.parsed_body.dig("resumen", "porcentaje_gps_valido")
+  end
+
+  test "unknown report pdf returns not found" do
+    authenticate_as :empresa_activa
+
+    get "/api/v1/informes/asistencia/999999/pdf"
+
+    assert_response :not_found
   end
 
   private

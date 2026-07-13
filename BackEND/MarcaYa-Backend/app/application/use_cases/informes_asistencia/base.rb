@@ -28,7 +28,7 @@ module Application
         end
 
         def parse_fecha(value, nombre)
-          Date.parse(value.to_s)
+          Date.iso8601(value.to_s)
         rescue Date::Error
           raise ArgumentError, "#{nombre} tiene formato invalido"
         end
