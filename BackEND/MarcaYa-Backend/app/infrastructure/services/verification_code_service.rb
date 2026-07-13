@@ -8,8 +8,8 @@ module Infrastructure
     class VerificationCodeService
       CODE_TTL_SECONDS = 10 * 60
 
-      def self.generate
-        SecureRandom.random_number(1_000_000).to_s.rjust(6, "0")
+      def self.generate(random_number: SecureRandom.random_number(1_000_000))
+        random_number.to_s.rjust(6, "0")
       end
 
       def self.digest(code)

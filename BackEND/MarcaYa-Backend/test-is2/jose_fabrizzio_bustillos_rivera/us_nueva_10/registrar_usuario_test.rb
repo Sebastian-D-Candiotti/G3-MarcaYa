@@ -1,0 +1,251 @@
+# frozen_string_literal: true
+
+require_relative "../test_helper"
+
+
+module Application
+  module UseCases
+    module Auth
+      class RegistrarUsuarioTest < Minitest::Test
+        def setup
+          @usuario_guardado = Domain::Entities::Usuario.new(
+            id: 10, correo: "nuevo@test.com",
+            clave_hash: "$2a$12$hashedpassword",
+            rol: "empleado", estado: true
+          )
+        end
+
+        def repo_usuario_sin_correo
+          r = Object.new
+          r.define_singleton_method(:exists_by_correo?) { |_| false }
+          r.define_singleton_method(:guardar) do |u|
+            Domain::Entities::Usuario.new(
+              id: 10, correo: u.correo,
+              clave_hash: u.clave_hash, rol: u.rol.valor,
+              estado: u.estado,
+              estado_verificacion: u.estado_verificacion,
+              codigo_verificacion_digest: u.codigo_verificacion_digest,
+              codigo_verificacion_expira_en: u.codigo_verificacion_expira_en
+            )
+          end
+          r
+        end
+
+        def repo_usuario_con_correo_existente
+          existente = Domain::Entities::Usuario.new(
+            id: 99,
+            correo: "existente@test.com",
+            clave_hash: "$2a$12$existing",
+            rol: "empleado",
+            estado: true,
+            estado_verificacion: Domain::Entities::Usuario::ESTADO_VERIFICACION_ACTIVO
+          )
+          r = Object.new
+          r.define_singleton_method(:exists_by_correo?) { |_| true }
+          r.define_singleton_method(:find_by_correo) { |_| existente }
+          r
+        end
+
+        def repo_empleado
+          r = Object.new
+          r.define_singleton_method(:exists_by_dni?) { |_| false }
+          r.define_singleton_method(:guardar) { |e| e }
+          r
+        end
+
+        def repo_empresa
+          r = Object.new
+          r.define_singleton_method(:exists_by_ruc?) { |_| false }
+          r.define_singleton_method(:verificar_codigo_ruc?) { |_, _| true }
+          r.define_singleton_method(:guardar) { |e| e }
+          r
+        end
+
+        def reniec_service
+          service = Object.new
+          service.define_singleton_method(:consultar) do |_dni|
+            { nombres: "Juan", apellido_paterno: "Perez", apellido_materno: "Prueba" }
+          end
+          service
+        end
+
+        def bcrypt_service
+          s = Object.new
+          s.define_singleton_method(:hash) { |_clave| "$2a$12$hashedpassword" }
+          s
+        end
+
+        def jwt_service
+          s = Object.new
+          s.define_singleton_method(:encode) { |_| "fake.jwt.token" }
+          s
+        end
+
+        def verification_code_service
+          s = Object.new
+          s.define_singleton_method(:generate) { "123456" }
+          s.define_singleton_method(:digest) { |codigo| "digest-#{codigo}" }
+          s.define_singleton_method(:expires_at) { Time.now + 600 }
+          s
+        end
+
+        def verification_mailer
+          delivery = Object.new
+          delivery.define_singleton_method(:deliver_now) { true }
+
+          message = Object.new
+          message.define_singleton_method(:codigo_verificacion) { delivery }
+
+          mailer = Object.new
+          mailer.define_singleton_method(:with) { |_| message }
+          mailer
+        end
+
+        def build_use_case(usuario_repo: repo_usuario_sin_correo,
+                           empleado_repo: repo_empleado,
+                           empresa_repo: repo_empresa,
+                           mailer: verification_mailer)
+          RegistrarUsuario.new(
+            usuario_repo: usuario_repo,
+            empleado_repo: empleado_repo,
+            empresa_repo: empresa_repo,
+            bcrypt_service: bcrypt_service,
+            jwt_service: jwt_service,
+            verification_code_service: verification_code_service,
+            verification_mailer: mailer,
+            reniec_service: reniec_service
+          )
+        end
+
+        def test_ejecutar_returns_pending_usuario_for_empleado
+          use_case = build_use_case
+
+          result = use_case.ejecutar(
+            correo: "nuevo@test.com",
+            clave: "password123",
+            rol: "empleado",
+            nombre: "Juan",
+            apellido: "Pérez",
+            dni: "12345678"
+          )
+
+          assert_instance_of Domain::Entities::Usuario, result[:usuario]
+          assert result[:requiere_verificacion]
+          refute result[:usuario].activo?
+          assert result[:usuario].pendiente_verificacion?
+        end
+
+        def test_ejecutar_raises_validacion_error_for_missing_fields
+          use_case = build_use_case
+
+          assert_raises Domain::Errors::ValidacionError do
+            use_case.ejecutar(correo: "", clave: "", rol: "", nombre: "")
+          end
+        end
+
+        def test_ejecutar_raises_validacion_error_for_duplicate_email
+          use_case = build_use_case(usuario_repo: repo_usuario_con_correo_existente)
+
+          assert_raises Domain::Errors::ValidacionError do
+            use_case.ejecutar(
+              correo: "existente@test.com",
+              clave: "password123",
+              rol: "empleado",
+              nombre: "Juan"
+            )
+          end
+        end
+
+        def test_ejecutar_creates_empresa_record_when_rol_is_empresa
+          empresa_guardada = nil
+          empresa_repo = Object.new
+          empresa_repo.define_singleton_method(:exists_by_ruc?) { |_| false }
+          empresa_repo.define_singleton_method(:guardar) do |e|
+            empresa_guardada = e
+            e
+          end
+
+          use_case = build_use_case(empresa_repo: empresa_repo)
+
+          use_case.ejecutar(
+            correo: "empresa@test.com",
+            clave: "password123",
+            rol: "empresa",
+            nombre: "Mi Empresa S.A.",
+            ruc: "20123456789"
+          )
+
+          assert_instance_of Domain::Entities::Empresa, empresa_guardada
+          assert_equal "Mi Empresa S.A.", empresa_guardada.nombre_empresa
+        end
+
+        def test_ejecutar_does_not_create_profile_for_admin_role
+          empleado_guardado = false
+          empresa_guardada = false
+
+          empleado_repo = Object.new
+          empleado_repo.define_singleton_method(:guardar) { |_| empleado_guardado = true }
+          empresa_repo_obj = Object.new
+          empresa_repo_obj.define_singleton_method(:guardar) { |_| empresa_guardada = true }
+
+          use_case = build_use_case(empleado_repo: empleado_repo, empresa_repo: empresa_repo_obj)
+
+          use_case.ejecutar(
+            correo: "admin@test.com",
+            clave: "adminpass123",
+            rol: "admin",
+            nombre: "Admin"
+          )
+
+          refute empleado_guardado, "Should not create empleado for admin"
+          refute empresa_guardada, "Should not create empresa for admin"
+        end
+
+        def test_ejecutar_sends_verification_email_once_with_expected_data
+          calls = []
+          delivery = Object.new
+          delivery.define_singleton_method(:deliver_now) { calls << :delivered; true }
+          message = Object.new
+          message.define_singleton_method(:codigo_verificacion) { delivery }
+          mailer = Object.new
+          mailer.define_singleton_method(:with) do |params|
+            calls << params
+            message
+          end
+
+          build_use_case(mailer: mailer).ejecutar(
+            correo: "nuevo@test.com",
+            clave: "password123",
+            rol: "empleado",
+            nombre: "Juan",
+            dni: "12345678"
+          )
+
+          assert_equal({ correo: "nuevo@test.com", codigo: "123456", minutos_validez: 10 }, calls.first)
+          assert_equal [:delivered], calls.drop(1)
+        end
+
+        def test_ejecutar_wraps_mail_delivery_error
+          delivery = Object.new
+          delivery.define_singleton_method(:deliver_now) { raise "mail service unavailable" }
+          message = Object.new
+          message.define_singleton_method(:codigo_verificacion) { delivery }
+          mailer = Object.new
+          mailer.define_singleton_method(:with) { |_| message }
+
+          error = assert_raises Domain::Errors::CorreoVerificacionNoEnviadoError do
+            build_use_case(mailer: mailer).ejecutar(
+              correo: "nuevo@test.com",
+              clave: "password123",
+              rol: "empleado",
+              nombre: "Juan",
+              dni: "12345678"
+            )
+          end
+
+          assert_match(/mail service unavailable/, error.message)
+        end
+      end
+    end
+  end
+end

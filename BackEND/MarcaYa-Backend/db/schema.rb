@@ -64,6 +64,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_07_000100) do
     t.datetime "updated_at", precision: nil, default: -> { "CURRENT_TIMESTAMP" }
   end
 
+  create_table "devices", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "fcm_token", null: false
+    t.string "platform", limit: 20, null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["fcm_token"], name: "index_devices_on_fcm_token", unique: true
+    t.index ["user_id"], name: "index_devices_on_user_id"
+  end
+
   create_table "empleado_obra", force: :cascade do |t|
     t.datetime "created_at", precision: nil, default: -> { "CURRENT_TIMESTAMP" }
     t.bigint "empleado_id", null: false
@@ -87,6 +97,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_07_000100) do
     t.string "apellido", limit: 100, null: false
     t.datetime "created_at", precision: nil, default: -> { "CURRENT_TIMESTAMP" }
     t.text "descripcion"
+    t.string "device_id"
     t.string "dni"
     t.string "estado", limit: 20, default: "activo"
     t.string "foto_url", limit: 500
@@ -103,6 +114,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_07_000100) do
     t.string "estado", limit: 20, default: "activo"
     t.string "foto_url", limit: 500
     t.string "nombre_empresa", limit: 200, null: false
+    t.boolean "otp_verificado", default: false, null: false
     t.string "ruc", limit: 20, null: false
     t.string "telefono", limit: 30
     t.datetime "updated_at", precision: nil, default: -> { "CURRENT_TIMESTAMP" }
@@ -201,6 +213,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_07_000100) do
 
   create_table "registro_asistencias", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.string "cliente_marcacion_id", limit: 80
     t.integer "duracion_jornada"
     t.bigint "empleado_id", null: false
     t.datetime "fecha_hora", null: false
@@ -211,6 +224,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_07_000100) do
     t.string "tipo_marcacion", limit: 10, null: false
     t.datetime "updated_at", null: false
     t.boolean "valida_gps", default: true, null: false
+    t.index ["cliente_marcacion_id"], name: "index_registro_asistencias_on_cliente_marcacion_id", unique: true, where: "(cliente_marcacion_id IS NOT NULL)"
     t.index ["empleado_id"], name: "index_registro_asistencias_on_empleado_id"
     t.index ["fecha_hora"], name: "index_registro_asistencias_on_fecha_hora"
     t.index ["parada_id"], name: "index_registro_asistencias_on_parada_id"
@@ -259,13 +273,27 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_07_000100) do
     t.string "clave_hash", limit: 255, null: false
     t.datetime "codigo_expira", precision: nil
     t.string "codigo_recuperacion", limit: 10
+    t.string "codigo_verificacion_digest", limit: 255
+    t.datetime "codigo_verificacion_expira_en"
     t.string "correo", limit: 255, null: false
     t.datetime "created_at", precision: nil, default: -> { "CURRENT_TIMESTAMP" }
     t.boolean "estado", default: true
+    t.string "estado_verificacion", limit: 30, default: "ACTIVO", null: false
     t.string "rol", limit: 20, null: false
     t.datetime "updated_at", precision: nil, default: -> { "CURRENT_TIMESTAMP" }
+    t.datetime "verificado_en"
+    t.index ["estado_verificacion"], name: "index_usuarios_on_estado_verificacion"
 
     t.unique_constraint ["correo"], name: "usuarios_correo_key"
+  end
+
+  create_table "verificaciones_ruc", force: :cascade do |t|
+    t.string "codigo", null: false
+    t.datetime "created_at", null: false
+    t.datetime "expira_at", null: false
+    t.string "ruc", null: false
+    t.datetime "updated_at", null: false
+    t.index ["ruc"], name: "index_verificaciones_ruc_on_ruc", unique: true
   end
 
   create_table "valoraciones", force: :cascade do |t|
@@ -295,6 +323,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_07_000100) do
   add_foreign_key "asistencias", "obras", name: "asistencias_obra_id_fkey"
   add_foreign_key "cronograma_de_pagos", "empleados", name: "cronograma_de_pagos_empleado_id_fkey"
   add_foreign_key "cronograma_de_pagos", "obras", name: "cronograma_de_pagos_obra_id_fkey"
+  add_foreign_key "devices", "usuarios", column: "user_id", on_delete: :cascade
   add_foreign_key "empleado_obra", "empleados", name: "empleado_obra_empleado_id_fkey"
   add_foreign_key "empleado_obra", "obras", name: "empleado_obra_obra_id_fkey"
   add_foreign_key "empleado_paradas", "empleados", name: "empleado_paradas_empleado_id_fkey", on_delete: :cascade

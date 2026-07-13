@@ -3,6 +3,10 @@ import 'package:flutter/foundation.dart';
 import '../src/api_service.dart';
 
 class VerificacionCuentaProvider extends ChangeNotifier {
+  VerificacionCuentaProvider({ApiService? apiService})
+    : _apiService = apiService ?? ApiService.instance;
+
+  final ApiService _apiService;
   bool _isLoading = false;
   String? _error;
 
@@ -17,7 +21,7 @@ class VerificacionCuentaProvider extends ChangeNotifier {
     _error = null;
 
     try {
-      final data = await ApiService.instance.verificarCuenta(
+      final data = await _apiService.verificarCuenta(
         correo: correo,
         codigo: codigo,
       );
@@ -40,7 +44,7 @@ class VerificacionCuentaProvider extends ChangeNotifier {
     _error = null;
 
     try {
-      await ApiService.instance.reenviarCodigoVerificacion(correo: correo);
+      await _apiService.reenviarCodigoVerificacion(correo: correo);
       return true;
     } on ApiException catch (e) {
       _error = _mapError(e.mensaje);

@@ -34,17 +34,21 @@ module Infrastructure
       end
 
       def impedir_modificar_cerrado
-        return unless estado_was == "CERRADO"
+        return unless estado_persistido_cerrado?
 
         errors.add(:base, "Un informe cerrado es inmutable")
         throw :abort
       end
 
       def impedir_eliminar_cerrado
-        return unless cerrado?
+        return unless estado_persistido_cerrado?
 
         errors.add(:base, "Un informe cerrado no puede eliminarse")
         throw :abort
+      end
+
+      def estado_persistido_cerrado?
+        attribute_in_database("estado") == "CERRADO"
       end
     end
   end

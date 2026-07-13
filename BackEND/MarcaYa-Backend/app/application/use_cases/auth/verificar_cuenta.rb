@@ -4,9 +4,10 @@ module Application
   module UseCases
     module Auth
       class VerificarCuenta
-        def initialize(usuario_repo:, verification_code_service:)
+        def initialize(usuario_repo:, verification_code_service:, clock: nil)
           @usuario_repo = usuario_repo
           @verification_code_service = verification_code_service
+          @clock = clock || -> { Time.respond_to?(:current) ? Time.current : Time.now }
         end
 
         def ejecutar(correo:, codigo:)
@@ -62,7 +63,7 @@ module Application
         end
 
         def current_time
-          Time.respond_to?(:current) ? Time.current : Time.now
+          @clock.call
         end
       end
     end

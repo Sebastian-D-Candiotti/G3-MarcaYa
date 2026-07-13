@@ -4,22 +4,30 @@ import 'package:sqflite/sqflite.dart';
 import '../models/marcacion_pendiente.dart';
 
 class MarcacionPendienteRepository {
+  MarcacionPendienteRepository({DatabaseFactory? factory, String? databasePath})
+    : _factory = factory,
+      _databasePath = databasePath;
+
   static const _databaseName = 'marcaya_offline.db';
-  static const _databaseVersion = 1;
+  static const _databaseVersion = 2;
   static const tableName = 'marcaciones_pendientes';
 
   Database? _database;
+  final DatabaseFactory? _factory;
+  final String? _databasePath;
 
   Future<Database> get database async {
     if (_database != null) return _database!;
 
-    final dbPath = await getDatabasesPath();
-    final path = p.join(dbPath, _databaseName);
-    _database = await openDatabase(
+    final factory = _factory ?? databaseFactory;
+    final dbPath = await factory.getDatabasesPath();
+    final path = _databasePath ?? p.join(dbPath, _databaseName);
+    _database = await factory.openDatabase(
       path,
-      version: _databaseVersion,
-      onCreate: (db, version) async {
-        await db.execute('''
+      options: OpenDatabaseOptions(
+        version: _databaseVersion,
+        onCreate: (db, version) async {
+          await db.execute('''
           CREATE TABLE $tableName (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             cliente_marcacion_id TEXT NOT NULL UNIQUE,
@@ -28,13 +36,23 @@ class MarcacionPendienteRepository {
             latitud REAL NOT NULL,
             longitud REAL NOT NULL,
             marcada_en TEXT NOT NULL,
+            is_mocked INTEGER NOT NULL DEFAULT 0,
             estado TEXT NOT NULL,
             intentos INTEGER NOT NULL DEFAULT 0,
             ultimo_error TEXT,
             creada_en TEXT NOT NULL
           )
         ''');
-      },
+        },
+        onUpgrade: (db, oldVersion, newVersion) async {
+          if (oldVersion < 2) {
+            await db.execute(
+              'ALTER TABLE $tableName '
+              'ADD COLUMN is_mocked INTEGER NOT NULL DEFAULT 0',
+            );
+          }
+        },
+      ),
     );
     return _database!;
   }
@@ -97,5 +115,10 @@ class MarcacionPendienteRepository {
       );
     }
     await batch.commit(noResult: true);
+  }
+
+  Future<void> close() async {
+    await _database?.close();
+    _database = null;
   }
 }
