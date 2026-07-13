@@ -19,7 +19,7 @@
 # Complejidad ciclomática V(G) = 5
 #   4 decisiones (raise unless/if) + 1
 
-require_relative "test_helper"
+require_relative "../test_helper"
 
 module TestIs2
   module RestablecerContrasenaTests
