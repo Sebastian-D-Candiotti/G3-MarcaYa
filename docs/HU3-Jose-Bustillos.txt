@@ -72,6 +72,9 @@ bundle exec rubocop
 Decision pendiente
 No existe una regla financiera explicita para pagar horas teoricas por tardanza o inasistencia justificada. Se implemento recalculo idempotente de cronogramas existentes usando las horas registradas actuales, sin inventar una formula nueva.
 
+AUDITORIA QA 2026-07-12
+La revision del arbol Git de esta rama comprobo que este documento es el unico archivo agregado por la rama. Los modelos, casos de uso, controladores, rutas, migraciones y pruebas enumerados arriba no existen en el commit 2143536 ni en su merge 89c5c97. Por ese motivo, las afirmaciones de implementacion y pruebas de este documento no deben usarse como evidencia hasta recuperar o volver a implementar el codigo faltante.
+
 ## 1. Arquitectura Utilizada
 Se agregaron entidades Rails Justificacion, Asistencia y CronogramaDePago; migraciones para Active Storage, estado de asistencia y tabla justificaciones; casos de uso en app/use_cases/justificaciones; controlador REST versionado; rutas protegidas; y pruebas automatizadas. No se crearon pantallas Flutter, providers ni servicios porque no era necesario para cerrar el backend y el frontend revisado inicialmente no seguia Provider/GoRouter.
 
