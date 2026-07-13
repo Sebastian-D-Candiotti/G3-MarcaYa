@@ -88,7 +88,8 @@ module Application
 
         def build_use_case(usuario_repo: repo_usuario_sin_correo,
                            empleado_repo: repo_empleado,
-                           empresa_repo: repo_empresa)
+                           empresa_repo: repo_empresa,
+                           mailer: verification_mailer)
           RegistrarUsuario.new(
             usuario_repo: usuario_repo,
             empleado_repo: empleado_repo,
@@ -96,7 +97,7 @@ module Application
             bcrypt_service: bcrypt_service,
             jwt_service: jwt_service,
             verification_code_service: verification_code_service,
-            verification_mailer: verification_mailer
+            verification_mailer: mailer
           )
         end
 
@@ -180,6 +181,49 @@ module Application
 
           refute empleado_guardado, "Should not create empleado for admin"
           refute empresa_guardada, "Should not create empresa for admin"
+        end
+
+        def test_ejecutar_sends_verification_email_once_with_expected_data
+          calls = []
+          delivery = Object.new
+          delivery.define_singleton_method(:deliver_now) { calls << :delivered; true }
+          message = Object.new
+          message.define_singleton_method(:codigo_verificacion) { delivery }
+          mailer = Object.new
+          mailer.define_singleton_method(:with) do |params|
+            calls << params
+            message
+          end
+
+          build_use_case(mailer: mailer).ejecutar(
+            correo: "nuevo@test.com",
+            clave: "password123",
+            rol: "empleado",
+            nombre: "Juan"
+          )
+
+          assert_equal({ correo: "nuevo@test.com", codigo: "123456", minutos_validez: 10 }, calls.first)
+          assert_equal [:delivered], calls.drop(1)
+        end
+
+        def test_ejecutar_wraps_mail_delivery_error
+          delivery = Object.new
+          delivery.define_singleton_method(:deliver_now) { raise "mail service unavailable" }
+          message = Object.new
+          message.define_singleton_method(:codigo_verificacion) { delivery }
+          mailer = Object.new
+          mailer.define_singleton_method(:with) { |_| message }
+
+          error = assert_raises Domain::Errors::CorreoVerificacionNoEnviadoError do
+            build_use_case(mailer: mailer).ejecutar(
+              correo: "nuevo@test.com",
+              clave: "password123",
+              rol: "empleado",
+              nombre: "Juan"
+            )
+          end
+
+          assert_match(/mail service unavailable/, error.message)
         end
       end
     end

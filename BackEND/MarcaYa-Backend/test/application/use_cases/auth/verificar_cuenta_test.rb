@@ -90,6 +90,43 @@ module Application
             use_case.ejecutar(correo: "activo@test.com", codigo: "123456")
           end
         end
+
+        def test_ejecutar_rejects_unknown_user
+          use_case = VerificarCuenta.new(
+            usuario_repo: repo(nil),
+            verification_code_service: code_service(matches: true)
+          )
+
+          assert_raises Domain::Errors::UsuarioNoEncontradoError do
+            use_case.ejecutar(correo: "missing@test.com", codigo: "123456")
+          end
+        end
+
+        def test_ejecutar_rejects_code_with_invalid_length_or_characters
+          use_case = VerificarCuenta.new(
+            usuario_repo: repo(usuario_pendiente),
+            verification_code_service: code_service(matches: true)
+          )
+
+          ["12345", "1234567", "12A456"].each do |codigo|
+            assert_raises Domain::Errors::ValidacionError do
+              use_case.ejecutar(correo: "nuevo@test.com", codigo: codigo)
+            end
+          end
+        end
+
+        def test_ejecutar_rejects_code_at_exact_expiration_time
+          now = Time.now
+          use_case = VerificarCuenta.new(
+            usuario_repo: repo(usuario_pendiente(expira_en: now)),
+            verification_code_service: code_service(matches: true),
+            clock: -> { now }
+          )
+
+          assert_raises Domain::Errors::CodigoVerificacionVencidoError do
+            use_case.ejecutar(correo: "nuevo@test.com", codigo: "123456")
+          end
+        end
       end
     end
   end
