@@ -43,6 +43,9 @@ module Application
         def repo_usuario_con_correo_existente
           r = Object.new
           r.define_singleton_method(:exists_by_correo?) { |_| true }
+          usuario_mock = Object.new
+          usuario_mock.define_singleton_method(:pendiente_verificacion?) { false }
+          r.define_singleton_method(:find_by_correo) { |_| usuario_mock }
           r
         end
 
