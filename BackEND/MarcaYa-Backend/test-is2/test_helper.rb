@@ -34,6 +34,10 @@ require_relative "../app/application/use_cases/auth/solicitar_codigo_recuperacio
 require_relative "../app/application/use_cases/auth/verificar_codigo_recuperacion"
 require_relative "../app/application/use_cases/auth/restablecer_contrasena"
 
+# ── Dependencias para CalcularMetricasPersonal ─────────────
+require_relative "../app/domain/entities/metricas_obra"
+require_relative "../app/application/use_cases/estadisticas/calcular_metricas_personal"
+
 # ── Stub del módulo Jwt (se usa en VerificarCodigoRecuperacion) ──
 # El use case llama Jwt.encode directamente, así que necesitamos
 # un stub que funcione sin Rails credentials.
