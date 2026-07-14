@@ -54,7 +54,7 @@ Rails.application.configure do
   # config.action_mailer.raise_delivery_errors = false
 
   # Set host to be used by links generated in mailer templates.
-  config.action_mailer.default_url_options = { host: "example.com" }
+  config.action_mailer.default_url_options = { host: "g3-marcaya.onrender.com", protocol: "https" }
 
   # Use SMTP if configured, fallback to Resend
   if ENV["SMTP_ADDRESS"].present? && ENV["SMTP_USERNAME"].present?
