@@ -55,17 +55,17 @@ class _VerificarOtpPageState extends State<VerificarOtpPage> {
 
       if (!mounted) return;
 
-      // Código verificado con éxito, recargamos el perfil para que el router redirija a /locked
+      // Código verificado con éxito, la cuenta se activó automáticamente
       await auth.fetchProfile();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Código OTP verificado correctamente.'),
+            content: Text('Cuenta activada correctamente. Ya podés ingresar.'),
             backgroundColor: AppColors.success,
           ),
         );
-        context.go('/locked');
+        context.go('/');
       }
     } on ApiException catch (e) {
       setState(() => _error = e.mensaje);

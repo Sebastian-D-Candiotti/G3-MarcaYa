@@ -151,6 +151,7 @@ class Api::V1::AuthController < Api::V1::BaseController
       return
     end
 
+    # Activar la empresa directamente al verificar OTP
     empresa_actualizada = Domain::Entities::Empresa.new(
       id: empresa.id,
       usuario_id: empresa.usuario_id,
@@ -160,27 +161,28 @@ class Api::V1::AuthController < Api::V1::BaseController
       direccion: empresa.direccion,
       telefono: empresa.telefono,
       foto_url: empresa.foto_url,
-      estado: empresa.estado,
+      estado: "activo",
       otp_verificado: true,
       created_at: empresa.created_at,
       updated_at: empresa.updated_at
     )
     empresa_repo.guardar(empresa_actualizada)
 
-    # ── US-NUEVA-13: Enviar correo de activación automáticamente ──
-    begin
-      usuario = Rails.configuration.di.repos[:usuario].find_by_id!(empresa.usuario_id)
-      UsuarioMailer.correo_activacion_empresa(
-        usuario.id,
-        usuario.correo,
-        empresa.nombre_empresa,
-        empresa.ruc
-      ).deliver_now
-    rescue StandardError => e
-      Rails.logger.error("Error al enviar correo de activación: #{e.message}")
-    end
+    # Activar también el usuario asociado
+    usuario = Rails.configuration.di.repos[:usuario].find_by_id!(empresa.usuario_id)
+    usuario_activo = Domain::Entities::Usuario.new(
+      id: usuario.id,
+      correo: usuario.correo,
+      clave_hash: usuario.clave_hash,
+      rol: usuario.rol,
+      estado: true,
+      estado_verificacion: usuario.estado_verificacion,
+      codigo_verificacion_digest: usuario.codigo_verificacion_digest,
+      codigo_verificacion_expira_en: usuario.codigo_verificacion_expira_en
+    )
+    Rails.configuration.di.repos[:usuario].guardar(usuario_activo)
 
-    render json: { mensaje: "Código OTP verificado correctamente. Se ha enviado un correo de activación a tu cuenta." }
+    render json: { mensaje: "Cuenta activada correctamente. Ya podés ingresar." }
   end
 
   def consultar_reniec
