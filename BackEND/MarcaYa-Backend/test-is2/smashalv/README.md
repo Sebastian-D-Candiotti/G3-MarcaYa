@@ -11,7 +11,7 @@ Esta carpeta centraliza en `main` las pruebas de las historias desarrolladas y a
 | US-NUEVA-02 / HU3 | `us_nueva_02/README.md` | No existe implementacion para probar | No ejecutada |
 | US-NUEVA-16 | `us_nueva_16/` | `FrontEND/MarcaYa/test-is2/jose_fabrizzio_bustillos_rivera/us_nueva_16/` | Pruebas disponibles |
 
-Las matrices, resultados, defectos y casos de caja negra estan en `evidencias/`. El informe general esta en `INFORME_CONSOLIDADO_QA_RELEASE_2.md` y la ejecucion realizada directamente sobre `main` esta en `RESULTADOS_EJECUCION_MAIN.md`.
+Las matrices, resultados, defectos y casos de caja negra estan en `evidencias/`. Las pruebas estructurales adicionales estan documentadas en `PRUEBAS_CAJA_BLANCA.md`. El informe general esta en `INFORME_CONSOLIDADO_QA_RELEASE_2.md` y la ejecucion realizada directamente sobre `main` esta en `RESULTADOS_EJECUCION_MAIN.md`.
 
 ## Ejecutar backend
 
@@ -19,9 +19,11 @@ Desde `BackEND/MarcaYa-Backend` y usando exclusivamente la base de test:
 
 ```powershell
 $env:RAILS_ENV = "test"
-bin/rails test test-is2/jose_fabrizzio_bustillos_rivera/us_nueva_10
-bin/rails test test-is2/jose_fabrizzio_bustillos_rivera/us_nueva_15
-bin/rails test test-is2/jose_fabrizzio_bustillos_rivera/us_nueva_16
+bin/rails test test-is2/smashalv/us_nueva_10
+bin/rails test test-is2/smashalv/us_nueva_15
+bin/rails test test-is2/smashalv/us_nueva_16
+bin/rails test test-is2/smashalv/us_nueva_10/verificar_cuenta_caja_blanca_test.rb `
+  test-is2/smashalv/us_nueva_15/sincronizar_marcaciones_offline_caja_blanca_test.rb
 ```
 
 ## Ejecutar frontend
