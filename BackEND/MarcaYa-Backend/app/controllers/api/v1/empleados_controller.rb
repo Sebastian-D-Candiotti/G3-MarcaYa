@@ -7,6 +7,7 @@ class Api::V1::EmpleadosController < Api::V1::BaseController
     render json: empleados.map { |e|
       {
         id: e.id,
+        usuario_id: e.usuario_id,
         nombre: e.nombre,
         apellido: e.apellido,
         dni: e.dni,

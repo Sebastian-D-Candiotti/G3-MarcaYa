@@ -129,14 +129,14 @@ class _AgregarParadaPageState extends State<AgregarParadaPage> {
         nombre: _nombreCtrl.text,
         latitud: latitud!,
         longitud: longitud!,
-        radioMetros: radioMetros,
+        radioMetros: radioMetros.round(),
       );
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Parada creada correctamente')),
       );
-      context.pop();
+      context.pop(true);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

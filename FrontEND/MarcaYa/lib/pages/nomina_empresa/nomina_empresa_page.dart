@@ -10,6 +10,7 @@
 import 'package:flutter/material.dart';
 
 import '../../components/bottom_navbar.dart';
+import '../../components/empty_state_placeholder.dart';
 import '../../src/api_service.dart';
 
 class NominaEmpresaPage extends StatefulWidget {
@@ -485,22 +486,24 @@ class _NominaEmpresaPageState extends State<NominaEmpresaPage> {
           children: [
             Icon(Icons.calendar_today_rounded, size: 16, color: _azul),
             const SizedBox(width: 8),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(fontSize: 10, color: Color(0xFF9CA3AF)),
-                ),
-                Text(
-                  _formatFecha(fecha),
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: fecha != null ? _azul : const Color(0xFF9CA3AF),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(fontSize: 10, color: Color(0xFF9CA3AF)),
                   ),
-                ),
-              ],
+                  Text(
+                    _formatFecha(fecha),
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: fecha != null ? _azul : const Color(0xFF9CA3AF),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -551,14 +554,11 @@ class _NominaEmpresaPageState extends State<NominaEmpresaPage> {
           const SizedBox(height: 12),
 
           if (_cronogramas.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 20),
-              child: Center(
-                child: Text(
-                  'No hay registros. Genera una planilla primero.',
-                  style: TextStyle(color: Color(0xFF9CA3AF)),
-                ),
-              ),
+            const EmptyStatePlaceholder(
+              isCompact: true,
+              icon: Icons.payments_outlined,
+              title: 'Planilla no calculada',
+              description: 'Elige un rango de fechas en la parte superior y presiona "Calcular Planilla" para ver los detalles de pago.',
             )
           else
             SingleChildScrollView(

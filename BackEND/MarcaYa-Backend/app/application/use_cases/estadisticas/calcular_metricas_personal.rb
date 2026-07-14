@@ -17,6 +17,9 @@ module Application
         def call(obra_id:, periodo:)
           obra = @obra_repo.find_by_id!(obra_id)
           paradas = @parada_repo.listar_por_obra(obra_id)
+
+          periodo = Time.current.strftime("%Y-%m") if periodo.nil? || periodo.empty?
+
           return empty_metrics(obra, periodo) if paradas.empty?
 
           parada_ids = paradas.map(&:id)

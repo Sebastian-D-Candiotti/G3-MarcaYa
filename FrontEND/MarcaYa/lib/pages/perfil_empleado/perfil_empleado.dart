@@ -278,6 +278,34 @@ class _PerfilEmpleadoPageState extends State<PerfilEmpleadoPage> {
                     ),
                   ],
 
+                  if (empleado.dni != null && empleado.dni!.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    _infoCard(
+                      icon: Icons.badge_outlined,
+                      title: 'DNI',
+                      subtitle: empleado.dni!,
+                    ),
+                  ],
+
+                  if (empleado.fechaRegistro != null) ...[
+                    const SizedBox(height: 12),
+                    _infoCard(
+                      icon: Icons.calendar_today_outlined,
+                      title: 'Miembro desde',
+                      subtitle:
+                          "${empleado.fechaRegistro!.day.toString().padLeft(2, '0')}/${empleado.fechaRegistro!.month.toString().padLeft(2, '0')}/${empleado.fechaRegistro!.year}",
+                    ),
+                  ],
+
+                  if (empleado.deviceId != null && empleado.deviceId!.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    _infoCard(
+                      icon: Icons.phonelink_setup_outlined,
+                      title: 'ID de Dispositivo Vinculado',
+                      subtitle: empleado.deviceId!,
+                    ),
+                  ],
+
                   // ── MARCACIÓN AUTOMÁTICA ────────────────────
                   if (auth.userRole == 'empleado' &&
                       empleado.rol == UserRole.employee) ...[

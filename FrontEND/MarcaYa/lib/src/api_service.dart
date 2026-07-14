@@ -411,7 +411,7 @@ class ApiService {
     required String nombre,
     required double latitud,
     required double longitud,
-    required double radioMetros,
+    required int radioMetros,
   }) async {
     final res = await _client.post(
       Uri.parse('$kBaseUrl/obras/$obraId/paradas'),
@@ -439,7 +439,7 @@ class ApiService {
     String? nombre,
     double? latitud,
     double? longitud,
-    double? radioMetros,
+    int? radioMetros,
   }) async {
     final body = <String, dynamic>{};
     if (nombre != null) body['nombre'] = nombre;
@@ -867,6 +867,28 @@ class ApiService {
       }),
     );
     _parsearRespuesta(res);
+  }
+
+  Future<List<dynamic>> obtenerValoraciones(int usuarioId) async {
+    final res = await _client.get(
+      Uri.parse('$kBaseUrl/valoraciones/$usuarioId'),
+      headers: await _headers(),
+    );
+    if (res.statusCode >= 400) return [];
+    return jsonDecode(res.body) as List<dynamic>;
+  }
+
+  Future<Map<String, dynamic>> obtenerPromedioValoracion(int usuarioId) async {
+    final res = await _client.get(
+      Uri.parse('$kBaseUrl/valoraciones/$usuarioId/promedio'),
+      headers: await _headers(),
+    );
+    if (res.statusCode >= 400) return {'promedio': 0.0, 'total': 0};
+    final decoded = jsonDecode(res.body);
+    if (decoded is Map<String, dynamic>) {
+      return decoded;
+    }
+    return {'promedio': 0.0, 'total': 0};
   }
 
   // ════════════════════════════════════════════════════════════

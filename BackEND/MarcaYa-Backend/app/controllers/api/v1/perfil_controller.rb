@@ -62,7 +62,8 @@ class Api::V1::PerfilController < Api::V1::BaseController
       ruc: empresa&.ruc,
       foto_url: empresa&.foto_url,
       estado: empresa&.estado,
-      otp_verificado: empresa&.otp_verificado
+      otp_verificado: empresa&.otp_verificado,
+      created_at: usuario.created_at
     }
   end
 
@@ -78,7 +79,10 @@ class Api::V1::PerfilController < Api::V1::BaseController
       apellido: empleado&.apellido,
       descripcion: empleado&.descripcion,
       telefono: empleado&.telefono,
-      foto_url: empleado&.foto_url
+      foto_url: empleado&.foto_url,
+      dni: empleado&.dni,
+      device_id: empleado&.device_id,
+      created_at: usuario.created_at
     }
   end
 

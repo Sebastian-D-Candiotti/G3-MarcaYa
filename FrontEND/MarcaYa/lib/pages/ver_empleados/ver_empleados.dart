@@ -107,7 +107,7 @@ class _SolicitudesPageState extends State<SolicitudesPage> {
                             context.push(
                               '/perfil-publico',
                               extra: {
-                                'usuarioId': empleado['id']
+                                'usuarioId': empleado['usuario_id']
                               },
                             );
                           },

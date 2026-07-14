@@ -13,6 +13,7 @@ class Empleado {
   final int asistencias;
   final int tardanzas;
   EstadoEmpleado estado;
+  final int? usuarioId;
 
   Empleado({
     required this.id,
@@ -23,5 +24,6 @@ class Empleado {
     required this.asistencias,
     required this.tardanzas,
     this.estado = EstadoEmpleado.activo,
+    this.usuarioId,
   });
 }

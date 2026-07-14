@@ -97,10 +97,15 @@ class _ParadasPorObraPageState extends State<ParadasPorObraPage> {
       appBar: AppBar(title: Text(title)),
       body: _buildBody(),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push(
-          '/empresa/paradas/agregar',
-          extra: widget.obraId,
-        ),
+        onPressed: () async {
+          final res = await context.push(
+            '/empresa/paradas/agregar',
+            extra: widget.obraId,
+          );
+          if (res == true) {
+            _cargarParadas();
+          }
+        },
         child: const Icon(Icons.add),
       ),
       bottomNavigationBar: const BottomNavbar(
@@ -161,7 +166,12 @@ class _ParadasPorObraPageState extends State<ParadasPorObraPage> {
               ),
               const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: () => context.push('/empresa/paradas/agregar', extra: widget.obraId),
+                onPressed: () async {
+                  final res = await context.push('/empresa/paradas/agregar', extra: widget.obraId);
+                  if (res == true) {
+                    _cargarParadas();
+                  }
+                },
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   shape: RoundedRectangleBorder(
@@ -199,10 +209,15 @@ class _ParadasPorObraPageState extends State<ParadasPorObraPage> {
                     ),
                     IconButton(
                       icon: const Icon(Icons.edit, size: 20),
-                      onPressed: () => context.push(
-                        '/empresa/paradas/editar',
-                        extra: parada,
-                      ),
+                      onPressed: () async {
+                        final res = await context.push(
+                          '/empresa/paradas/editar',
+                          extra: parada,
+                        );
+                        if (res == true) {
+                          _cargarParadas();
+                        }
+                      },
                     ),
                     IconButton(
                       icon: const Icon(Icons.delete, size: 20, color: Colors.red),

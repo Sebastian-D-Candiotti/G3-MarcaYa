@@ -68,7 +68,7 @@ module Api
         obra_ids = obras.pluck(:id)
 
         # Obtener asistencias válidas en el período
-        asistencias = Asistencia.where(obra_id: obra_ids)
+        asistencias = ::Infrastructure::Orm::AsistenciaRecord.where(obra_id: obra_ids)
                                  .where(fecha: periodo_inicio..periodo_fin)
 
         # Agrupar por empleado + obra

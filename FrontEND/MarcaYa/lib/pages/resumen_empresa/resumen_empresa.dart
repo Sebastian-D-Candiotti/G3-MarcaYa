@@ -6,6 +6,7 @@ import '../../providers/alertas_ausencia_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../src/api_service.dart';
 import '../../theme/app_theme.dart';
+import '../../components/empty_state_placeholder.dart';
 
 class ResumenEmpresaPage extends StatefulWidget {
   const ResumenEmpresaPage({super.key});
@@ -284,16 +285,11 @@ class _ResumenEmpresaPageState extends State<ResumenEmpresaPage> {
                   const SizedBox(height: 12),
 
                   if (_actividadReciente.isEmpty)
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Center(
-                          child: Text(
-                            'Sin actividad reciente hoy',
-                            style: TextStyle(color: Colors.grey.shade500),
-                          ),
-                        ),
-                      ),
+                    const EmptyStatePlaceholder(
+                      isCompact: true,
+                      icon: Icons.history,
+                      title: 'Sin actividad hoy',
+                      description: 'Las marcaciones en tiempo real aparecerán aquí apenas ocurran.',
                     )
                   else
                     Card(
@@ -413,18 +409,24 @@ class _ResumenEmpresaPageState extends State<ResumenEmpresaPage> {
     final pendientes = alertasProv.alertasPendientes;
 
     if (pendientes.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 4),
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.green.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.green.withValues(alpha: 0.2)),
+        ),
         child: Row(
           children: [
-            Icon(Icons.check_circle, size: 16, color: AppColors.success),
-            const SizedBox(width: 6),
-            const Text(
-              'Sin alertas de ausencia',
-              style: TextStyle(
-                color: AppColors.success,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
+            const Icon(Icons.check_circle_outline, color: Colors.green),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('¡Todo en orden!', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+                  Text('No hay alertas de ausentismo reportadas el día de hoy.', style: TextStyle(fontSize: 12, color: Colors.green.shade700)),
+                ],
               ),
             ),
           ],

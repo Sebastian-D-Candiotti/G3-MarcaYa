@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../components/bottom_navbar.dart';
+import '../../components/empty_state_placeholder.dart';
 import '../../src/api_service.dart';
 import '../../providers/auth_provider.dart';
 
@@ -280,7 +281,13 @@ class _VerSolicitudesPageState extends State<VerSolicitudesPage> {
     return Scaffold(
       appBar: AppBar(title: const Text('Solicitudes de ingreso')),
       body: _solicitudes.isEmpty
-          ? const Center(child: Text('No hay solicitudes pendientes'))
+          ? EmptyStatePlaceholder(
+              icon: Icons.person_add_disabled_outlined,
+              title: 'Sin solicitudes de ingreso',
+              description: 'No tienes nuevas solicitudes de trabajadores pendientes de aprobación.',
+              actionLabel: 'Refrescar',
+              onActionPressed: _cargarSolicitudes,
+            )
           : ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         itemCount: _solicitudes.length,

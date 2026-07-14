@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../components/bottom_navbar.dart';
 import '../../src/api_service.dart';
+import '../../theme/app_theme.dart';
 
 class HistorialCobrosPage extends StatefulWidget {
   const HistorialCobrosPage({super.key});
@@ -18,7 +19,6 @@ class HistorialCobrosPage extends StatefulWidget {
 
 class _HistorialCobrosPageState extends State<HistorialCobrosPage> {
   // ── Colores ─────────────────────────────────────────────────
-  static const Color _azul = Color(0xFF0B4F7A);
   static const Color _verde = Color(0xFF38A3A5);
   static const Color _naranja = Color(0xFFF59E0B);
   static const Color _rojo = Color(0xFFE53935);
@@ -127,14 +127,12 @@ class _HistorialCobrosPageState extends State<HistorialCobrosPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text(
           'Historial de Cobros',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: _azul,
-        foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
@@ -184,7 +182,7 @@ class _HistorialCobrosPageState extends State<HistorialCobrosPage> {
                 onPressed: _cargarCronograma,
                 icon: const Icon(Icons.refresh),
                 label: const Text('Reintentar'),
-                style: ElevatedButton.styleFrom(backgroundColor: _azul),
+                style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
               ),
             ],
           ),
@@ -200,23 +198,23 @@ class _HistorialCobrosPageState extends State<HistorialCobrosPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               const Icon(Icons.account_balance_wallet_outlined,
-                  size: 64, color: Color(0xFFBDBDBD)),
+                  size: 64, color: AppColors.textSecondary),
               const SizedBox(height: 16),
               const Text(
                 'No hay cobros registrados',
-                style: TextStyle(fontSize: 17, color: Color(0xFF6B7280), fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 17, color: AppColors.textPrimary, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               const Text(
                 'Tus pagos aparecerán aquí cuando la empresa\ngenere la planilla',
-                style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+                style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () => context.go('/empleado'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _azul,
+                  backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   shape: RoundedRectangleBorder(
@@ -233,7 +231,7 @@ class _HistorialCobrosPageState extends State<HistorialCobrosPage> {
 
     return RefreshIndicator(
       onRefresh: _cargarCronograma,
-      color: _azul,
+      color: AppColors.primary,
       child: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         children: [
@@ -242,12 +240,12 @@ class _HistorialCobrosPageState extends State<HistorialCobrosPage> {
           const SizedBox(height: 16),
 
           // ── Lista de cronogramas ─────────────────────────────
-          Text(
+          const Text(
             'Detalle por período',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: _azul,
+              color: AppColors.primary,
             ),
           ),
           const SizedBox(height: 10),
@@ -263,14 +261,14 @@ class _HistorialCobrosPageState extends State<HistorialCobrosPage> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF0B4F7A), Color(0xFF1E9FB2)],
+          colors: [AppColors.primary, AppColors.primaryHover],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: _azul.withValues(alpha: 0.3),
+            color: AppColors.primary.withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -385,15 +383,15 @@ class _HistorialCobrosPageState extends State<HistorialCobrosPage> {
             // Período + estado
             Row(
               children: [
-                Icon(Icons.date_range_rounded, size: 18, color: _azul),
+                const Icon(Icons.date_range_rounded, size: 18, color: AppColors.primary),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
                     periodo,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: _azul,
+                      color: AppColors.primary,
                     ),
                   ),
                 ),
@@ -406,11 +404,11 @@ class _HistorialCobrosPageState extends State<HistorialCobrosPage> {
             // Obra
             Row(
               children: [
-                const Icon(Icons.business_outlined, size: 14, color: Color(0xFF9CA3AF)),
+                const Icon(Icons.business_outlined, size: 14, color: AppColors.textSecondary),
                 const SizedBox(width: 6),
                 Text(
                   obraNombre,
-                  style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+                  style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
                 ),
               ],
             ),
@@ -469,19 +467,19 @@ class _HistorialCobrosPageState extends State<HistorialCobrosPage> {
         ),
         child: Column(
           children: [
-            Icon(icono, size: 16, color: _azul),
+            Icon(icono, size: 16, color: AppColors.primary),
             const SizedBox(height: 4),
             Text(
               valor,
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF1F2937),
+                color: AppColors.textPrimary,
               ),
             ),
             Text(
               label,
-              style: const TextStyle(fontSize: 10, color: Color(0xFF9CA3AF)),
+              style: const TextStyle(fontSize: 10, color: AppColors.textSecondary),
             ),
           ],
         ),

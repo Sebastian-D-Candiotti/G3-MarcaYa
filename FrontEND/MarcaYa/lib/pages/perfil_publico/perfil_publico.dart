@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../src/api_service.dart';
+import '../../theme/app_theme.dart';
 
 class PerfilPublicoPage extends StatefulWidget {
   final int usuarioId;
@@ -15,6 +16,9 @@ class _PerfilPublicoPageState extends State<PerfilPublicoPage> {
   Map<String, dynamic>? usuario;
   List<dynamic> _misSolicitudes = [];
   List<dynamic> _misObras = [];
+  List<dynamic> _valoraciones = [];
+  double _promedio = 0.0;
+  int _totalValoraciones = 0;
   bool cargando = true;
 
   @override
@@ -44,10 +48,26 @@ class _PerfilPublicoPageState extends State<PerfilPublicoPage> {
         }
       } catch (_) {}
 
+      // Cargar valoraciones de la empresa
+      List<dynamic> valoraciones = [];
+      double promedio = 0.0;
+      int totalVal = 0;
+      if (data != null && data['rol'] == 'empresa') {
+        try {
+          valoraciones = await ApiService.instance.obtenerValoraciones(widget.usuarioId);
+          final promData = await ApiService.instance.obtenerPromedioValoracion(widget.usuarioId);
+          promedio = double.tryParse(promData['promedio']?.toString() ?? '0.0') ?? 0.0;
+          totalVal = int.tryParse(promData['total']?.toString() ?? '0') ?? 0;
+        } catch (_) {}
+      }
+
       setState(() {
         usuario = data;
         _misSolicitudes = solicitudes;
         _misObras = obras;
+        _valoraciones = valoraciones;
+        _promedio = promedio;
+        _totalValoraciones = totalVal;
         cargando = false;
       });
     } catch (e) {
@@ -239,114 +259,209 @@ class _PerfilPublicoPageState extends State<PerfilPublicoPage> {
 
             const SizedBox(height: 20),
 
-            // ESTRELLAS
+            // ESTRELLAS Y VALORACIÓN
             if (usuario!['rol'] == 'empresa')
               Column(
                 children: [
-
                   const Text(
                     'Valoración',
                     style: TextStyle(
                       fontSize: 18,
-                      fontWeight:
-                      FontWeight.bold,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-
-                  const SizedBox(height: 10),
-
+                  const SizedBox(height: 6),
                   Row(
-                    mainAxisAlignment:
-                    MainAxisAlignment
-                        .center,
-                    children:
-                    List.generate(
-                      5,
-                          (_) => const Icon(
-                        Icons.star,
-                        color:
-                        Colors.amber,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        _promedio.toStringAsFixed(1),
+                        style: const TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: List.generate(5, (index) {
+                              return Icon(
+                                index < _promedio.round() ? Icons.star : Icons.star_border,
+                                color: Colors.amber,
+                                size: 20,
+                              );
+                            }),
+                          ),
+                          Text(
+                            '($_totalValoraciones valoraciones)',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  if (Provider.of<AuthProvider>(context, listen: false).userRole == 'empleado') ...[
+                    const SizedBox(height: 12),
+                    ElevatedButton.icon(
+                      onPressed: _mostrarDialogoCalificar,
+                      icon: const Icon(Icons.rate_review_outlined),
+                      label: const Text('Calificar Empresa'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ],
               ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
             // OBRAS
             if (usuario!['rol'] == 'empresa') ...[
-              if (usuario!['obras'] != null) ...[
-                const Text(
-                  'Obras actuales',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+              if (usuario!['obras'] != null && (usuario!['obras'] as List).isNotEmpty) ...[
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Obras de la Empresa',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                 ),
-
-                const SizedBox(height: 10),
-
-                ...List<Widget>.from(
-                  (usuario!['obras'] as List).map(
-                        (obra) => Card(
-                          child: ListTile(
-                            title: Text(obra['nombre'] ?? ''),
-                            subtitle: Text(obra['codigo_obra'] ?? ''),
-                          ),
+                const SizedBox(height: 12),
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 1.4,
+                  ),
+                  itemCount: (usuario!['obras'] as List).length,
+                  itemBuilder: (context, index) {
+                    final obra = (usuario!['obras'] as List)[index] as Map<String, dynamic>;
+                    return Container(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [AppColors.primary, Color(0xFF22577A)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                  ),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.15),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Icon(Icons.construction_rounded, color: Colors.white, size: 24),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                obra['nombre'] ?? 'Obra',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Código: ${obra['codigo_obra'] ?? ''}',
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.8),
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
               ],
 
               // BOTÓN SOLICITAR INGRESO — UNO SOLO PARA LA EMPRESA
-              _buildSolicitarIngresoBoton(usuario?['empresa_id'] as int?),
+              SizedBox(
+                width: double.infinity,
+                child: _buildSolicitarIngresoBoton(usuario?['empresa_id'] as int?),
+              ),
             ],
 
-            const SizedBox(height: 25),
+            const SizedBox(height: 24),
 
             // COMENTARIOS
-            if (usuario!['comentarios'] != null &&
-                (usuario!['comentarios']
-                as List)
-                    .isNotEmpty)
+            if (_valoraciones.isNotEmpty)
               Column(
-                crossAxisAlignment:
-                CrossAxisAlignment
-                    .start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
                   const Text(
-                    'Comentarios',
+                    'Reseñas de Colaboradores',
                     style: TextStyle(
                       fontSize: 18,
-                      fontWeight:
-                      FontWeight.bold,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
                     ),
                   ),
-
                   const SizedBox(height: 10),
-
-                  ...List<Widget>.from(
-                    (usuario!['comentarios']
-                    as List)
-                        .map(
-                          (c) =>
-                          Card(
-                            child:
-                            ListTile(
-                              title: Text(
-                                c['empleado'] ??
-                                    'Anónimo',
-                              ),
-                              subtitle:
-                              Text(
-                                c['comentario'] ??
-                                    '',
-                              ),
+                  ..._valoraciones.map(
+                    (v) => Card(
+                      margin: const EdgeInsets.symmetric(vertical: 6),
+                      child: ListTile(
+                        leading: const CircleAvatar(
+                          backgroundColor: Color(0xFFE2E8F0),
+                          child: Icon(Icons.person, color: AppColors.textSecondary),
+                        ),
+                        title: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Colaborador #${v['empleadoId'] ?? ''}',
+                              style: const TextStyle(fontWeight: FontWeight.bold),
                             ),
+                            Row(
+                              children: List.generate(5, (index) {
+                                return Icon(
+                                  index < (v['puntuacion'] ?? 0) ? Icons.star : Icons.star_border,
+                                  color: Colors.amber,
+                                  size: 16,
+                                );
+                              }),
+                            ),
+                          ],
+                        ),
+                        subtitle: Padding(
+                          padding: const EdgeInsets.only(top: 6.0),
+                          child: Text(
+                            v['comentario'] ?? '',
+                            style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
                           ),
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -418,6 +533,103 @@ class _PerfilPublicoPageState extends State<PerfilPublicoPage> {
             SnackBar(content: Text('Error al enviar solicitud: $e')),
           );
         }
+      },
+    );
+  }
+
+  void _mostrarDialogoCalificar() {
+    int puntuacion = 5;
+    final comentarioCtrl = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: const Text('Calificar Empresa'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('¿Cómo calificarías tu experiencia con esta empresa?'),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (index) {
+                      final starVal = index + 1;
+                      return IconButton(
+                        icon: Icon(
+                          starVal <= puntuacion ? Icons.star : Icons.star_border,
+                          color: Colors.amber,
+                          size: 32,
+                        ),
+                        onPressed: () {
+                          setDialogState(() {
+                            puntuacion = starVal;
+                          });
+                        },
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: comentarioCtrl,
+                    maxLines: 3,
+                    decoration: const InputDecoration(
+                      hintText: 'Escribe tu comentario aquí...',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Cancelar'),
+                ),
+                FilledButton(
+                  onPressed: () async {
+                    if (comentarioCtrl.text.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Por favor escribe un comentario')),
+                      );
+                      return;
+                    }
+                    try {
+                      final companyId = int.tryParse(usuario!['empresa_id']?.toString() ?? '');
+                      if (companyId == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Error: No se encontró el ID de la empresa')),
+                        );
+                        return;
+                      }
+
+                      await ApiService.instance.crearValoracion(
+                        empresaId: companyId,
+                        puntuacion: puntuacion,
+                        comentario: comentarioCtrl.text,
+                      );
+
+                      Navigator.pop(ctx);
+                      cargarPerfil(); // reload ratings list
+                      
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Reseña guardada correctamente')),
+                      );
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error al guardar reseña: $e')),
+                      );
+                    }
+                  },
+                  child: const Text('Enviar'),
+                ),
+              ],
+            );
+          },
+        );
       },
     );
   }

@@ -13,6 +13,7 @@ import 'package:go_router/go_router.dart';
 import '../../components/bottom_navbar.dart';
 import '../../providers/auth_provider.dart';
 import '../../src/api_service.dart';
+import '../../theme/app_theme.dart';
 
 class HistorialAsistenciasPage extends StatefulWidget {
   const HistorialAsistenciasPage({super.key});
@@ -24,7 +25,6 @@ class HistorialAsistenciasPage extends StatefulWidget {
 
 class _HistorialAsistenciasPageState extends State<HistorialAsistenciasPage> {
   // ── colores de marca ────────────────────────────────────────
-  static const Color _azul = Color(0xFF0B4F7A);
   static const Color _verde = Color(0xFF38A3A5);
   static const Color _naranja = Color(0xFFF59E0B);
   static const Color _rojo = Color(0xFFE53935);
@@ -120,7 +120,7 @@ class _HistorialAsistenciasPageState extends State<HistorialAsistenciasPage> {
   }
 
   Color _colorTipo(String tipo) {
-    return tipo.toLowerCase().contains('entrada') ? _azul : _verde;
+    return tipo.toLowerCase().contains('entrada') ? AppColors.primary : _verde;
   }
 
   IconData _iconoTipo(String tipo) {
@@ -134,14 +134,12 @@ class _HistorialAsistenciasPageState extends State<HistorialAsistenciasPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text(
           'Historial de Marcaciones',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: _azul,
-        foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
@@ -191,7 +189,7 @@ class _HistorialAsistenciasPageState extends State<HistorialAsistenciasPage> {
                 onPressed: _cargarHistorial,
                 icon: const Icon(Icons.refresh),
                 label: const Text('Reintentar'),
-                style: ElevatedButton.styleFrom(backgroundColor: _azul),
+                style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
               ),
             ],
           ),
@@ -207,22 +205,22 @@ class _HistorialAsistenciasPageState extends State<HistorialAsistenciasPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               const Icon(Icons.history_toggle_off_rounded,
-                  size: 64, color: Color(0xFFBDBDBD)),
+                  size: 64, color: AppColors.textSecondary),
               const SizedBox(height: 16),
               const Text(
                 'No hay marcaciones registradas',
-                style: TextStyle(fontSize: 17, color: Color(0xFF6B7280), fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 17, color: AppColors.textPrimary, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               const Text(
                 'Tus marcaciones aparecerán aquí',
-                style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+                style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
               ),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () => context.go('/empleado'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _azul,
+                  backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   shape: RoundedRectangleBorder(
@@ -239,7 +237,7 @@ class _HistorialAsistenciasPageState extends State<HistorialAsistenciasPage> {
 
     return RefreshIndicator(
       onRefresh: _cargarHistorial,
-      color: _azul,
+      color: AppColors.primary,
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         itemCount: _registros.length,
@@ -342,7 +340,7 @@ class _HistorialAsistenciasPageState extends State<HistorialAsistenciasPage> {
 
                   // Hora de entrada
                   _infoRow(Icons.login_rounded, 'Entrada: $horaEntrada',
-                      color: _azul),
+                      color: AppColors.primary),
 
                   // Hora de salida (si existe)
                   if (registro['hora_salida'] != null)
@@ -397,14 +395,14 @@ class _HistorialAsistenciasPageState extends State<HistorialAsistenciasPage> {
       padding: const EdgeInsets.only(top: 3),
       child: Row(
         children: [
-          Icon(icon, size: 14, color: color ?? const Color(0xFF9CA3AF)),
+          Icon(icon, size: 14, color: color ?? AppColors.textSecondary),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
               texto,
               style: TextStyle(
                 fontSize: 13,
-                color: color ?? const Color(0xFF6B7280),
+                color: color ?? AppColors.textSecondary,
               ),
               overflow: TextOverflow.ellipsis,
             ),

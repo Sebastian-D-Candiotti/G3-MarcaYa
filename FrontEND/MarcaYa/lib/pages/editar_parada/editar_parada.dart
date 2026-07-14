@@ -70,14 +70,14 @@ class _EditarParadaPageState extends State<EditarParadaPage> {
         nombre: _nombreCtrl.text,
         latitud: latitud!,
         longitud: longitud!,
-        radioMetros: radioMetros,
+        radioMetros: radioMetros.round(),
       );
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Parada actualizada')),
       );
-      context.pop();
+      context.pop(true);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

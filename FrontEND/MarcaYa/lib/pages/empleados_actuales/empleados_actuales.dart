@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../components/bottom_navbar.dart';
+import '../../components/empty_state_placeholder.dart';
 import '../../src/api_service.dart';
 import '../ver_empleados/empleado_model.dart';
 import '../ver_empleados/components/empleado_card.dart';
@@ -130,6 +131,13 @@ class _EmpleadosActualesPageState extends State<EmpleadosActualesPage> {
     final asistenciasCount =
         asistencias.where((r) => r['tipoMarcacion'] == 'entrada').length;
 
+    int? parsedUsuarioId;
+    if (emp['usuario_id'] != null) {
+      parsedUsuarioId = int.tryParse(emp['usuario_id'].toString());
+    } else if (emp['usuarioId'] != null) {
+      parsedUsuarioId = int.tryParse(emp['usuarioId'].toString());
+    }
+
     final empleado = Empleado(
       id: idStr,
       nombre: '${emp['nombre']} ${emp['apellido']}',
@@ -139,6 +147,7 @@ class _EmpleadosActualesPageState extends State<EmpleadosActualesPage> {
       asistencias: asistenciasCount,
       tardanzas: 0,
       estado: EstadoEmpleado.activo,
+      usuarioId: parsedUsuarioId,
     );
 
     return _EmpleadoEnriquecido(empleado: empleado, obras: obras);
@@ -193,7 +202,13 @@ class _EmpleadosActualesPageState extends State<EmpleadosActualesPage> {
     }
     if (_grupos.isEmpty ||
         _grupos.every((g) => g.empleados.isEmpty)) {
-      return const Center(child: Text('No hay empleados'));
+      return EmptyStatePlaceholder(
+        icon: Icons.badge_outlined,
+        title: 'Tu lista de empleados está vacía',
+        description: 'Aún no hay trabajadores vinculados. Registra o aprueba a tus empleados para empezar a monitorear asistencias.',
+        actionLabel: 'Buscar Empleados',
+        onActionPressed: () => context.push('/empresa/buscar'),
+      );
     }
 
     return ListView.builder(
@@ -249,10 +264,20 @@ class _EmpleadosActualesPageState extends State<EmpleadosActualesPage> {
             ...grupo.empleados.map(
               (empleado) => EmpleadoCard(
                 empleado: empleado,
-                onTap: () => context.push(
-                  '/perfil-publico',
-                  extra: {'usuarioId': empleado.id},
-                ),
+                onTap: () {
+                  if (empleado.usuarioId != null) {
+                    context.push(
+                      '/perfil-publico',
+                      extra: {'usuarioId': empleado.usuarioId},
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Este empleado no tiene un usuario asociado para ver su perfil público.'),
+                      ),
+                    );
+                  }
+                },
                 onDesactivar: () => _desactivarEmpleado(empleado),
               ),
             ),

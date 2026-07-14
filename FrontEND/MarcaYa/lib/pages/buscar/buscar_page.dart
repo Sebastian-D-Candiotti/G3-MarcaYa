@@ -26,7 +26,6 @@ class _BuscarPageState extends State<BuscarPage> {
   List<dynamic> usuariosFiltrados = [];
 
   bool cargando = true;
-  String filtroTipo = 'todos';
 
   final TextEditingController buscarController =
   TextEditingController();
@@ -65,7 +64,8 @@ class _BuscarPageState extends State<BuscarPage> {
 
         usuariosVisibles = data.where((usuario) {
 
-          return usuario['id'] != usuarioActualId;
+          return usuario['id'] != usuarioActualId &&
+              usuario['rol'] == 'empresa';
 
         }).toList();
 
@@ -103,16 +103,10 @@ class _BuscarPageState extends State<BuscarPage> {
             ? usuario['descripcion'].toString().toLowerCase()
             : '';
 
-        final rol = usuario['rol'] != null
-            ? usuario['rol'].toString().toLowerCase()
-            : '';
-
         final coincideTexto = nombre.contains(texto.toLowerCase()) ||
             descripcion.contains(texto.toLowerCase());
 
-        final coincideTipo = filtroTipo == 'todos' ? true : rol == filtroTipo;
-
-        return coincideTexto && coincideTipo;
+        return coincideTexto;
 
       }).toList();
     });
@@ -134,51 +128,7 @@ class _BuscarPageState extends State<BuscarPage> {
 
         children: [
 
-          Padding(
-            padding: const EdgeInsets.all(16),
-
-            child: DropdownButtonFormField<String>(
-
-              value: filtroTipo,
-
-              decoration: InputDecoration(
-                labelText: 'Filtrar por tipo',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-
-              items: const [
-
-                DropdownMenuItem(
-                  value: 'todos',
-                  child: Text('Todos'),
-                ),
-
-                DropdownMenuItem(
-                  value: 'empresa',
-                  child: Text('Empresas'),
-                ),
-
-                DropdownMenuItem(
-                  value: 'empleado',
-                  child: Text('Empleados'),
-                ),
-
-              ],
-
-              onChanged: (value) {
-
-                setState(() {
-                  filtroTipo = value!;
-                });
-
-                filtrarUsuarios(
-                  buscarController.text,
-                );
-              },
-            ),
-          ),
+          const SizedBox(height: 16),
 
           Padding(
             padding: const EdgeInsets.symmetric(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../components/bottom_navbar.dart';
+import '../../components/empty_state_placeholder.dart';
 import '../../src/api_service.dart';
 
 class VerAsistenciaPage extends StatefulWidget {
@@ -74,7 +75,13 @@ class _VerAsistenciaPageState extends State<VerAsistenciaPage> {
       );
     }
     if (_registros.isEmpty) {
-      return const Center(child: Text('Sin empleados marcados en esta parada'));
+      return EmptyStatePlaceholder(
+        icon: Icons.radio_button_checked,
+        title: 'Esperando marcaciones...',
+        description: 'No se registran entradas o salidas en esta parada el día de hoy.',
+        actionLabel: 'Actualizar Monitor',
+        onActionPressed: _cargar,
+      );
     }
     return ListView.builder(
       padding: const EdgeInsets.all(16),

@@ -32,6 +32,8 @@ class AppUser {
     this.promedioEstrellas,
     this.comentarios,
     this.ruc,
+    this.dni,
+    this.deviceId,
   });
 
   final String id;
@@ -52,6 +54,8 @@ class AppUser {
   final String? fotoUrl;
   final String? apellido;
   final String? ruc;
+  final String? dni;
+  final String? deviceId;
   final double? promedioEstrellas;
   final List<dynamic>? comentarios;
 
@@ -87,6 +91,8 @@ class AppUser {
       fotoUrl: json['foto_url'] as String?,
       direccion: json['direccion'] as String?,
       ruc: json['ruc'] as String?,
+      dni: json['dni'] as String?,
+      deviceId: json['device_id']?.toString() ?? json['deviceId']?.toString(),
       promedioEstrellas: json['promedio_estrellas'] != null
           ? (json['promedio_estrellas'] as num).toDouble()
           : null,

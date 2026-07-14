@@ -4,6 +4,7 @@ import '../../models/informe_asistencia.dart';
 import '../../providers/informes_asistencia_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/pdf_download.dart';
+import '../../components/empty_state_placeholder.dart';
 
 class InformesAsistenciaPage extends StatefulWidget {
   const InformesAsistenciaPage({super.key});
@@ -185,9 +186,10 @@ class _InformesAsistenciaPageState extends State<InformesAsistenciaPage> {
         ),
         const SizedBox(height: 8),
         if (provider.historial.isEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 18),
-            child: Text('Sin informes cerrados.'),
+          const EmptyStatePlaceholder(
+            icon: Icons.analytics_outlined,
+            title: 'Sin informes mensuales cerrados',
+            description: 'Para ver reportes históricos en PDF, primero debes cerrar el período mensual actual.',
           )
         else
           ...provider.historial.map((informe) => _InformeTile(
