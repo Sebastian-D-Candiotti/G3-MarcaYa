@@ -91,9 +91,8 @@ module Application
           )
 
           crear_perfil!(usuario, params)
-          enviar_codigo!(correo: usuario.correo, codigo: codigo)
 
-          # Si es flujo manual de empresa, generamos y enviamos el código OTP
+          # Si es flujo manual de empresa, generamos y enviamos SOLO el código OTP
           if rol.to_s == "empresa" && params[:registro_tipo].to_s == "manual"
             codigo_otp = rand(100000..999999).to_s
             expira_at = 15.minutes.from_now
@@ -113,6 +112,9 @@ module Application
             rescue StandardError => e
               Rails.logger.error("Error al enviar correo de verificacion via ActionMailer: #{e.message}") if defined?(Rails) && Rails.logger
             end
+          else
+            # Registro de empleado o empresa SUNAT → correo de verificación genérico
+            enviar_codigo!(correo: usuario.correo, codigo: codigo)
           end
 
           { usuario: usuario, requiere_verificacion: true }

@@ -69,7 +69,6 @@ final appRouter = GoRouter(
     final protected =
         location.startsWith('/empleado') ||
             location.startsWith('/empresa') ||
-            location == '/verificar-otp' ||
             location == '/locked';
 
     if (!loggedIn && protected) {

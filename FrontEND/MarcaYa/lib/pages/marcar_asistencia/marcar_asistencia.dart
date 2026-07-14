@@ -300,7 +300,7 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
       NotificationService.instance.showMarkingNotification(
         tipo: tipoTexto,
         hora: DateTime.now(),
-        validaGps: resultado['valida_gps'] == true,
+        validaGps: !esFakeGPS,
         obraNombre: widget.obraNombre,
       );
 

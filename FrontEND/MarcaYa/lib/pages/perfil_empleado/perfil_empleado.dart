@@ -5,6 +5,7 @@ import '../../providers/auth_provider.dart';
 import '../../components/bottom_navbar.dart';
 import '../../src/api_service.dart';
 import '../../src/app_state.dart';
+import '../../theme/app_theme.dart';
 import '../../services/auto_marking_service.dart';
 import '../../services/auto_marking_prefs.dart';
 
@@ -190,11 +191,11 @@ class _PerfilEmpleadoPageState extends State<PerfilEmpleadoPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // FOTO
+                  // ── FOTO ────────────────────────────────────
                   CircleAvatar(
                     radius: 50,
-                    backgroundImage:
-                        empleado.fotoUrl != null && empleado.fotoUrl!.isNotEmpty
+                    backgroundImage: empleado.fotoUrl != null &&
+                            empleado.fotoUrl!.isNotEmpty
                         ? NetworkImage(empleado.fotoUrl!)
                         : null,
                     child: empleado.fotoUrl == null || empleado.fotoUrl!.isEmpty
@@ -209,101 +210,114 @@ class _PerfilEmpleadoPageState extends State<PerfilEmpleadoPage> {
 
                   const SizedBox(height: 20),
 
-                  // NOMBRE COMPLETO
+                  // ── NOMBRE COMPLETO ─────────────────────────
                   Text(
                     '${empleado.nombre ?? ''} ${empleado.apellido ?? ''}',
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
                     ),
                     textAlign: TextAlign.center,
                   ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
 
-                  // DESCRIPCIÓN
-                  if (empleado.descripcion != null &&
-                      empleado.descripcion!.isNotEmpty)
-                    Text(
-                      empleado.descripcion!,
-                      style: const TextStyle(fontSize: 16),
-                      textAlign: TextAlign.center,
+                  // ── ROL ─────────────────────────────────────
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(20),
                     ),
-
-                  const SizedBox(height: 20),
-
-                  // CORREO
-                  Card(
-                    child: ListTile(
-                      leading: const Icon(Icons.email),
-                      title: const Text('Correo'),
-                      subtitle: Text(empleado.correo),
+                    child: Text(
+                      (auth.userRole ?? 'empleado').toUpperCase(),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
+                        letterSpacing: 1.2,
+                      ),
                     ),
                   ),
 
                   const SizedBox(height: 12),
 
-                  // TELÉFONO
-                  if (empleado.telefono != null &&
-                      empleado.telefono!.isNotEmpty)
-                    Card(
-                      child: ListTile(
-                        leading: const Icon(Icons.phone),
-                        title: const Text('Teléfono'),
-                        subtitle: Text(empleado.telefono!),
+                  // ── DESCRIPCIÓN ─────────────────────────────
+                  if (empleado.descripcion != null &&
+                      empleado.descripcion!.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        empleado.descripcion!,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          color: AppColors.textSecondary,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
                     ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 24),
 
-                  // ROL
-                  Card(
-                    child: ListTile(
-                      leading: const Icon(Icons.badge),
-                      title: const Text('Rol'),
-                      subtitle: Text(auth.userRole ?? 'empleado'),
+                  // ── INFORMACIÓN ─────────────────────────────
+                  _infoCard(
+                    icon: Icons.email_outlined,
+                    title: 'Correo',
+                    subtitle: empleado.correo,
+                  ),
+
+                  if (empleado.telefono != null &&
+                      empleado.telefono!.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    _infoCard(
+                      icon: Icons.phone_outlined,
+                      title: 'Teléfono',
+                      subtitle: empleado.telefono!,
+                    ),
+                  ],
+
+                  // ── MARCACIÓN AUTOMÁTICA ────────────────────
+                  if (auth.userRole == 'empleado' &&
+                      empleado.rol == UserRole.employee) ...[
+                    const SizedBox(height: 20),
+                    _buildAutoMarkingCard(),
+                  ],
+
+                  const SizedBox(height: 24),
+
+                  // ── BOTONES ─────────────────────────────────
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () =>
+                          context.push('/empleado/perfil/editar'),
+                      icon: const Icon(Icons.edit),
+                      label: const Text('Editar Perfil'),
                     ),
                   ),
 
-            const SizedBox(height: 12),
+                  const SizedBox(height: 12),
 
-            // ═══════════════════════════════════════════════════
-            // US-NUEVA-08: Switch de Marcación Automática (RBAC)
-            // Solo visible para rol EMPLEADO.
-            // ═══════════════════════════════════════════════════
-            if (auth.userRole == 'empleado' &&
-                empleado.rol == UserRole.employee)
-              _buildAutoMarkingCard(),
-
-            const SizedBox(height: 16),
-
-            ElevatedButton.icon(
-              onPressed: () => context.push('/empleado/perfil/editar'),
-              icon: const Icon(Icons.edit),
-              label: const Text('Editar Perfil'),
-            ),
-            const SizedBox(height: 12),
-
-                  /*ElevatedButton.icon(
-              onPressed: () async {
-                // US-NUEVA-08: Cancelar alarma y limpiar prefs al logout
-                await AutoMarkingService.cancelAndClearAll();
-
-                await auth.logout();
-
-                if (context.mounted) {
-                  context.go('/');
-                }
-              },
-
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-              ),
-
-              icon: const Icon(Icons.logout),
-              label: const Text('Cerrar Sesión'),
-            ),*/
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        await AutoMarkingService.cancelAndClearAll();
+                        await auth.logout();
+                        if (context.mounted) {
+                          context.go('/');
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.error,
+                        foregroundColor: Colors.white,
+                      ),
+                      icon: const Icon(Icons.logout),
+                      label: const Text('Cerrar Sesión'),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -311,6 +325,34 @@ class _PerfilEmpleadoPageState extends State<PerfilEmpleadoPage> {
       bottomNavigationBar: const BottomNavbar(
         userRole: 'empleado',
         currentIndex: 2,
+      ),
+    );
+  }
+
+  // ── Widget reutilizable para info cards ────────────────────
+  static Widget _infoCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
+    return Card(
+      child: ListTile(
+        leading: Icon(icon, color: AppColors.primary),
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontSize: 13,
+            color: AppColors.textSecondary,
+          ),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+            color: AppColors.textPrimary,
+          ),
+        ),
       ),
     );
   }

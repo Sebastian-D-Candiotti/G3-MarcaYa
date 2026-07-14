@@ -19,6 +19,7 @@ class _ResumenEmpresaPageState extends State<ResumenEmpresaPage> {
   int _paradasActivas = 0;
   double _tendencia = 0.0;
   bool _cargando = true;
+  List<dynamic> _actividadReciente = [];
 
   @override
   void initState() {
@@ -82,6 +83,8 @@ class _ResumenEmpresaPageState extends State<ResumenEmpresaPage> {
           _asistenciasTotales = hoyCount;
           _paradasActivas = activas;
           _tendencia = tendencia;
+          // Actividad reciente: últimas 5 marcaciones de hoy
+          _actividadReciente = (asistenciasHoy as List).take(5).toList();
           _cargando = false;
         });
       }
@@ -265,9 +268,6 @@ class _ResumenEmpresaPageState extends State<ResumenEmpresaPage> {
                           context.push('/empresa/informe-ia');
                         },
                       ),
-                        },
-                      ),
-
                     ],
                   ),
 
@@ -283,26 +283,49 @@ class _ResumenEmpresaPageState extends State<ResumenEmpresaPage> {
 
                   const SizedBox(height: 12),
 
-                  Card(
-                    child: Column(
-                      children: const [
-                        ListTile(
-                          leading: Icon(Icons.login),
-                          title: Text('Juan Pérez ingresó a Obra A'),
+                  if (_actividadReciente.isEmpty)
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Center(
+                          child: Text(
+                            'Sin actividad reciente hoy',
+                            style: TextStyle(color: Colors.grey.shade500),
+                          ),
                         ),
-                        Divider(height: 1),
-                        ListTile(
-                          leading: Icon(Icons.logout),
-                          title: Text('Carlos Ruiz salió de Obra B'),
-                        ),
-                        Divider(height: 1),
-                        ListTile(
-                          leading: Icon(Icons.request_page),
-                          title: Text('Nueva solicitud recibida'),
-                        ),
-                      ],
+                      ),
+                    )
+                  else
+                    Card(
+                      child: Column(
+                        children: _actividadReciente.map((a) {
+                          final tipo = (a['tipoMarcacion'] ?? '').toString();
+                          final fechaHora = a['fechaHora']?.toString();
+                          final hora = fechaHora != null
+                              ? DateTime.tryParse(fechaHora)
+                              : null;
+                          final horaStr = hora != null
+                              ? '${hora.hour.toString().padLeft(2, '0')}:${hora.minute.toString().padLeft(2, '0')}'
+                              : '';
+                          final esEntrada = tipo.toLowerCase().contains('entrada');
+                          return Column(
+                            children: [
+                              ListTile(
+                                leading: Icon(
+                                  esEntrada ? Icons.login : Icons.logout,
+                                  color: esEntrada ? Colors.green : Colors.orange,
+                                ),
+                                title: Text(
+                                  '${esEntrada ? 'Entrada' : 'Salida'} registrada',
+                                ),
+                                subtitle: Text(horaStr.isNotEmpty ? 'A las $horaStr' : ''),
+                              ),
+                              const Divider(height: 1),
+                            ],
+                          );
+                        }).toList(),
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
