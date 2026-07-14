@@ -86,7 +86,7 @@ class _LockedPageState extends State<LockedPage> {
 
               // ── Título ────────────────────────────────────────
               const Text(
-                'Revisa tu correo electrónico',
+                'Cuenta pendiente de aprobación',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 24,
@@ -98,9 +98,9 @@ class _LockedPageState extends State<LockedPage> {
 
               // ── Descripción ───────────────────────────────────
               const Text(
-                'Hemos enviado un correo de activación a tu cuenta. '
-                'Haz clic en el botón "Activar mi cuenta" dentro del '
-                'correo para completar el registro de tu empresa.',
+                'Tu verificación OTP fue exitosa. '
+                'Un administrador debe aprobar tu cuenta para que puedas ingresar. '
+                'Haz clic en el botón de abajo para verificar si ya fue activada.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 15,
@@ -111,7 +111,7 @@ class _LockedPageState extends State<LockedPage> {
 
               const SizedBox(height: 8),
 
-              // ── Nota de validez ──────────────────────────────
+              // ── Nota informativa ─────────────────────────────
               Container(
                 margin: const EdgeInsets.symmetric(vertical: 16),
                 padding: const EdgeInsets.symmetric(
@@ -130,7 +130,7 @@ class _LockedPageState extends State<LockedPage> {
                     SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'El enlace de activación es válido por 24 horas.',
+                        'El administrador recibió tu solicitud. Esto puede tardar unos minutos.',
                         style: TextStyle(
                           fontSize: 13,
                           color: Color(0xFF92400E),

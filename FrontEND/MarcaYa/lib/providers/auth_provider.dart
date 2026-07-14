@@ -60,6 +60,9 @@ class AuthProvider extends ChangeNotifier {
       onLoginCallback?.call();
 
       return true;
+    } on PendienteVerificacionException {
+      // Re-lanzar para que el UI maneje el caso específico
+      rethrow;
     } catch (e) {
       debugPrint('Error login: $e');
       return false;

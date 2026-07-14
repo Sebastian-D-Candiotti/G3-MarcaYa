@@ -102,6 +102,19 @@ class ApiService {
       }),
     );
 
+    // Detectar cuenta pendiente de verificación (empresas)
+    if (res.statusCode == 403) {
+      final body = jsonDecode(res.body) as Map<String, dynamic>;
+      if (body['pendiente_verificacion'] == true) {
+        throw PendienteVerificacionException(
+          body['error']?.toString() ?? 'Cuenta pendiente de verificación',
+          body['correo_enmascarado']?.toString() ?? '',
+          ruc: body['ruc']?.toString(),
+          correo: body['correo']?.toString(),
+        );
+      }
+    }
+
     final data = _parsearRespuesta(res);
     await _guardarToken(data['token'] as String);
 
@@ -1154,4 +1167,21 @@ class ApiException implements Exception {
 
   @override
   String toString() => 'ApiException($statusCode): $mensaje';
+}
+
+class PendienteVerificacionException implements Exception {
+  const PendienteVerificacionException(
+    this.mensaje,
+    this.correoEnmascarado, {
+    this.ruc,
+    this.correo,
+  });
+
+  final String mensaje;
+  final String correoEnmascarado;
+  final String? ruc;
+  final String? correo;
+
+  @override
+  String toString() => 'PendienteVerificacionException: $mensaje';
 }

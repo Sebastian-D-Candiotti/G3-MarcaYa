@@ -25,7 +25,7 @@ class Api::V1::AuthController < Api::V1::BaseController
   rescue ::Domain::Errors::CredencialesInvalidasError
     render json: { error: "Contrasena incorrecta" }, status: :unauthorized
   rescue ::Domain::Errors::CuentaPendienteVerificacionError
-    render json: { error: "Cuenta pendiente de verificacion" }, status: :forbidden
+    reenviar_verificacion_si_empresa
   rescue ::Domain::Errors::UsuarioInactivoError
     render json: { error: "Usuario no encontrado" }, status: :unauthorized
   end
@@ -151,7 +151,7 @@ class Api::V1::AuthController < Api::V1::BaseController
       return
     end
 
-    # Activar la empresa directamente al verificar OTP
+    # Marcar OTP como verificado pero la empresa queda PENDIENTE hasta que el admin la active
     empresa_actualizada = Domain::Entities::Empresa.new(
       id: empresa.id,
       usuario_id: empresa.usuario_id,
@@ -161,28 +161,32 @@ class Api::V1::AuthController < Api::V1::BaseController
       direccion: empresa.direccion,
       telefono: empresa.telefono,
       foto_url: empresa.foto_url,
-      estado: "activo",
+      estado: "PENDIENTE",
       otp_verificado: true,
       created_at: empresa.created_at,
       updated_at: empresa.updated_at
     )
     empresa_repo.guardar(empresa_actualizada)
 
-    # Activar también el usuario asociado
+    # Enviar correo al admin de MarcaYa para que active la cuenta
     usuario = Rails.configuration.di.repos[:usuario].find_by_id!(empresa.usuario_id)
-    usuario_activo = Domain::Entities::Usuario.new(
-      id: usuario.id,
-      correo: usuario.correo,
-      clave_hash: usuario.clave_hash,
-      rol: usuario.rol,
-      estado: true,
-      estado_verificacion: usuario.estado_verificacion,
-      codigo_verificacion_digest: usuario.codigo_verificacion_digest,
-      codigo_verificacion_expira_en: usuario.codigo_verificacion_expira_en
-    )
-    Rails.configuration.di.repos[:usuario].guardar(usuario_activo)
+    admin_email = "marcaya3690@gmail.com"
 
-    render json: { mensaje: "Cuenta activada correctamente. Ya podés ingresar." }
+    begin
+      activation_token = Api::V1::UsuariosController.generar_token_activacion(usuario.id)
+      UsuarioMailer.correo_solicitud_activacion_admin(
+        admin_email,
+        usuario.id,
+        empresa.nombre_empresa,
+        empresa.ruc,
+        usuario.correo,
+        activation_token
+      ).deliver_now
+    rescue StandardError => e
+      Rails.logger.error("Error al enviar correo de activación al admin: #{e.message}")
+    end
+
+    render json: { mensaje: "OTP verificado. Tu cuenta está pendiente de aprobación por el administrador." }
   end
 
   def consultar_reniec
@@ -208,6 +212,44 @@ class Api::V1::AuthController < Api::V1::BaseController
   end
 
   private
+
+  def reenviar_verificacion_si_empresa
+    correo = params[:correo].to_s.strip
+    usuario_repo = Rails.configuration.di.repos[:usuario]
+    usuario = usuario_repo.find_by_correo(correo)
+
+    if usuario&.es_empresa?
+      empresa_repo = Rails.configuration.di.repos[:empresa]
+      empresa = empresa_repo.find_by_usuario_id(usuario.id)
+
+      if empresa
+        # Generar y guardar nuevo OTP
+        codigo_otp = rand(100000..999999).to_s
+        expira_at = 15.minutes.from_now
+        verificacion = Infrastructure::Orm::VerificacionRucRecord.find_or_initialize_by(ruc: empresa.ruc)
+        verificacion.update!(codigo: codigo_otp, expira_at: expira_at)
+
+        # Enviar correo con el OTP
+        begin
+          UsuarioMailer.correo_verificacion_ruc(usuario.correo, codigo_otp, empresa.nombre_empresa).deliver_now
+        rescue StandardError => e
+          Rails.logger.error("Error al reenviar OTP: #{e.message}")
+        end
+
+        correo_enmascarado = Domain::Services::SunatService.enmascarar_correo(usuario.correo)
+        render json: {
+          error: "Cuenta pendiente de verificación. Se envió un nuevo código a #{correo_enmascarado}",
+          pendiente_verificacion: true,
+          correo_enmascarado: correo_enmascarado,
+          ruc: empresa.ruc,
+          correo: usuario.correo
+        }, status: :forbidden
+        return
+      end
+    end
+
+    render json: { error: "Cuenta pendiente de verificación" }, status: :forbidden
+  end
 
   def build_perfil(usuario)
     if usuario.es_empresa?

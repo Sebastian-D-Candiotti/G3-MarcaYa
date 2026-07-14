@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../providers/asistencia_offline_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../src/api_service.dart';
 import '../../theme/app_theme.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'dart:io';
@@ -77,6 +78,19 @@ class _SignInPageState extends State<SignInPage> {
           _error = 'Correo o contraseña incorrectos';
         });
       }
+    } on PendienteVerificacionException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.mensaje),
+          backgroundColor: AppColors.warning,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+      context.go('/verificar-otp', extra: {
+        'ruc': e.ruc,
+        'correo': e.correo,
+      });
     } catch (e) {
       setState(() {
         _error = 'Error al conectar con el servidor';

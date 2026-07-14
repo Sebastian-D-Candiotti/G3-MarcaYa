@@ -55,17 +55,17 @@ class _VerificarOtpPageState extends State<VerificarOtpPage> {
 
       if (!mounted) return;
 
-      // Código verificado con éxito, la cuenta se activó automáticamente
+      // Código verificado con éxito, la cuenta queda pendiente de aprobación del admin
       await auth.fetchProfile();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Cuenta activada correctamente. Ya podés ingresar.'),
+            content: Text('OTP verificado. Tu cuenta está pendiente de aprobación.'),
             backgroundColor: AppColors.success,
           ),
         );
-        context.go('/');
+        context.go('/locked');
       }
     } on ApiException catch (e) {
       setState(() => _error = e.mensaje);
