@@ -250,12 +250,7 @@ class _NominaEmpresaPageState extends State<NominaEmpresaPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
-        title: const Text(
-          'Gestión de Nómina',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: _azul,
-        foregroundColor: Colors.white,
+        title: const Text('Gestión de Nómina'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded),

@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'src/api_service.dart';
 import 'src/app_state.dart';
@@ -100,6 +101,16 @@ class MarcaYA extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: appTheme,
       routerConfig: appRouter,
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('es', 'PE'),
+        Locale('es', ''),
+        Locale('en', 'US'),
+      ],
     );
   }
 }

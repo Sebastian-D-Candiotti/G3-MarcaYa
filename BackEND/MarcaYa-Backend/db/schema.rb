@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_07_000100) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_14_170500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -106,7 +106,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_07_000100) do
     t.decimal "horas_trabajadas", precision: 10, scale: 2, default: "0.0"
     t.decimal "monto_total", precision: 10, scale: 2, default: "0.0"
     t.bigint "obra_id", null: false
-    t.string "periodo", limit: 20
+    t.string "periodo", limit: 30
     t.decimal "tarifa_hora", precision: 10, scale: 2, default: "0.0"
     t.datetime "updated_at", precision: nil, default: -> { "CURRENT_TIMESTAMP" }
   end

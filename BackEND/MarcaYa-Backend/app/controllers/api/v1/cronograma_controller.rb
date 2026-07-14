@@ -68,16 +68,22 @@ module Api
         obra_ids = obras.pluck(:id)
 
         # Obtener asistencias válidas en el período
-        asistencias = ::Infrastructure::Orm::AsistenciaRecord.where(obra_id: obra_ids)
-                                 .where(fecha: periodo_inicio..periodo_fin)
+        asistencias = ::Infrastructure::Orm::AsistenciaRecord
+                        .joins(parada: :obra)
+                        .where(obras: { id: obra_ids })
+                        .where(tipo_marcacion: "SALIDA", valida_gps: true)
+                        .where.not(duracion_jornada: nil)
+                        .where(fecha_hora: Time.zone.parse(periodo_inicio).beginning_of_day..Time.zone.parse(periodo_fin).end_of_day)
+                        .includes(parada: :obra)
 
         # Agrupar por empleado + obra
-        agrupado = asistencias.group_by { |a| [a.empleado_id, a.obra_id] }
+        agrupado = asistencias.group_by { |a| [a.empleado_id, a.parada.obra_id] }
 
         cronogramas_creados = []
 
         agrupado.each do |(empleado_id, obra_id), registros|
-          horas = registros.sum { |r| r.horas_trabajadas.to_f }
+          # duracion_jornada está en minutos, se convierte a horas
+          horas = registros.sum { |r| r.duracion_jornada.to_f / 60.0 }
 
           cronograma = CronogramaDePago.find_or_initialize_by(
             empleado_id: empleado_id,

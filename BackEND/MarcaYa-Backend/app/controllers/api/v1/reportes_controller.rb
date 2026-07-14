@@ -75,7 +75,7 @@ class Api::V1::ReportesController < Api::V1::BaseController
     fecha_inicio = params[:fecha_inicio].present? ? Date.parse(params[:fecha_inicio]) : fecha_fin - 30.days
 
     # ── 2. Obtener asistencias de la empresa ──────────────────
-    empresa = current_user.empresa
+    empresa = current_user.empresas&.first
     unless empresa
       return render json: { error: "Solo usuarios de tipo empresa pueden generar informes." }, status: :forbidden
     end
