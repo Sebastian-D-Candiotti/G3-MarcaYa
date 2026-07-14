@@ -190,6 +190,25 @@ class Api::V1::UsuariosController < Api::V1::BaseController
     )
     empresa_repo.guardar(empresa_actualizada)
 
+    # Activar también el estado de verificación del usuario para que pueda hacer login
+    usuario_repo = Rails.configuration.di.repos[:usuario]
+    usuario_actualizado = Domain::Entities::Usuario.new(
+      id: usuario.id,
+      correo: usuario.correo,
+      clave_hash: usuario.clave_hash,
+      rol: usuario.rol.valor,
+      estado: usuario.estado,
+      codigo_recuperacion: usuario.codigo_recuperacion,
+      codigo_expira: usuario.codigo_expira,
+      estado_verificacion: Domain::Entities::Usuario::ESTADO_VERIFICACION_ACTIVO,
+      codigo_verificacion_digest: usuario.codigo_verificacion_digest,
+      codigo_verificacion_expira_en: usuario.codigo_verificacion_expira_en,
+      verificado_en: usuario.verificado_en,
+      created_at: usuario.created_at,
+      updated_at: usuario.updated_at
+    )
+    usuario_repo.guardar(usuario_actualizado)
+
     Rails.logger.info(
       "[ACTIVACIÓN] Empresa '#{empresa.nombre_empresa}' (ID: #{empresa.id}) " \
       "activada vía correo electrónico"

@@ -151,6 +151,12 @@ class Api::V1::AuthController < Api::V1::BaseController
       return
     end
 
+    # Si ya se verificó el OTP antes, no re-activar ni re-enviar al admin (idempotente)
+    if empresa.otp_verificado == true
+      render json: { mensaje: "OTP ya verificado. Tu cuenta está pendiente de aprobación por el administrador." }
+      return
+    end
+
     # Marcar OTP como verificado pero la empresa queda PENDIENTE hasta que el admin la active
     empresa_actualizada = Domain::Entities::Empresa.new(
       id: empresa.id,
