@@ -2,7 +2,6 @@
 // Reemplaza la lógica simulada de MarcaYAState por llamadas HTTP reales
 
 import 'dart:convert';
-import 'dart:io' show Platform;
 import 'dart:typed_data';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -17,8 +16,18 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 // Físico          → IP local de tu máquina (ej: 192.168.1.5)
 // Producción      → https://g3-marcaya.onrender.com/api/v1
 String get kBaseUrl {
-  const prodUrl = String.fromEnvironment('API_BASE_URL');
-  if (prodUrl.isNotEmpty) return prodUrl;
+  const envUrl = String.fromEnvironment('API_BASE_URL');
+  if (envUrl.isNotEmpty) return envUrl;
+
+  if (kDebugMode) {
+    if (kIsWeb) {
+      return 'http://localhost:3000/api/v1';
+    }
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      return 'http://10.0.2.2:3000/api/v1';
+    }
+    return 'http://localhost:3000/api/v1';
+  }
 
   return 'https://g3-marcaya.onrender.com/api/v1';
 }
@@ -345,6 +354,7 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> crearObra({
+    int? empresaId,
     required String codigoObra,
     required String nombre,
     required String descripcionUbicacion,
@@ -358,9 +368,8 @@ class ApiService {
     required int capacidadEmpleados,
     String? direccion,
   }) async {
-    final empresaId = _state.currentUser?.empresaId;
     final body = <String, dynamic>{
-      'empresa_id': int.tryParse(empresaId ?? '') ?? 0,
+      'empresa_id': empresaId ?? 0,
       'codigo_obra': codigoObra,
       'nombre': nombre,
       'descripcion_ubicacion': descripcionUbicacion,

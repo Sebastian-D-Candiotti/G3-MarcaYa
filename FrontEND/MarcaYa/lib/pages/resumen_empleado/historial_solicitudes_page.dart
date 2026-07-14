@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../src/api_service.dart';
+import '../../theme/app_theme.dart';
 
 class HistorialSolicitudesPage extends StatefulWidget {
   final String empleadoId;
@@ -66,11 +68,53 @@ class _HistorialSolicitudesPageState
         child: CircularProgressIndicator(),
       )
           : solicitudes.isEmpty
-          ? const Center(
-        child: Text(
-          'No hay solicitudes registradas',
-        ),
-      )
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.find_in_page_outlined,
+                      size: 64,
+                      color: Colors.grey.shade400,
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'No hay solicitudes registradas',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Aún no has solicitado unirte a ninguna obra o empresa. Busca opciones disponibles para enviar tu primera solicitud.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      onPressed: () => context.push('/empleado/buscar'),
+                      icon: const Icon(Icons.search_rounded),
+                      label: const Text('Buscar Empresas / Obras'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
           : ListView.builder(
         padding: const EdgeInsets.all(12),
         itemCount: solicitudes.length,

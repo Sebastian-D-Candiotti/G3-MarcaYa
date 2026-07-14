@@ -9,6 +9,7 @@ import '../../src/api_service.dart';
 import '../../theme/app_theme.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'dart:io';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SignInPage extends StatefulWidget {
   const SignInPage({super.key});
@@ -24,6 +25,28 @@ class _SignInPageState extends State<SignInPage> {
   bool _rememberUser = false;
   bool _obscurePassword = true;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRememberedUser();
+  }
+
+  Future<void> _loadRememberedUser() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final remember = prefs.getBool('remember_user') ?? false;
+      if (remember) {
+        final email = prefs.getString('remembered_email') ?? '';
+        setState(() {
+          _rememberUser = true;
+          _emailController.text = email;
+        });
+      }
+    } catch (e) {
+      // Ignore errors when loading preferences
+    }
+  }
 
   @override
   void dispose() {
@@ -70,6 +93,22 @@ class _SignInPageState extends State<SignInPage> {
         unawaited(
           context.read<AsistenciaOfflineProvider>().sincronizarPendientes(),
         );
+
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          if (_rememberUser) {
+            await prefs.setBool('remember_user', true);
+            await prefs.setString('remembered_email', correo);
+          } else {
+            await prefs.remove('remember_user');
+            await prefs.remove('remembered_email');
+          }
+        } catch (e) {
+          // Ignore shared preferences saving errors
+        }
+
+        if (!mounted) return;
+
         context.go(
           auth.userRole == 'empleado' ? '/empleado' : '/empresa',
         );

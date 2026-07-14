@@ -96,6 +96,25 @@ class Api::V1::UsuariosController < Api::V1::BaseController
           updated_at: empresa.updated_at
         )
         empresa_repo.guardar(empresa_actualizada)
+
+        # Activar también el usuario (estado: true, estado_verificacion: ACTIVO)
+        usuario_repo = Rails.configuration.di.repos[:usuario]
+        usuario_actualizado = Domain::Entities::Usuario.new(
+          id: usuario.id,
+          correo: usuario.correo,
+          clave_hash: usuario.clave_hash,
+          rol: usuario.rol.valor,
+          estado: true,
+          codigo_recuperacion: usuario.codigo_recuperacion,
+          codigo_expira: usuario.codigo_expira,
+          estado_verificacion: Domain::Entities::Usuario::ESTADO_VERIFICACION_ACTIVO,
+          codigo_verificacion_digest: usuario.codigo_verificacion_digest,
+          codigo_verificacion_expira_en: usuario.codigo_verificacion_expira_en,
+          verificado_en: usuario.verificado_en || Time.current,
+          created_at: usuario.created_at,
+          updated_at: usuario.updated_at
+        )
+        usuario_repo.guardar(usuario_actualizado)
       end
     end
 
@@ -190,20 +209,20 @@ class Api::V1::UsuariosController < Api::V1::BaseController
     )
     empresa_repo.guardar(empresa_actualizada)
 
-    # Activar también el estado de verificación del usuario para que pueda hacer login
+    # Activar también el estado de verificación del usuario para que pueda hacer login (forzar estado: true)
     usuario_repo = Rails.configuration.di.repos[:usuario]
     usuario_actualizado = Domain::Entities::Usuario.new(
       id: usuario.id,
       correo: usuario.correo,
       clave_hash: usuario.clave_hash,
       rol: usuario.rol.valor,
-      estado: usuario.estado,
+      estado: true,
       codigo_recuperacion: usuario.codigo_recuperacion,
       codigo_expira: usuario.codigo_expira,
       estado_verificacion: Domain::Entities::Usuario::ESTADO_VERIFICACION_ACTIVO,
       codigo_verificacion_digest: usuario.codigo_verificacion_digest,
       codigo_verificacion_expira_en: usuario.codigo_verificacion_expira_en,
-      verificado_en: usuario.verificado_en,
+      verificado_en: usuario.verificado_en || Time.current,
       created_at: usuario.created_at,
       updated_at: usuario.updated_at
     )

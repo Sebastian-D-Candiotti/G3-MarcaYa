@@ -59,7 +59,50 @@ class _ListaObrasPageState extends State<ListaObrasPage> {
       body: _cargando
           ? const Center(child: CircularProgressIndicator())
           : _obras.isEmpty
-              ? const Center(child: Text('No hay obras registradas'))
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.business_rounded,
+                          color: Colors.grey,
+                          size: 64,
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'No hay obras registradas',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1F2937),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Agrega tu primera obra para comenzar a gestionar a tus empleados y sus ubicaciones de asistencia.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Color(0xFF6B7280),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        ElevatedButton(
+                          onPressed: () => context.push('/empresa/obras/agregar'),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text('Agregar Obra'),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
               : ListView.builder(
                   padding: const EdgeInsets.all(16),
                   itemCount: _obras.length,

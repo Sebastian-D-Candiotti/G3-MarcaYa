@@ -15,31 +15,103 @@ class ResumenEmpleadoPage extends StatefulWidget {
 }
 
 class _ResumenEmpleadoPageState extends State<ResumenEmpleadoPage> {
-  List<dynamic> obras = [];   // ← aquí van
-  bool cargando = true;       // ← aquí van
+  List<dynamic> obras = [];
+  bool cargando = true;
+  int _obrasAsistidasCount = 0;
+  int _solicitudesCount = 0;
+  bool _cargandoMetricas = true;
+  dynamic _activeShift;
 
   @override
   void initState() {
     super.initState();
     _cargarObrasAprobadas();
   }
+
+  String _formatHora(String? iso) {
+    if (iso == null || iso.isEmpty) return '—';
+    try {
+      final dt = DateTime.parse(iso).toLocal();
+      return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+    } catch (_) {
+      return iso;
+    }
+  }
+
   Future<void> _cargarObrasAprobadas() async {
     final auth = context.read<AuthProvider>();
     final empleadoId = auth.currentUserProfile?.employeeId;
     if (empleadoId == null) {
-      setState(() => cargando = false);
+      setState(() {
+        cargando = false;
+        _cargandoMetricas = false;
+      });
       return;
     }
     try {
       final lista = await ApiService.instance
           .obtenerObrasEmpleado(empleadoId);
-      setState(() {
-        obras = lista;
-        cargando = false;
-      });
+      if (mounted) {
+        setState(() {
+          obras = lista;
+          cargando = false;
+        });
+      }
     } catch (e) {
-      setState(() => cargando = false);
+      if (mounted) {
+        setState(() => cargando = false);
+      }
       debugPrint('Error al cargar obras aprobadas: $e');
+    }
+
+    try {
+      final historialFuture = ApiService.instance.obtenerHistorial();
+      final solicitudesFuture = ApiService.instance.obtenerSolicitudesEmpleado(empleadoId);
+
+      final results = await Future.wait([historialFuture, solicitudesFuture]);
+      final List<dynamic> historial = results[0];
+      final List<dynamic> solicitudes = results[1];
+
+      final uniqueObras = <dynamic>{};
+      dynamic activeShift;
+
+      // Sort history descending (newest first) to find if there is an active check-in
+      historial.sort((a, b) {
+        final fechaA = a['hora_entrada'] ?? a['created_at'] ?? '';
+        final fechaB = b['hora_entrada'] ?? b['created_at'] ?? '';
+        return fechaB.toString().compareTo(fechaA.toString());
+      });
+
+      if (historial.isNotEmpty) {
+        final firstItem = historial.first;
+        if (firstItem['hora_entrada'] != null && firstItem['hora_salida'] == null) {
+          activeShift = firstItem;
+        }
+      }
+
+      for (var record in historial) {
+        final obraId = record['obra_id'] ?? record['obra']?['id'];
+        final obraNombre = record['obra_nombre'] ?? record['obra']?['nombre'];
+        if (obraId != null) {
+          uniqueObras.add(obraId);
+        } else if (obraNombre != null && obraNombre.toString().isNotEmpty) {
+          uniqueObras.add(obraNombre);
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _obrasAsistidasCount = uniqueObras.length;
+          _solicitudesCount = solicitudes.length;
+          _activeShift = activeShift;
+          _cargandoMetricas = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _cargandoMetricas = false);
+      }
+      debugPrint('Error al cargar metricas: $e');
     }
   }
   @override
@@ -81,23 +153,31 @@ class _ResumenEmpleadoPageState extends State<ResumenEmpleadoPage> {
                 Expanded(
                   child: Card(
                     child: Padding(
-                      padding: EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(16),
                       child: Column(
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.business,
                             size: 35,
                             color: AppColors.primary,
                           ),
-                          SizedBox(height: 8),
-                          Text(
-                            '3',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text('Obras asistidas'),
+                          const SizedBox(height: 8),
+                          _cargandoMetricas
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Text(
+                                  _obrasAsistidasCount.toString(),
+                                  style: const TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                          const Text('Obras asistidas'),
                         ],
                       ),
                     ),
@@ -106,23 +186,31 @@ class _ResumenEmpleadoPageState extends State<ResumenEmpleadoPage> {
                 Expanded(
                   child: Card(
                     child: Padding(
-                      padding: EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(16),
                       child: Column(
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.send,
                             size: 35,
                             color: Colors.orange,
                           ),
-                          SizedBox(height: 8),
-                          Text(
-                            '5',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text('Solicitudes'),
+                          const SizedBox(height: 8),
+                          _cargandoMetricas
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Text(
+                                  _solicitudesCount.toString(),
+                                  style: const TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                          const Text('Solicitudes'),
                         ],
                       ),
                     ),
@@ -194,7 +282,97 @@ class _ResumenEmpleadoPageState extends State<ResumenEmpleadoPage> {
 
             const SizedBox(height: 12),
 
-        const SizedBox(height: 30),
+            _cargandoMetricas
+                ? const Center(child: CircularProgressIndicator())
+                : _activeShift == null
+                    ? Card(
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.work_off_outlined,
+                                size: 40,
+                                color: Colors.grey,
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: const [
+                                    Text(
+                                      'Sin obra en curso',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                    SizedBox(height: 4),
+                                    Text(
+                                      'No tienes una marcación de entrada activa. Selecciona una de tus obras aprobadas a continuación para marcar asistencia.',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Color(0xFF6B7280),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : Card(
+                        color: AppColors.primary.withValues(alpha: 0.05),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: const BorderSide(color: AppColors.primary, width: 1.5),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.play_circle_fill_rounded,
+                                size: 40,
+                                color: AppColors.primary,
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _activeShift['obra_nombre'] ?? _activeShift['obra']?['nombre'] ?? 'Obra en curso',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Marcación de entrada registrada a las ${_formatHora(_activeShift['hora_entrada'])}',
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+            const SizedBox(height: 30),
 
             const Text('Mis Obras Aprobadas',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
@@ -203,7 +381,57 @@ class _ResumenEmpleadoPageState extends State<ResumenEmpleadoPage> {
             cargando
                 ? const Center(child: CircularProgressIndicator())
                 : obras.isEmpty
-                ? const Text('No tienes obras aprobadas')
+                ? Card(
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.business_center_outlined,
+                            size: 48,
+                            color: Colors.grey,
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Aún no tienes obras aprobadas',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Debes unirte a una obra para registrar asistencias. Busca una empresa o solicita acceso.',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF6B7280),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 20),
+                          ElevatedButton.icon(
+                            onPressed: () => context.push('/empleado/buscar'),
+                            icon: const Icon(Icons.search_rounded),
+                            label: const Text('Buscar Empresas / Obras'),
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
                 : Card(
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,

@@ -4,6 +4,7 @@
 // Consume GET /api/v1/cronograma (cronograma propio del empleado).
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../components/bottom_navbar.dart';
 import '../../src/api_service.dart';
@@ -192,24 +193,40 @@ class _HistorialCobrosPageState extends State<HistorialCobrosPage> {
     }
 
     if (_cronogramas.isEmpty) {
-      return const Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.account_balance_wallet_outlined,
-                size: 64, color: Color(0xFFBDBDBD)),
-            SizedBox(height: 16),
-            Text(
-              'No hay cobros registrados',
-              style: TextStyle(fontSize: 17, color: Color(0xFF6B7280)),
-            ),
-            SizedBox(height: 8),
-            Text(
-              'Tus pagos aparecerán aquí cuando la empresa\ngenere la planilla',
-              style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
-              textAlign: TextAlign.center,
-            ),
-          ],
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.account_balance_wallet_outlined,
+                  size: 64, color: Color(0xFFBDBDBD)),
+              const SizedBox(height: 16),
+              const Text(
+                'No hay cobros registrados',
+                style: TextStyle(fontSize: 17, color: Color(0xFF6B7280), fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Tus pagos aparecerán aquí cuando la empresa\ngenere la planilla',
+                style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () => context.go('/empleado'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _azul,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('Ir al Inicio'),
+              ),
+            ],
+          ),
         ),
       );
     }

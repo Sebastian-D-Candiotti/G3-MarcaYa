@@ -3,6 +3,8 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:provider/provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../src/api_service.dart';
 
 class AgregarObraPage extends StatefulWidget {
@@ -201,7 +203,12 @@ class _AgregarObraPageState extends State<AgregarObraPage> {
   }
 
   Future<void> crearObra() async {
+    final auth = context.read<AuthProvider>();
+    final empresaIdStr = auth.currentUserProfile?.empresaId;
+    final empresaId = int.tryParse(empresaIdStr ?? '');
+
     await ApiService.instance.crearObra(
+      empresaId: empresaId,
       codigoObra: codigoController.text,
       nombre: nombreController.text,
       descripcionUbicacion: descripcionController.text,

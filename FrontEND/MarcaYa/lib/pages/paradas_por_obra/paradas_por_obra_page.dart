@@ -130,7 +130,50 @@ class _ParadasPorObraPageState extends State<ParadasPorObraPage> {
       );
     }
     if (_paradas.isEmpty) {
-      return const Center(child: Text('No hay paradas para esta obra'));
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.location_off_rounded,
+                color: Colors.grey,
+                size: 64,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Sin paradas registradas',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1F2937),
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Esta obra no cuenta con paradas asociadas. Agrega paradas con geocercas para permitir que tus empleados marquen su asistencia.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF6B7280),
+                ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () => context.push('/empresa/paradas/agregar', extra: widget.obraId),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('Agregar Parada'),
+              ),
+            ],
+          ),
+        ),
+      );
     }
     return ListView.builder(
       padding: const EdgeInsets.all(16),

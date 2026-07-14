@@ -8,6 +8,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../components/bottom_navbar.dart';
 import '../../providers/auth_provider.dart';
@@ -52,12 +53,12 @@ class _HistorialAsistenciasPageState extends State<HistorialAsistenciasPage> {
 
       List<dynamic> data;
 
-      if (empleadoId != null) {
-        // Intentamos el endpoint por ID primero (más específico)
+      if (auth.userRole == 'empleado') {
+        data = await ApiService.instance.obtenerHistorial();
+      } else if (empleadoId != null) {
         data = await ApiService.instance
             .obtenerAsistenciasEmpleado(int.parse(empleadoId));
       } else {
-        // Fallback: historial del usuario autenticado
         data = await ApiService.instance.obtenerHistorial();
       }
 
@@ -199,23 +200,39 @@ class _HistorialAsistenciasPageState extends State<HistorialAsistenciasPage> {
     }
 
     if (_registros.isEmpty) {
-      return const Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.history_toggle_off_rounded,
-                size: 64, color: Color(0xFFBDBDBD)),
-            SizedBox(height: 16),
-            Text(
-              'No hay marcaciones registradas',
-              style: TextStyle(fontSize: 17, color: Color(0xFF6B7280)),
-            ),
-            SizedBox(height: 8),
-            Text(
-              'Tus marcaciones aparecerán aquí',
-              style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
-            ),
-          ],
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.history_toggle_off_rounded,
+                  size: 64, color: Color(0xFFBDBDBD)),
+              const SizedBox(height: 16),
+              const Text(
+                'No hay marcaciones registradas',
+                style: TextStyle(fontSize: 17, color: Color(0xFF6B7280), fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Tus marcaciones aparecerán aquí',
+                style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () => context.go('/empleado'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _azul,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('Ir al Inicio'),
+              ),
+            ],
+          ),
         ),
       );
     }
