@@ -358,8 +358,9 @@ class ApiService {
     required int capacidadEmpleados,
     String? direccion,
   }) async {
+    final empresaId = _state.currentUser?.empresaId;
     final body = <String, dynamic>{
-      'empresa_id': 1,
+      'empresa_id': int.tryParse(empresaId ?? '') ?? 0,
       'codigo_obra': codigoObra,
       'nombre': nombre,
       'descripcion_ubicacion': descripcionUbicacion,
