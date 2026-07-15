@@ -15,6 +15,8 @@ class MarcarAsistenciaPage extends StatefulWidget {
   final double latitud;
   final double longitud;
   final double radio;
+  final String horaInicio;
+  final String horaFin;
 
   const MarcarAsistenciaPage({
     super.key,
@@ -23,6 +25,8 @@ class MarcarAsistenciaPage extends StatefulWidget {
     required this.latitud,
     required this.longitud,
     required this.radio,
+    this.horaInicio = '08:00',
+    this.horaFin = '18:00',
   });
   @override
   State<MarcarAsistenciaPage> createState() => _MarcarAsistenciaPageState();
@@ -41,14 +45,44 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
   double get obraLng => widget.longitud;
   double get radioMetros => widget.radio;
 
-  // Horarios de obra (hardcodeados; idealmente vendrían del backend)
-  // EN DESARROLLO: ventana amplia para pruebas (12h de tolerancia)
-  static const int horaInicio = 8;
-  static const int minutoInicio = 0;
-  static const int horaFin = 18;
-  static const int minutoFin = 0;
-  static const int toleranciaMinutos =
-      720; // 12 horas = siempre disponible en desarrollo
+  // Horarios de obra (dinámicos)
+  int get horaInicio {
+    try {
+      final parts = widget.horaInicio.split(':');
+      return int.parse(parts[0]);
+    } catch (_) {
+      return 8;
+    }
+  }
+
+  int get minutoInicio {
+    try {
+      final parts = widget.horaInicio.split(':');
+      return int.parse(parts[1]);
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  int get horaFin {
+    try {
+      final parts = widget.horaFin.split(':');
+      return int.parse(parts[0]);
+    } catch (_) {
+      return 18;
+    }
+  }
+
+  int get minutoFin {
+    try {
+      final parts = widget.horaFin.split(':');
+      return int.parse(parts[1]);
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  static const int toleranciaMinutos = 720; // 12 horas = siempre disponible en desarrollo
 
   Position? _posicionActual;
   StreamSubscription<Position>? _positionSub;
@@ -404,16 +438,29 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
   Widget _obraCard() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFEAF8F8),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: azul, width: 1.3),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
-          const Icon(Icons.business, color: azul, size: 34),
-          const SizedBox(width: 12),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEAF8F8),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.business, color: azul, size: 28),
+          ),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -422,15 +469,15 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
                   widget.obraNombre,
                   style: const TextStyle(
                     color: azul,
-                    fontSize: 17,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'ID de obra: ${widget.obraId}',
-                  style: const TextStyle(
-                    color: azul,
+                  style: TextStyle(
+                    color: Colors.grey.shade600,
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
@@ -468,7 +515,7 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
       decoration: BoxDecoration(
         color: color.withOpacity(0.10),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color, width: 1.2),
+        border: Border.all(color: color.withOpacity(0.3), width: 1.2),
       ),
       child: Row(
         children: [
@@ -502,7 +549,8 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
       return _estadoGrande(
         icono: Icons.location_off,
         texto: _errorGps!,
-        color: rojo,
+        color: rojo.withOpacity(0.15),
+        textoColor: rojo,
       );
     }
 
@@ -510,15 +558,16 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
       return _estadoGrande(
         icono: Icons.check_circle,
         texto: 'Dentro del rango autorizado',
-        color: verde,
-        textoColor: azul,
+        color: verde.withOpacity(0.2),
+        textoColor: const Color(0xFF388E3C),
       );
     }
 
     return _estadoGrande(
       icono: Icons.cancel,
-      texto: 'Fuera del rango autorizado',
-      color: rojo,
+      texto: 'Fuera del rango de la obra',
+      color: rojo.withOpacity(0.15),
+      textoColor: rojo,
     );
   }
 
@@ -530,22 +579,28 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
   }) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: azul, width: 1.3),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         children: [
-          Icon(icono, color: textoColor, size: 28),
-          const SizedBox(width: 10),
+          Icon(icono, color: textoColor, size: 24),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
               texto,
               style: TextStyle(
                 color: textoColor,
-                fontSize: 15,
+                fontSize: 14,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -565,7 +620,13 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
       height: 260,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: azul, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       clipBehavior: Clip.antiAlias,
       child: FlutterMap(
@@ -641,65 +702,123 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
   }
 
   Widget _infoHorario() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Horario de Jornada',
+            style: TextStyle(
+              color: azul,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _horarioItem('Hora actual', _formatearHora(_horaActual), Icons.access_time_filled),
+              _horarioItem('Entrada', widget.horaInicio, Icons.login_rounded),
+              _horarioItem('Salida', widget.horaFin, Icons.logout_rounded),
+            ],
+          ),
+          const SizedBox(height: 14),
+          const Divider(height: 1, color: Color(0xFFEEEEEE)),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: _entradaDisponible ? const Color(0xFF4CAF50) : const Color(0xFFE53935),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Entrada: ${_entradaDisponible ? "Disponible" : "No disponible"}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade700,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: _salidaDisponible ? const Color(0xFF4CAF50) : const Color(0xFFE53935),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Salida: ${_salidaDisponible ? "Disponible" : "No disponible"}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade700,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _horarioItem(String titulo, String valor, IconData icon) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Horario:',
+        Icon(icon, color: celeste, size: 20),
+        const SizedBox(height: 4),
+        Text(
+          titulo,
           style: TextStyle(
-            color: azul,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
+            fontSize: 11,
+            color: Colors.grey.shade500,
+            fontWeight: FontWeight.w500,
           ),
         ),
-        const SizedBox(height: 10),
-        Table(
-          border: TableBorder.all(color: azul, width: 1.3),
-          columnWidths: const {
-            0: FlexColumnWidth(1.7),
-            1: FlexColumnWidth(1.3),
-          },
-          children: [
-            TableRow(
-              children: [
-                const _CeldaHorario('Hora actual:'),
-                _CeldaHorario(_formatearHora(_horaActual)),
-              ],
-            ),
-            const TableRow(
-              children: [
-                _CeldaHorario('Hora entrada:'),
-                _CeldaHorario('08:00'),
-              ],
-            ),
-            const TableRow(
-              children: [_CeldaHorario('Hora salida:'), _CeldaHorario('18:00')],
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            _estadoBox('Entrada', azul, flex: 2),
-            _estadoBox(
-              _entradaDisponible ? 'Disponible' : 'No disponible',
-              _entradaDisponible ? verde : gris,
-              flex: 2,
-              textoColor: _entradaDisponible ? azul : Colors.white,
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        Row(
-          children: [
-            _estadoBox('Salida', azul, flex: 2),
-            _estadoBox(
-              _salidaDisponible ? 'Disponible' : 'No disponible',
-              _salidaDisponible ? verde : gris,
-              flex: 2,
-              textoColor: _salidaDisponible ? azul : Colors.white,
-            ),
-          ],
+        const SizedBox(height: 2),
+        Text(
+          valor,
+          style: const TextStyle(
+            fontSize: 14,
+            color: azul,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ],
     );
@@ -809,16 +928,22 @@ class _MarcarAsistenciaPageState extends State<MarcarAsistenciaPage> {
     }
 
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFFEAF8F8),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: azul, width: 1.3),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
           const Icon(Icons.location_on, color: azul, size: 22),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Expanded(
             child: _paradasDisponibles.length > 1
                 ? DropdownButtonHideUnderline(

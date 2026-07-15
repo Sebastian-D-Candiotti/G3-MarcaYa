@@ -178,6 +178,8 @@ final appRouter = GoRouter(
           latitud: extra['latitud'],
           longitud: extra['longitud'],
           radio: extra['radio'],
+          horaInicio: extra['horaInicio'] ?? '08:00',
+          horaFin: extra['horaFin'] ?? '18:00',
         );
       },
     ),

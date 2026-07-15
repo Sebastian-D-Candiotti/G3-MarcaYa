@@ -81,13 +81,54 @@ class Api::V1::EmpleadosController < Api::V1::BaseController
 
     empleado_repo.guardar(actualizado)
 
+    # Buscar la empresa del usuario actual (el administrador que despide al empleado)
+    empresa = current_user.empresas&.first
+    if empresa
+      # 1. Desactivar asignaciones a obras de esta empresa
+      mis_obras_ids = Rails.configuration.di.repos[:obra].listar_por_empresa(empresa.id).map(&:id)
+      asignaciones_repo = Rails.configuration.di.repos[:asignacion]
+      asignaciones = asignaciones_repo.listar_por_empleado(empleado.id)
+      
+      asignaciones.each do |a|
+        if a.estado == "activo" && mis_obras_ids.include?(a.obra_id)
+          asignacion_actualizada = Domain::Entities::Asignacion.new(
+            id: a.id,
+            empleado_id: a.empleado_id,
+            obra_id: a.obra_id,
+            estado: "inactivo",
+            created_at: a.created_at,
+            updated_at: Time.now
+          )
+          asignaciones_repo.guardar(asignacion_actualizada)
+        end
+      end
+
+      # 2. Rechazar solicitudes de este empleado para esta empresa
+      solicitudes_repo = Rails.configuration.di.repos[:solicitud]
+      solicitudes = solicitudes_repo.listar_por_empleado(empleado.id)
+      
+      solicitudes.each do |s|
+        if s.empresa_id == empresa.id && s.estado != "rechazada"
+          solicitud_actualizada = Domain::Entities::Solicitud.new(
+            id: s.id,
+            empleado_id: s.empleado_id,
+            empresa_id: s.empresa_id,
+            estado: "rechazada",
+            created_at: s.created_at,
+            updated_at: Time.now
+          )
+          solicitudes_repo.guardar(solicitud_actualizada)
+        end
+      end
+    end
+
     render json: { mensaje: "Empleado desactivado correctamente" }
   rescue ::Domain::Errors::ValidacionError => e
     render json: { error: e.message }, status: :unprocessable_entity
   rescue ActiveRecord::RecordNotFound
     render json: { error: "Empleado no encontrado" }, status: :not_found
   rescue StandardError => e
-    render json: { error: "Empleado no encontrado" }, status: :not_found
+    render json: { error: e.message || "Empleado no encontrado" }, status: :not_found
   end
 
   # GET /api/v1/empleados/:id/asistencias

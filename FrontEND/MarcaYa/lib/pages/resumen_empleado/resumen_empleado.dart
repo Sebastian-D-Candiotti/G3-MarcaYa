@@ -468,6 +468,8 @@ class _ResumenEmpleadoPageState extends State<ResumenEmpleadoPage> {
                                       'latitud': obra['latitud'].toDouble(),
                                       'longitud': obra['longitud'].toDouble(),
                                       'radio': obra['radio'].toDouble(),
+                                      'horaInicio': obra['hora_inicio'] ?? '08:00',
+                                      'horaFin': obra['hora_fin'] ?? '18:00',
                                     },
                                   );
 

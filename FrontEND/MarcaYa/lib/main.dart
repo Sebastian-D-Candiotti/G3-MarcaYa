@@ -39,6 +39,8 @@ void main() async {
         'latitud': data['latitud'],
         'longitud': data['longitud'],
         'radio': data['radio'],
+        'horaInicio': data['horaInicio'] ?? '08:00',
+        'horaFin': data['horaFin'] ?? '18:00',
       });
     } else if (screen == 'historial') {
       appRouter.go('/empleado/historial');

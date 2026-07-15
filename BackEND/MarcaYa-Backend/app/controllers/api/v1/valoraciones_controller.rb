@@ -3,7 +3,7 @@
 module Api
   module V1
     class ValoracionesController < BaseController
-      before_action :authenticate_user!
+      # Se remueve before_action :authenticate_user! ya que se hereda :authenticate! de BaseController
 
       # POST /api/v1/valoraciones
       def crear
@@ -25,14 +25,27 @@ module Api
 
       # GET /api/v1/valoraciones/:usuario_id
       def listar
-        valoraciones = valoracion_facade.listar_por_empresa(empresa_id: params[:usuario_id])
+        empresa = Rails.configuration.di.repos[:empresa].find_by_usuario_id(params[:usuario_id])
+        return render json: [] unless empresa
+
+        valoraciones = valoracion_facade.listar_por_empresa(empresa_id: empresa.id)
         render json: valoraciones.map { |v| Serializer::ValoracionSerializer.as_json(v) }
       end
 
       # GET /api/v1/valoraciones/:usuario_id/promedio
       def promedio
-        promedio = valoracion_facade.promedio_empresa(empresa_id: params[:usuario_id])
-        render json: promedio
+        empresa = Rails.configuration.di.repos[:empresa].find_by_usuario_id(params[:usuario_id])
+        return render json: { promedio: 5.0, total: 0 } unless empresa
+
+        valoraciones = Rails.configuration.di.repos[:valoracion].listar_por_empresa(empresa.id)
+        
+        promedio = if valoraciones.any?
+                     Domain::Services::ValoracionPromedioService.calcular(valoraciones)
+                   else
+                     5.0
+                   end
+        
+        render json: { promedio: promedio, total: valoraciones.size }
       end
 
       private

@@ -183,9 +183,6 @@ class _InformeIAPageState extends State<InformeIAPage>
           'Informe Ejecutivo IA',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: _azul,
-        foregroundColor: Colors.white,
-        elevation: 0,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

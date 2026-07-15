@@ -23,7 +23,27 @@ class VerificacionRegistroPage extends StatefulWidget {
 
 class _VerificacionRegistroPageState extends State<VerificacionRegistroPage> {
   final _controllers = List.generate(6, (_) => TextEditingController());
-  final _focusNodes = List.generate(6, (_) => FocusNode());
+  late final List<FocusNode> _focusNodes;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNodes = List.generate(6, (index) {
+      return FocusNode(
+        onKeyEvent: (node, event) {
+          final isDown = event.runtimeType.toString().contains('Down');
+          if (isDown && event.logicalKey == LogicalKeyboardKey.backspace) {
+            if (_controllers[index].text.isEmpty && index > 0) {
+              _controllers[index - 1].clear();
+              _focusNodes[index - 1].requestFocus();
+              return KeyEventResult.handled;
+            }
+          }
+          return KeyEventResult.ignored;
+        },
+      );
+    });
+  }
 
   @override
   void dispose() {
@@ -37,8 +57,14 @@ class _VerificacionRegistroPageState extends State<VerificacionRegistroPage> {
   }
 
   void _onDigitChanged(String value, int index) {
-    if (value.isNotEmpty && index < _focusNodes.length - 1) {
-      _focusNodes[index + 1].requestFocus();
+    if (value.isNotEmpty) {
+      if (index < _focusNodes.length - 1) {
+        _focusNodes[index + 1].requestFocus();
+      }
+    } else {
+      if (index > 0) {
+        _focusNodes[index - 1].requestFocus();
+      }
     }
   }
 

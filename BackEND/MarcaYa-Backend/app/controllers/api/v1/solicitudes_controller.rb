@@ -126,7 +126,9 @@ class Api::V1::SolicitudesController < Api::V1::BaseController
         empresa_id: o.empresa_id,
         latitud: o.latitud,
         longitud: o.longitud,
-        radio: o.radio_metros
+        radio: o.radio_metros,
+        hora_inicio: o.hora_inicio&.strftime("%H:%M") || "08:00",
+        hora_fin: o.hora_fin&.strftime("%H:%M") || "18:00"
       }
     end
 
