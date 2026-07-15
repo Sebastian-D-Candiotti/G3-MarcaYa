@@ -109,10 +109,8 @@ Rails.application.routes.draw do
       put  'alertas/ausencias/:id/desestimar', to: 'alertas#desestimar', as: :alerta_desestimar
 
       # REPORTES
-      namespace :reportes do
-        get "asistencia", to: "reportes#asistencia"
-        post "informe-ia", to: "reportes#informe_ia"  # US-NUEVA-06: Informe ejecutivo con IA
-      end
+      get "reportes/asistencia", to: "reportes#asistencia"
+      post "reportes/informe-ia", to: "reportes#informe_ia"  # US-NUEVA-06: Informe ejecutivo con IA
 
       # INFORMES HISTORICOS DE ASISTENCIA
       get  "informes/asistencia",              to: "informes_asistencia#index"

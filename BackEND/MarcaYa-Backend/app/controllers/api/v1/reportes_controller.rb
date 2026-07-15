@@ -63,18 +63,24 @@ class Api::V1::ReportesController < Api::V1::BaseController
   #   5. Retorna informe + metadatos
   # ════════════════════════════════════════════════════════════════
   def informe_ia
-    api_key = ENV["GEMINI_API_KEY"]
-    if api_key.blank?
+    # ── 1. Determinar proveedor de IA ─────────────────────────
+    if ENV["OPENROUTER_API_KEY"].present?
+      provider = "openrouter"
+      api_key = ENV["OPENROUTER_API_KEY"]
+    elsif ENV["GEMINI_API_KEY"].present?
+      provider = "gemini"
+      api_key = ENV["GEMINI_API_KEY"]
+    else
       return render json: {
-        error: "La clave de API de Gemini no está configurada. Agrega GEMINI_API_KEY en el archivo .env del backend."
+        error: "No se ha configurado ninguna API Key para el servicio de IA. Agrega OPENROUTER_API_KEY o GEMINI_API_KEY en las variables de entorno del backend."
       }, status: :service_unavailable
     end
 
-    # ── 1. Determinar período ─────────────────────────────────
+    # ── 2. Determinar período ─────────────────────────────────
     fecha_fin   = params[:fecha_fin].present?    ? Date.parse(params[:fecha_fin])    : Date.today
     fecha_inicio = params[:fecha_inicio].present? ? Date.parse(params[:fecha_inicio]) : fecha_fin - 30.days
 
-    # ── 2. Obtener asistencias de la empresa ──────────────────
+    # ── 3. Obtener asistencias de la empresa ──────────────────
     empresa = current_user.empresas&.first
     unless empresa
       return render json: { error: "Solo usuarios de tipo empresa pueden generar informes." }, status: :forbidden
@@ -107,14 +113,14 @@ class Api::V1::ReportesController < Api::V1::BaseController
       }, status: :unprocessable_entity
     end
 
-    # ── 3. Agregar datos ANÓNIMOS ─────────────────────────────
+    # ── 4. Agregar datos ANÓNIMOS ─────────────────────────────
     datos_anonimos = agregar_datos_anonimos(records, obra_ids)
 
-    # ── 4. Construir prompt ───────────────────────────────────
+    # ── 5. Construir prompt ───────────────────────────────────
     prompt = construir_prompt_informe(datos_anonimos, fecha_inicio, fecha_fin)
 
-    # ── 5. Llamar a Gemini API ────────────────────────────────
-    informe_texto = llamar_gemini(api_key, prompt)
+    # ── 6. Llamar al servicio de IA ───────────────────────────
+    informe_texto = llamar_ia(provider, api_key, prompt)
 
     render json: {
       informe: informe_texto,
@@ -130,7 +136,7 @@ class Api::V1::ReportesController < Api::V1::BaseController
     }
   rescue Date::Error => e
     render json: { error: "Formato de fecha inválido: #{e.message}" }, status: :unprocessable_entity
-  rescue GeminiApiError => e
+  rescue IaApiError => e
     render json: { error: "Error al comunicarse con la IA: #{e.message}" }, status: :bad_gateway
   rescue => e
     Rails.logger.error("InformeIA error: #{e.class} — #{e.message}\n#{e.backtrace&.first(5)&.join("\n")}")
@@ -255,6 +261,68 @@ class Api::V1::ReportesController < Api::V1::BaseController
     PROMPT
   end
 
+  # ── Excepción personalizada para errores de IA ──────────────
+  class IaApiError < StandardError; end
+
+  # ── Método unificado de llamada a IA ────────────────────────
+  def llamar_ia(provider, api_key, prompt)
+    case provider
+    when "openrouter"
+      llamar_openrouter(api_key, prompt)
+    else
+      llamar_gemini(api_key, prompt)
+    end
+  end
+
+  # ── Llamada a OpenRouter API ────────────────────────────────
+  def llamar_openrouter(api_key, prompt)
+    require "net/http"
+    require "json"
+
+    uri = URI("https://openrouter.ai/api/v1/chat/completions")
+    
+    # Modelo gratuito por defecto. Se puede sobreescribir con variable de entorno.
+    model_name = ENV["OPENROUTER_MODEL"].presence || "google/gemma-4-26b-a4b-it:free"
+
+    body = {
+      model: model_name,
+      messages: [
+        { role: "user", content: prompt }
+      ],
+      temperature: 0.5
+    }
+
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = true
+    http.open_timeout = 15
+    http.read_timeout = 60
+
+    request = Net::HTTP::Post.new(uri)
+    request["Content-Type"] = "application/json"
+    request["Authorization"] = "Bearer #{api_key}"
+    request["HTTP-Referer"] = "https://github.com/Sebastian-D-Candiotti/G3-MarcaYa"
+    request["X-Title"] = "MarcaYA"
+    request.body = body.to_json
+
+    response = http.request(request)
+
+    unless response.is_a?(Net::HTTPSuccess)
+      parsed = JSON.parse(response.body) rescue {}
+      error_msg = parsed.dig("error", "message") || "HTTP #{response.code}"
+      Rails.logger.error("OpenRouter API error: #{response.code} — #{error_msg}")
+      raise IaApiError, error_msg
+    end
+
+    parsed = JSON.parse(response.body)
+    texto = parsed.dig("choices", 0, "message", "content")
+
+    if texto.blank?
+      raise IaApiError, "La IA no generó una respuesta válida."
+    end
+
+    texto
+  end
+
   # ── Llamada a Google Gemini API ─────────────────────────────
   def llamar_gemini(api_key, prompt)
     require "net/http"
@@ -291,14 +359,14 @@ class Api::V1::ReportesController < Api::V1::BaseController
       parsed = JSON.parse(response.body) rescue {}
       error_msg = parsed.dig("error", "message") || "HTTP #{response.code}"
       Rails.logger.error("Gemini API error: #{response.code} — #{error_msg}")
-      raise GeminiApiError, error_msg
+      raise IaApiError, error_msg
     end
 
     parsed = JSON.parse(response.body)
     texto = parsed.dig("candidates", 0, "content", "parts", 0, "text")
 
     if texto.blank?
-      raise GeminiApiError, "La IA no generó una respuesta válida."
+      raise IaApiError, "La IA no generó una respuesta válida."
     end
 
     texto
