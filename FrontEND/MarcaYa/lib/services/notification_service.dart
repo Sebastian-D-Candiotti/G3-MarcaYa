@@ -41,7 +41,7 @@ class NotificationService {
     _router = router;
 
     const androidSettings = AndroidInitializationSettings(
-      '@mipmap/ic_launcher',
+      'ic_launcher',
     );
 
     const initSettings = InitializationSettings(
@@ -104,7 +104,7 @@ class NotificationService {
       channelDescription: _androidChannel.description,
       importance: Importance.high,
       priority: Priority.high,
-      icon: '@mipmap/ic_launcher',
+      icon: 'ic_launcher',
       // BigTextStyle para mostrar el cuerpo completo sin truncar
       styleInformation: BigTextStyleInformation(
         body,
@@ -144,7 +144,7 @@ class NotificationService {
     final plugin = FlutterLocalNotificationsPlugin();
 
     const androidSettings = AndroidInitializationSettings(
-      '@mipmap/ic_launcher',
+      'ic_launcher',
     );
 
     const initSettings = InitializationSettings(android: androidSettings);
@@ -175,7 +175,7 @@ class NotificationService {
           'Notificaciones de confirmación de marcado de asistencia',
       importance: Importance.high,
       priority: Priority.high,
-      icon: '@mipmap/ic_launcher',
+      icon: 'ic_launcher',
       autoCancel: true,
       // US-NUEVA-09 CA-2: BigText para notificación detallada
       styleInformation: BigTextStyleInformation(

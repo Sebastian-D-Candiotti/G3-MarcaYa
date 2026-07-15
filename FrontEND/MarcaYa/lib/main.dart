@@ -20,12 +20,33 @@ import 'services/notification_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Inicializar servicios de segundo plano (US-NUEVA-08 y US-NUEVA-09)
-  await AutoMarkingService.initialize();
-  await NotificationService.instance.initialize(appRouter);
+  debugPrint('ST-LOG: Iniciando inicialización de servicios...');
 
-  await Firebase.initializeApp();
+  try {
+    debugPrint('ST-LOG: Cargando AutoMarkingService...');
+    await AutoMarkingService.initialize();
+    debugPrint('ST-LOG: AutoMarkingService inicializado con éxito.');
+  } catch (e) {
+    debugPrint('ST-LOG: ERROR al inicializar AutoMarkingService: $e');
+  }
 
+  try {
+    debugPrint('ST-LOG: Cargando NotificationService...');
+    await NotificationService.instance.initialize(appRouter);
+    debugPrint('ST-LOG: NotificationService inicializado con éxito.');
+  } catch (e) {
+    debugPrint('ST-LOG: ERROR al inicializar NotificationService: $e');
+  }
+
+  try {
+    debugPrint('ST-LOG: Cargando Firebase...');
+    await Firebase.initializeApp();
+    debugPrint('ST-LOG: Firebase inicializado con éxito.');
+  } catch (e) {
+    debugPrint('ST-LOG: ERROR al inicializar Firebase: $e');
+  }
+
+  debugPrint('ST-LOG: Configurando PushProvider...');
   final pushProvider = PushProvider();
 
   // Deep link desde notificaciones push
@@ -48,7 +69,9 @@ void main() async {
   };
 
   // Inicializar push de forma asíncrona sin bloquear el render inicial
+  debugPrint('ST-LOG: Ejecutando pushProvider.initialize()...');
   pushProvider.initialize();
+  debugPrint('ST-LOG: Preparado para llamar a runApp()...');
 
 
   runApp(
