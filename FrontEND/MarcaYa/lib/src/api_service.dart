@@ -1061,55 +1061,22 @@ class ApiService {
 
   /// Obtiene todas las alertas de ausencia de la empresa autenticada
   Future<List<dynamic>> obtenerAlertasAusencia() async {
-    try {
-      final res = await _client.get(
-        Uri.parse('$kBaseUrl/alertas/ausencias'),
-        headers: await _headers(),
+    final res = await _client.get(
+      Uri.parse('$kBaseUrl/alertas/ausencias'),
+      headers: await _headers(),
+    );
+
+    if (res.statusCode >= 400) {
+      final body = jsonDecode(res.body);
+      throw ApiException(
+        body is Map
+            ? (body['error'] ?? 'Error al obtener alertas de ausencia')
+            : 'Error al obtener alertas de ausencia',
+        res.statusCode,
       );
-
-      List<dynamic> backendAlerts = [];
-      if (res.statusCode < 400) {
-        backendAlerts = jsonDecode(res.body) as List<dynamic>;
-      }
-
-      // Alertas hardcodeadas para demostración
-      final mockAlerts = [
-        {
-          'id': 9001,
-          'empleadoNombre': 'Juan',
-          'empleadoApellido': 'Pérez (Demo)',
-          'obraNombre': 'Edificio Las Camelias',
-          'estado': 'pendiente'
-        },
-        {
-          'id': 9002,
-          'empleadoNombre': 'Carlos',
-          'empleadoApellido': 'Mendoza (Demo)',
-          'obraNombre': 'Condominio El Sol',
-          'estado': 'pendiente'
-        }
-      ];
-
-      return [...mockAlerts, ...backendAlerts];
-    } catch (_) {
-      // Retornar las de demo si falla la conexión
-      return [
-        {
-          'id': 9001,
-          'empleadoNombre': 'Juan',
-          'empleadoApellido': 'Pérez (Demo)',
-          'obraNombre': 'Edificio Las Camelias',
-          'estado': 'pendiente'
-        },
-        {
-          'id': 9002,
-          'empleadoNombre': 'Carlos',
-          'empleadoApellido': 'Mendoza (Demo)',
-          'obraNombre': 'Condominio El Sol',
-          'estado': 'pendiente'
-        }
-      ];
     }
+
+    return jsonDecode(res.body) as List<dynamic>;
   }
 
   /// Resuelve una alerta de ausencia por ID
