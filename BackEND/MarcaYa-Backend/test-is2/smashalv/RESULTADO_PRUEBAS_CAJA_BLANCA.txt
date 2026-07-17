@@ -1,0 +1,30 @@
+MarcaYA Release 2 - Evidencia de pruebas de caja blanca
+Responsable: Jose Fabrizzio Bustillos Rivera
+Fecha: 2026-07-13 (America/Lima)
+
+Entorno:
+- Ruby 4.0.4
+- Rails 8.1.3
+- PostgreSQL 17
+- RAILS_ENV=test
+- Base aislada: MarcaYa_test_whitebox
+
+Pruebas ejecutadas:
+- test-is2/smashalv/us_nueva_10/verificar_cuenta_caja_blanca_test.rb
+- test-is2/smashalv/us_nueva_15/sincronizar_marcaciones_offline_caja_blanca_test.rb
+
+Resultado focalizado:
+20 runs, 105 assertions, 0 failures, 0 errors, 0 skips
+
+RuboCop focalizado:
+2 files inspected, no offenses detected
+
+Regresion de las carpetas US-NUEVA-10 y US-NUEVA-15:
+61 runs, 269 assertions, 0 failures, 13 errors, 0 skips
+
+Los 13 errores de regresion provienen de fixtures existentes. PostgreSQL
+rechaza registro_asistencias.empleado_id = 1 porque ese identificador no
+existe en empleados al validar la clave foranea fk_rails_a9dbc6bfe6.
+
+Detalle metodologico, caminos y acciones recomendadas:
+test-is2/smashalv/PRUEBAS_CAJA_BLANCA.md
