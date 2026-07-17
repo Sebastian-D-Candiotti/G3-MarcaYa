@@ -324,7 +324,7 @@ class _RegistrarEmpresaPageState extends State<RegistrarEmpresaPage> {
       });
 
       try {
-        await ApiService.instance.registrarEmpresa(
+        final data = await ApiService.instance.registrarEmpresa(
           correo: email,
           clave: clave,
           ruc: ruc,
@@ -334,8 +334,21 @@ class _RegistrarEmpresaPageState extends State<RegistrarEmpresaPage> {
 
         if (!mounted) return;
 
+        final yaRegistrado = data['ya_registrado'] == true;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(yaRegistrado
+                ? 'Ya tenés un registro pendiente. Revisá tu correo para el nuevo código.'
+                : 'Empresa registrada. Revisa tu correo para verificar la cuenta.'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+
         // Cargar perfil en el Provider
-        await context.read<AuthProvider>().fetchProfile();
+        if (!yaRegistrado) {
+          await context.read<AuthProvider>().fetchProfile();
+        }
 
         if (mounted) {
           context.go('/verificar-otp', extra: {'ruc': ruc, 'correo': email});

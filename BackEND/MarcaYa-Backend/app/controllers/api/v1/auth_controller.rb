@@ -224,33 +224,50 @@ class Api::V1::AuthController < Api::V1::BaseController
     usuario_repo = Rails.configuration.di.repos[:usuario]
     usuario = usuario_repo.find_by_correo(correo)
 
-    if usuario&.es_empresa?
-      empresa_repo = Rails.configuration.di.repos[:empresa]
-      empresa = empresa_repo.find_by_usuario_id(usuario.id)
+    if usuario&.pendiente_verificacion?
+      if usuario.es_empresa?
+        empresa_repo = Rails.configuration.di.repos[:empresa]
+        empresa = empresa_repo.find_by_usuario_id(usuario.id)
 
-      if empresa
-        # Generar y guardar nuevo OTP
-        codigo_otp = rand(100000..999999).to_s
-        expira_at = 15.minutes.from_now
-        verificacion = Infrastructure::Orm::VerificacionRucRecord.find_or_initialize_by(ruc: empresa.ruc)
-        verificacion.update!(codigo: codigo_otp, expira_at: expira_at)
+        if empresa
+          # Generar y guardar nuevo OTP
+          codigo_otp = rand(100000..999999).to_s
+          expira_at = 15.minutes.from_now
+          verificacion = Infrastructure::Orm::VerificacionRucRecord.find_or_initialize_by(ruc: empresa.ruc)
+          verificacion.update!(codigo: codigo_otp, expira_at: expira_at)
 
-        # Enviar correo con el OTP
-        begin
-          UsuarioMailer.correo_verificacion_ruc(usuario.correo, codigo_otp, empresa.nombre_empresa).deliver_now
-        rescue StandardError => e
-          Rails.logger.error("Error al reenviar OTP: #{e.message}")
+          # Enviar correo con el OTP
+          begin
+            UsuarioMailer.correo_verificacion_ruc(usuario.correo, codigo_otp, empresa.nombre_empresa).deliver_now
+          rescue StandardError => e
+            Rails.logger.error("Error al reenviar OTP: #{e.message}")
+          end
+
+          correo_enmascarado = Domain::Services::SunatService.enmascarar_correo(usuario.correo)
+          render json: {
+            error: "Cuenta pendiente de verificación. Se envió un nuevo código a #{correo_enmascarado}",
+            pendiente_verificacion: true,
+            correo_enmascarado: correo_enmascarado,
+            ruc: empresa.ruc,
+            correo: usuario.correo,
+            rol: "empresa"
+          }, status: :forbidden
+          return
         end
-
-        correo_enmascarado = Domain::Services::SunatService.enmascarar_correo(usuario.correo)
-        render json: {
-          error: "Cuenta pendiente de verificación. Se envió un nuevo código a #{correo_enmascarado}",
-          pendiente_verificacion: true,
-          correo_enmascarado: correo_enmascarado,
-          ruc: empresa.ruc,
-          correo: usuario.correo
-        }, status: :forbidden
-        return
+      else
+        # Es empleado
+        begin
+          Rails.configuration.di.auth_facade.reenviar_codigo_verificacion(correo: usuario.correo)
+          render json: {
+            error: "Cuenta pendiente de verificación. Se envió un nuevo código a tu correo.",
+            pendiente_verificacion: true,
+            correo: usuario.correo,
+            rol: "empleado"
+          }, status: :forbidden
+          return
+        rescue StandardError => e
+          Rails.logger.error("Error al reenviar código de verificación de empleado: #{e.message}")
+        end
       end
     end
 

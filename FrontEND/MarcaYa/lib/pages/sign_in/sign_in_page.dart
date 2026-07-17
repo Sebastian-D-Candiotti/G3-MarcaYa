@@ -87,10 +87,17 @@ class _SignInPageState extends State<SignInPage> {
           duration: const Duration(seconds: 4),
         ),
       );
-      context.go('/verificar-otp', extra: {
-        'ruc': e.ruc,
-        'correo': e.correo,
-      });
+      if (e.rol == 'empleado') {
+        context.go('/register/verify', extra: {
+          'correo': e.correo,
+          'rol': 'empleado',
+        });
+      } else {
+        context.go('/verificar-otp', extra: {
+          'ruc': e.ruc,
+          'correo': e.correo,
+        });
+      }
     } catch (e) {
       setState(() {
         _error = 'Error al conectar con el servidor';

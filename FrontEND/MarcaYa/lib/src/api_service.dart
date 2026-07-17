@@ -102,7 +102,7 @@ class ApiService {
       }),
     );
 
-    // Detectar cuenta pendiente de verificación (empresas)
+    // Detectar cuenta pendiente de verificación
     if (res.statusCode == 403) {
       final body = jsonDecode(res.body) as Map<String, dynamic>;
       if (body['pendiente_verificacion'] == true) {
@@ -111,6 +111,7 @@ class ApiService {
           body['correo_enmascarado']?.toString() ?? '',
           ruc: body['ruc']?.toString(),
           correo: body['correo']?.toString(),
+          rol: body['rol']?.toString(),
         );
       }
     }
@@ -1176,12 +1177,14 @@ class PendienteVerificacionException implements Exception {
     this.correoEnmascarado, {
     this.ruc,
     this.correo,
+    this.rol,
   });
 
   final String mensaje;
   final String correoEnmascarado;
   final String? ruc;
   final String? correo;
+  final String? rol;
 
   @override
   String toString() => 'PendienteVerificacionException: $mensaje';
