@@ -38,20 +38,23 @@ module Application
         end
 
         def empleado_repo
+          emp = empleado
           r = Object.new
-          r.define_singleton_method(:find_by_id!) { |_id| empleado }
+          r.define_singleton_method(:find_by_id!) { |_id| emp }
           r
         end
 
         def parada_repo
+          par = parada
           r = Object.new
-          r.define_singleton_method(:find_by_id!) { |_id| parada }
+          r.define_singleton_method(:find_by_id!) { |_id| par }
           r
         end
 
         def empleado_parada_repo
+          asig = asignacion
           r = Object.new
-          r.define_singleton_method(:buscar_asignacion) { |_eid, _pid| asignacion }
+          r.define_singleton_method(:buscar_asignacion) { |_eid, _pid| asig }
           r
         end
 
